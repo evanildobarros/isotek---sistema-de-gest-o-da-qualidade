@@ -79,6 +79,19 @@ export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['Gestão da Qualidade']);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Load and sync avatar
+  useEffect(() => {
+    const loadAvatar = () => {
+      const savedAvatar = localStorage.getItem('isotek_avatar');
+      setAvatarUrl(savedAvatar);
+    };
+
+    loadAvatar();
+    window.addEventListener('avatarUpdated', loadAvatar);
+    return () => window.removeEventListener('avatarUpdated', loadAvatar);
+  }, []);
 
   // Auto-expand group if child is active
   useEffect(() => {
@@ -136,8 +149,8 @@ export const Sidebar: React.FC = () => {
         key={item.label}
         onClick={() => item.path && navigate(item.path)}
         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-            ? 'bg-isotek-50 text-isotek-700'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ? 'bg-isotek-50 text-isotek-700'
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
       >
         {item.icon && (
@@ -175,15 +188,26 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       <div className="p-4 border-t border-gray-100">
-        <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-isotek-100 flex items-center justify-center text-isotek-700 font-bold text-xs">
-            JD
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
+        <button
+          onClick={() => navigate('/app/perfil')}
+          className="w-full bg-gray-50 rounded-lg p-3 flex items-center gap-3 hover:bg-gray-100 transition-colors group"
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full object-cover border-2 border-isotek-200 group-hover:border-isotek-300 transition-colors"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-isotek-100 flex items-center justify-center text-isotek-700 font-bold text-xs group-hover:bg-isotek-200 transition-colors">
+              JD
+            </div>
+          )}
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-isotek-700 transition-colors">John Doe</p>
             <p className="text-xs text-gray-500 truncate">Gerente da Qualidade</p>
           </div>
-        </div>
+        </button>
       </div>
     </aside>
   );
