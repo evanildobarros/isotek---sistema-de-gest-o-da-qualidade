@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { SectionDashboard } from './components/SectionDashboard';
 import { SectionContexto } from './components/SectionContexto';
 import { SectionMelhoria } from './components/SectionMelhoria';
+import { SectionPerfil } from './components/SectionPerfil';
 import { SectionPlaceholder } from './components/SectionPlaceholder';
 
 const App: React.FC = () => {
@@ -22,6 +23,7 @@ const App: React.FC = () => {
           <Route element={<DashboardLayout />}>
             <Route index element={<Navigate to="/app/dashboard" replace />} />
             <Route path="dashboard" element={<SectionDashboard />} />
+            <Route path="perfil" element={<SectionPerfil />} />
 
             {/* Gestão da Qualidade */}
             <Route path="documentos" element={<SectionPlaceholder title="Documentos (GED)" />} />
