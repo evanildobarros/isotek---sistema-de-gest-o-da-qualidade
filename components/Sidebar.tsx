@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileText,
@@ -23,63 +24,74 @@ import {
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../types';
 
-interface SidebarProps {
-  activeSection: IsoSection;
-  onNavigate: (section: IsoSection) => void;
-}
-
 const navigationData: NavigationItem[] = [
   {
     label: 'Painel de Controle',
     section: IsoSection.DASHBOARD,
+    path: '/app/dashboard',
     icon: LayoutDashboard
   },
   {
     label: 'Gestão da Qualidade',
     icon: Award,
     children: [
-      { label: 'Documentos (GED)', section: IsoSection.DOCUMENTS, icon: FileText },
-      { label: 'Não Conformidades', section: IsoSection.NON_CONFORMANCES, icon: AlertTriangle },
-      { label: 'Ações Corretivas', section: IsoSection.CORRECTIVE_ACTIONS, icon: CheckSquare },
-      { label: 'Auditorias', section: IsoSection.AUDITS, icon: ClipboardCheck },
+      { label: 'Documentos (GED)', section: IsoSection.DOCUMENTS, path: '/app/documentos', icon: FileText },
+      { label: 'Não Conformidades', section: IsoSection.NON_CONFORMANCES, path: '/app/nao-conformidades', icon: AlertTriangle },
+      { label: 'Ações Corretivas', section: IsoSection.CORRECTIVE_ACTIONS, path: '/app/acoes-corretivas', icon: CheckSquare },
+      { label: 'Auditorias', section: IsoSection.AUDITS, path: '/app/auditorias', icon: ClipboardCheck },
     ]
   },
   {
     label: 'Gestão de Riscos',
     icon: ShieldAlert,
     children: [
-      { label: 'Contexto (SWOT)', section: IsoSection.RISK_MATRIX, icon: Grid }, // Mapped to Risk Matrix for now
-      { label: 'Oportunidades', section: IsoSection.OPPORTUNITIES, icon: TrendingUp },
+      { label: 'Contexto (SWOT)', section: IsoSection.RISK_MATRIX, path: '/app/contexto', icon: Grid },
+      { label: 'Oportunidades', section: IsoSection.OPPORTUNITIES, path: '/app/oportunidades', icon: TrendingUp },
     ]
   },
   {
     label: 'Gestão Administrativa',
     icon: Users,
     children: [
-      { label: 'Colaboradores', section: IsoSection.EMPLOYEES, icon: User },
-      { label: 'Treinamentos', section: IsoSection.TRAININGS, icon: GraduationCap },
+      { label: 'Colaboradores', section: IsoSection.EMPLOYEES, path: '/app/colaboradores', icon: User },
+      { label: 'Treinamentos', section: IsoSection.TRAININGS, path: '/app/treinamentos', icon: GraduationCap },
     ]
   },
   {
     label: 'Relatórios',
     icon: BarChart3,
     children: [
-      { label: 'Indicadores (KPIs)', section: IsoSection.KPIS, icon: PieChart },
-      { label: 'Análise Crítica', section: IsoSection.MANAGEMENT_REVIEW, icon: FileBarChart },
+      { label: 'Indicadores (KPIs)', section: IsoSection.KPIS, path: '/app/indicadores', icon: PieChart },
+      { label: 'Análise Crítica', section: IsoSection.MANAGEMENT_REVIEW, path: '/app/analise-critica', icon: FileBarChart },
     ]
   },
   {
     label: 'Configurações',
     icon: Settings,
     children: [
-      { label: 'Usuários', section: IsoSection.USERS, icon: UserCog },
-      { label: 'Sistema', section: IsoSection.SYSTEM, icon: Database },
+      { label: 'Usuários', section: IsoSection.USERS, path: '/app/usuarios', icon: UserCog },
+      { label: 'Sistema', section: IsoSection.SYSTEM, path: '/app/sistema', icon: Database },
     ]
   }
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onNavigate }) => {
+export const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['Gestão da Qualidade']);
+
+  // Auto-expand group if child is active
+  useEffect(() => {
+    const currentPath = location.pathname;
+    navigationData.forEach(group => {
+      if (group.children) {
+        const hasActiveChild = group.children.some(child => child.path === currentPath);
+        if (hasActiveChild && !expandedGroups.includes(group.label)) {
+          setExpandedGroups(prev => [...prev, group.label]);
+        }
+      }
+    });
+  }, [location.pathname]);
 
   const toggleGroup = (label: string) => {
     setExpandedGroups(prev =>
@@ -92,8 +104,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onNavigate }) =
   const renderMenuItem = (item: NavigationItem) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedGroups.includes(item.label);
-    const isActive = item.section === activeSection;
-    const isChildActive = hasChildren && item.children?.some(child => child.section === activeSection);
+    const isActive = item.path === location.pathname;
+    const isChildActive = hasChildren && item.children?.some(child => child.path === location.pathname);
 
     if (hasChildren) {
       return (
@@ -122,10 +134,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onNavigate }) =
     return (
       <button
         key={item.label}
-        onClick={() => item.section && onNavigate(item.section)}
+        onClick={() => item.path && navigate(item.path)}
         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-          ? 'bg-isotek-50 text-isotek-700'
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            ? 'bg-isotek-50 text-isotek-700'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
       >
         {item.icon && (

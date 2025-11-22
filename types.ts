@@ -40,6 +40,7 @@ export interface NavigationItem {
   label: string;
   icon?: React.ElementType;
   section?: IsoSection;
+  path?: string;
   children?: NavigationItem[];
   isOpen?: boolean; // For UI state
 }
