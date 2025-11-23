@@ -1,26 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, LogOut, ChevronDown } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 
 export const UserDropdown: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [profile, setProfile] = useState<{ full_name: string | null; role: string | null; avatar_url: string | null } | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Load avatar from localStorage
+    // Fetch profile from Supabase
     useEffect(() => {
-        const loadAvatar = () => {
-            const savedAvatar = localStorage.getItem('isotek_avatar');
-            setAvatarUrl(savedAvatar);
+        if (!user) return;
+
+        const fetchProfile = async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('full_name, role, avatar_url')
+                .eq('id', user.id)
+                .single();
+
+            if (!error && data) {
+                setProfile(data);
+            }
         };
 
-        loadAvatar();
-
-        // Listen for avatar updates
-        window.addEventListener('avatarUpdated', loadAvatar);
-        return () => window.removeEventListener('avatarUpdated', loadAvatar);
-    }, []);
+        fetchProfile();
+    }, [user]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -34,9 +42,13 @@ export const UserDropdown: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('isotek_token');
-        navigate('/login');
+    const { signOut } = useAuth();
+    const handleLogout = async () => {
+        try {
+            await signOut();
+        } catch (error) {
+            console.error('Erro ao sair:', error);
+        }
     };
 
     const handleProfileClick = () => {
@@ -52,22 +64,22 @@ export const UserDropdown: React.FC = () => {
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
             >
                 {/* Avatar */}
-                {avatarUrl ? (
+                {profile?.avatar_url ? (
                     <img
-                        src={avatarUrl}
+                        src={profile.avatar_url}
                         alt="Avatar"
                         className="w-9 h-9 rounded-full object-cover shadow-md border-2 border-gray-100"
                     />
                 ) : (
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-isotek-500 to-isotek-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                        AD
+                        {profile?.full_name ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : user?.email?.slice(0, 2).toUpperCase() || 'U'}
                     </div>
                 )}
 
                 {/* User Info */}
                 <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold text-gray-900">Admin User</p>
-                    <p className="text-xs text-gray-500">Administrador</p>
+                    <p className="text-sm font-semibold text-gray-900">{profile?.full_name || user?.email || 'Usuário'}</p>
+                    <p className="text-xs text-gray-500">{profile?.role || 'Colaborador'}</p>
                 </div>
 
                 {/* Chevron Icon */}
@@ -82,8 +94,8 @@ export const UserDropdown: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 animate-fade-in">
                     {/* User Info Header (visible on mobile) */}
                     <div className="md:hidden px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-900">Admin User</p>
-                        <p className="text-xs text-gray-500">admin@isotek.com</p>
+                        <p className="text-sm font-semibold text-gray-900">{profile?.full_name || user?.email || 'Usuário'}</p>
+                        <p className="text-xs text-gray-500">{user?.email || ''}</p>
                     </div>
 
                     {/* Menu Items */}

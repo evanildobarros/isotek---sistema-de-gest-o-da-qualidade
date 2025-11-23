@@ -1,17 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Building2, Calendar, Shield, X, Camera, Lock, Upload } from 'lucide-react';
+import { User, Mail, Phone, Building2, Calendar, Shield, X, Camera, Lock, Upload, Loader2 } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
+
+interface ProfileData {
+    full_name: string | null;
+    avatar_url: string | null;
+    department: string | null;
+    role: string | null;
+    is_active: boolean;
+    created_at: string;
+}
 
 export const SectionPerfil: React.FC = () => {
+    const { user } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-    // Form states
-    const [fullName, setFullName] = useState('Administrador Silva');
-    const [email, setEmail] = useState('admin@isotek.com');
-    const [phone, setPhone] = useState('(98) 98765-4321');
-    const [role, setRole] = useState('Gerente da Qualidade');
+    // Profile data
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
+    // Edit form states
+    const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [department, setDepartment] = useState('');
+
+    // Password states
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,27 +36,66 @@ export const SectionPerfil: React.FC = () => {
     // Photo upload states
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-    // Load avatar from localStorage on mount
+    // Fetch profile data on mount
     useEffect(() => {
-        const savedAvatar = localStorage.getItem('isotek_avatar');
-        if (savedAvatar) {
-            setAvatarUrl(savedAvatar);
-        }
-    }, []);
+        if (!user) return;
+
+        const fetchProfile = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (!error && data) {
+                setProfileData(data as ProfileData);
+                setFullName(data.full_name || '');
+                setDepartment(data.department || '');
+            } else {
+                console.error('Error fetching profile:', error);
+            }
+            setLoading(false);
+        };
+
+        fetchProfile();
+    }, [user]);
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
+    const formatRole = (role: string | null) => {
+        if (!role) return 'Colaborador';
+        const roleMap: { [key: string]: string } = {
+            'admin': 'Administrador',
+            'gestor': 'Gestor',
+            'auditor': 'Auditor',
+            'colaborador': 'Colaborador'
+        };
+        return roleMap[role] || role;
+    };
+
+    const getInitials = (name: string | null) => {
+        if (!name) return user?.email?.slice(0, 2).toUpperCase() || 'U';
+        return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    };
 
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, etc.)');
             return;
         }
 
-        // Validate file size (5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert('O arquivo deve ter no máximo 5MB');
             return;
@@ -47,7 +103,6 @@ export const SectionPerfil: React.FC = () => {
 
         setSelectedFile(file);
 
-        // Create preview URL
         const reader = new FileReader();
         reader.onloadend = () => {
             setPreviewUrl(reader.result as string);
@@ -55,42 +110,97 @@ export const SectionPerfil: React.FC = () => {
         reader.readAsDataURL(file);
     };
 
-    const handleSavePhoto = () => {
-        if (!previewUrl) {
+    const handleSavePhoto = async () => {
+        if (!previewUrl || !user) {
             alert('Por favor, selecione uma foto primeiro');
             return;
         }
 
-        // Save to localStorage
-        localStorage.setItem('isotek_avatar', previewUrl);
-        setAvatarUrl(previewUrl);
+        setSaving(true);
+        try {
+            // Update avatar_url in database
+            const { error } = await supabase
+                .from('profiles')
+                .update({ avatar_url: previewUrl })
+                .eq('id', user.id);
 
-        // Reset states
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        setIsPhotoModalOpen(false);
+            if (error) throw error;
 
-        alert('Foto atualizada com sucesso!');
-
-        // Trigger custom event to update avatar in other components
-        window.dispatchEvent(new Event('avatarUpdated'));
+            // Update local state
+            setProfileData(prev => prev ? { ...prev, avatar_url: previewUrl } : null);
+            setSelectedFile(null);
+            setPreviewUrl(null);
+            setIsPhotoModalOpen(false);
+            alert('Foto atualizada com sucesso!');
+        } catch (error) {
+            console.error('Error saving photo:', error);
+            alert('Erro ao atualizar foto. Tente novamente.');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleRemovePhoto = () => {
-        localStorage.removeItem('isotek_avatar');
-        setAvatarUrl(null);
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        alert('Foto removida com sucesso!');
-        window.dispatchEvent(new Event('avatarUpdated'));
+    const handleRemovePhoto = async () => {
+        if (!user) return;
+
+        setSaving(true);
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ avatar_url: null })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            setProfileData(prev => prev ? { ...prev, avatar_url: null } : null);
+            setSelectedFile(null);
+            setPreviewUrl(null);
+            alert('Foto removida com sucesso!');
+        } catch (error) {
+            console.error('Error removing photo:', error);
+            alert('Erro ao remover foto. Tente novamente.');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleSaveProfile = () => {
-        alert('Perfil atualizado com sucesso!');
-        setIsEditModalOpen(false);
+    const handleSaveProfile = async () => {
+        if (!user) return;
+
+        setSaving(true);
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    full_name: fullName,
+                    department: department
+                })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            // Refresh profile data
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (data) {
+                setProfileData(data as ProfileData);
+            }
+
+            alert('Perfil atualizado com sucesso!');
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            alert('Erro ao atualizar perfil. Tente novamente.');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (newPassword !== confirmPassword) {
             alert('As senhas não coincidem!');
             return;
@@ -99,20 +209,35 @@ export const SectionPerfil: React.FC = () => {
             alert('A senha deve ter pelo menos 6 caracteres!');
             return;
         }
-        alert('Senha alterada com sucesso!');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setIsPasswordModalOpen(false);
+
+        setSaving(true);
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) throw error;
+
+            alert('Senha alterada com sucesso!');
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setIsPasswordModalOpen(false);
+        } catch (error: any) {
+            console.error('Error changing password:', error);
+            alert(error.message || 'Erro ao alterar senha. Tente novamente.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const renderAvatar = (size: 'small' | 'large' = 'large') => {
         const sizeClasses = size === 'large' ? 'w-24 h-24 text-3xl' : 'w-16 h-16 text-2xl';
 
-        if (avatarUrl) {
+        if (profileData?.avatar_url) {
             return (
                 <img
-                    src={avatarUrl}
+                    src={profileData.avatar_url}
                     alt="Avatar"
                     className={`${sizeClasses} rounded-full object-cover shadow-lg`}
                 />
@@ -121,10 +246,18 @@ export const SectionPerfil: React.FC = () => {
 
         return (
             <div className={`${sizeClasses} rounded-full bg-gradient-to-br from-isotek-500 to-isotek-600 flex items-center justify-center text-white font-bold shadow-lg`}>
-                AD
+                {getInitials(profileData?.full_name || null)}
             </div>
         );
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-isotek-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -143,8 +276,10 @@ export const SectionPerfil: React.FC = () => {
                         </button>
                     </div>
                     <div>
-                        <h3 className="text-2xl font-bold text-gray-900">Admin User</h3>
-                        <p className="text-gray-500 mt-1">Administrador do Sistema</p>
+                        <h3 className="text-2xl font-bold text-gray-900">
+                            {profileData?.full_name || user?.email || 'Usuário'}
+                        </h3>
+                        <p className="text-gray-500 mt-1">{formatRole(profileData?.role || null)}</p>
                         <div className="flex gap-2 mt-3">
                             <button
                                 onClick={() => setIsPhotoModalOpen(true)}
@@ -152,10 +287,11 @@ export const SectionPerfil: React.FC = () => {
                             >
                                 Alterar Foto
                             </button>
-                            {avatarUrl && (
+                            {profileData?.avatar_url && (
                                 <button
                                     onClick={handleRemovePhoto}
-                                    className="px-4 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
                                 >
                                     Remover Foto
                                 </button>
@@ -172,7 +308,7 @@ export const SectionPerfil: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Nome Completo</p>
-                            <p className="font-semibold text-gray-900">{fullName}</p>
+                            <p className="font-semibold text-gray-900">{profileData?.full_name || user?.email || '-'}</p>
                         </div>
                     </div>
 
@@ -182,7 +318,7 @@ export const SectionPerfil: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">E-mail</p>
-                            <p className="font-semibold text-gray-900">{email}</p>
+                            <p className="font-semibold text-gray-900">{user?.email || '-'}</p>
                         </div>
                     </div>
 
@@ -192,7 +328,7 @@ export const SectionPerfil: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Telefone</p>
-                            <p className="font-semibold text-gray-900">{phone}</p>
+                            <p className="font-semibold text-gray-900">{phone || '-'}</p>
                         </div>
                     </div>
 
@@ -201,8 +337,8 @@ export const SectionPerfil: React.FC = () => {
                             <Building2 className="text-orange-600" size={20} />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Cargo</p>
-                            <p className="font-semibold text-gray-900">{role}</p>
+                            <p className="text-sm text-gray-500">Departamento</p>
+                            <p className="font-semibold text-gray-900">{profileData?.department || '-'}</p>
                         </div>
                     </div>
 
@@ -212,7 +348,9 @@ export const SectionPerfil: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Data de Cadastro</p>
-                            <p className="font-semibold text-gray-900">15 de Janeiro de 2024</p>
+                            <p className="font-semibold text-gray-900">
+                                {profileData?.created_at ? formatDate(profileData.created_at) : '-'}
+                            </p>
                         </div>
                     </div>
 
@@ -222,7 +360,7 @@ export const SectionPerfil: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Nível de Acesso</p>
-                            <p className="font-semibold text-gray-900">Administrador Total</p>
+                            <p className="font-semibold text-gray-900">{formatRole(profileData?.role || null)}</p>
                         </div>
                     </div>
                 </div>
@@ -302,10 +440,11 @@ export const SectionPerfil: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
                                 <input
                                     type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                    value={user?.email || ''}
+                                    disabled
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
                                 />
+                                <p className="text-xs text-gray-500 mt-1">O e-mail não pode ser alterado</p>
                             </div>
 
                             <div>
@@ -315,15 +454,16 @@ export const SectionPerfil: React.FC = () => {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                    placeholder="(00) 00000-0000"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
                                 <input
                                     type="text"
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
+                                    value={department}
+                                    onChange={(e) => setDepartment(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
                                 />
                             </div>
@@ -332,13 +472,15 @@ export const SectionPerfil: React.FC = () => {
                         <div className="flex gap-3 mt-6">
                             <button
                                 onClick={handleSaveProfile}
-                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors"
+                                disabled={saving}
+                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                             >
-                                Salvar Alterações
+                                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Salvar Alterações'}
                             </button>
                             <button
                                 onClick={() => setIsEditModalOpen(false)}
-                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                disabled={saving}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                             >
                                 Cancelar
                             </button>
@@ -370,11 +512,11 @@ export const SectionPerfil: React.FC = () => {
                             <div className="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-lg mb-6 bg-gray-100">
                                 {previewUrl ? (
                                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                ) : avatarUrl ? (
-                                    <img src={avatarUrl} alt="Current" className="w-full h-full object-cover" />
+                                ) : profileData?.avatar_url ? (
+                                    <img src={profileData.avatar_url} alt="Current" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-isotek-500 to-isotek-600 flex items-center justify-center text-white font-bold text-5xl">
-                                        AD
+                                        {getInitials(profileData?.full_name || null)}
                                     </div>
                                 )}
                             </div>
@@ -398,10 +540,10 @@ export const SectionPerfil: React.FC = () => {
                         <div className="flex gap-3">
                             <button
                                 onClick={handleSavePhoto}
-                                disabled={!previewUrl}
-                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={!previewUrl || saving}
+                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                             >
-                                Salvar Foto
+                                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Salvar Foto'}
                             </button>
                             <button
                                 onClick={() => {
@@ -409,7 +551,8 @@ export const SectionPerfil: React.FC = () => {
                                     setSelectedFile(null);
                                     setPreviewUrl(null);
                                 }}
-                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                disabled={saving}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                             >
                                 Cancelar
                             </button>
@@ -486,9 +629,10 @@ export const SectionPerfil: React.FC = () => {
                         <div className="flex gap-3 mt-6">
                             <button
                                 onClick={handleChangePassword}
-                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors"
+                                disabled={saving}
+                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                             >
-                                Alterar Senha
+                                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Alterar Senha'}
                             </button>
                             <button
                                 onClick={() => {
@@ -497,7 +641,8 @@ export const SectionPerfil: React.FC = () => {
                                     setNewPassword('');
                                     setConfirmPassword('');
                                 }}
-                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                disabled={saving}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                             >
                                 Cancelar
                             </button>

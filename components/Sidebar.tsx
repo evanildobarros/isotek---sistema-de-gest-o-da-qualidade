@@ -186,29 +186,6 @@ export const Sidebar: React.FC = () => {
           {navigationData.map(renderMenuItem)}
         </div>
       </nav>
-
-      <div className="p-4 border-t border-gray-100">
-        <button
-          onClick={() => navigate('/app/perfil')}
-          className="w-full bg-gray-50 rounded-lg p-3 flex items-center gap-3 hover:bg-gray-100 transition-colors group"
-        >
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="w-8 h-8 rounded-full object-cover border-2 border-isotek-200 group-hover:border-isotek-300 transition-colors"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-isotek-100 flex items-center justify-center text-isotek-700 font-bold text-xs group-hover:bg-isotek-200 transition-colors">
-              JD
-            </div>
-          )}
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-isotek-700 transition-colors">John Doe</p>
-            <p className="text-xs text-gray-500 truncate">Gerente da Qualidade</p>
-          </div>
-        </button>
-      </div>
     </aside>
   );
 };

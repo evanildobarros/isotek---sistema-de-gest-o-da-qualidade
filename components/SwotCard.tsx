@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, AlertCircle } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
 
 interface SwotItem {
     id: string;
@@ -92,6 +93,7 @@ const getMockData = (type: string): SwotItem[] => {
 
 export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     const config = typeConfig[type];
+    const { user } = useAuth();
 
     const [items, setItems] = useState<SwotItem[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,6 +156,21 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
         // Online mode - save to Supabase
         try {
+            console.log('Current User:', user);
+            console.log('Payload:', {
+                description: description.trim(),
+                impact: impact,
+                type: config.dbValue,
+                is_active: true,
+                user_id: user?.id
+            });
+
+            if (!user) {
+                alert('⚠️ Você precisa estar logado para adicionar itens.');
+                setIsLoading(false);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from('swot_analysis')
                 .insert([
@@ -161,7 +178,8 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                         description: description.trim(),
                         impact: impact,
                         type: config.dbValue,
-                        is_active: true
+                        is_active: true,
+                        user_id: user?.id
                     }
                 ])
                 .select()
@@ -176,7 +194,8 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             alert('✅ Item adicionado com sucesso!');
         } catch (error) {
             console.error('Erro ao adicionar item:', error);
-            alert('❌ Erro ao adicionar item. Verifique sua conexão com o Supabase.');
+            console.error('Erro ao adicionar item:', error);
+            alert(`❌ Erro ao adicionar item: ${error.message || 'Verifique sua conexão com o Supabase.'}`);
         } finally {
             setIsLoading(false);
         }
