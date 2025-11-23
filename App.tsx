@@ -14,6 +14,7 @@ import { UsersPage } from './components/UsersPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { DocumentsPage } from './components/DocumentsPage';
 import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
+import { AuditsPage } from './components/AuditsPage';
 
 const App: React.FC = () => {
   return (
@@ -35,7 +36,7 @@ const App: React.FC = () => {
               <Route path="documentos" element={<DocumentsPage />} />
               <Route path="nao-conformidades" element={<SectionMelhoria />} />
               <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
-              <Route path="auditorias" element={<SectionPlaceholder title="Auditorias" />} />
+              <Route path="auditorias" element={<AuditsPage />} />
 
               {/* Gestão de Riscos */}
               <Route path="contexto" element={<SectionContexto />} />
