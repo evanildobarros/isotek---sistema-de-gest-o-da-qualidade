@@ -13,6 +13,7 @@ import { SectionPlaceholder } from './components/SectionPlaceholder';
 import { UsersPage } from './components/UsersPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { DocumentsPage } from './components/DocumentsPage';
+import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
 
 const App: React.FC = () => {
   return (
@@ -33,7 +34,7 @@ const App: React.FC = () => {
               {/* Gestão da Qualidade */}
               <Route path="documentos" element={<DocumentsPage />} />
               <Route path="nao-conformidades" element={<SectionMelhoria />} />
-              <Route path="acoes-corretivas" element={<SectionPlaceholder title="Ações Corretivas" />} />
+              <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
               <Route path="auditorias" element={<SectionPlaceholder title="Auditorias" />} />
 
               {/* Gestão de Riscos */}
