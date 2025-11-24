@@ -16,6 +16,7 @@ import { DocumentsPage } from './components/DocumentsPage';
 import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
 import { AuditsPage } from './components/AuditsPage';
 import { UnitsPage } from './components/UnitsPage';
+import { StrategicDefinitionPage } from './components/StrategicDefinitionPage';
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
               {/* Grupo A: Estratégia (Plan) */}
               {/* 4.0 Contexto */}
               <Route path="contexto-analise" element={<SectionContexto />} />
+              <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
               <Route path="partes-interessadas" element={<SectionPlaceholder title="Partes Interessadas" />} />
               <Route path="processos-escopo" element={<SectionPlaceholder title="Processos e Escopo" />} />
 

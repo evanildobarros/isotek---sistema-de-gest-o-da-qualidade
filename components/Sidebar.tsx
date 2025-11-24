@@ -66,6 +66,12 @@ const menuGroups: MenuGroup[] = [
         icon: Building2,
         items: [
           {
+            label: 'Definição Estratégica',
+            section: IsoSection.CONTEXT_ANALYSIS, // Using same section enum for now or create new one
+            path: '/app/definicao-estrategica',
+            icon: Target
+          },
+          {
             label: 'Análise de Contexto',
             section: IsoSection.CONTEXT_ANALYSIS,
             path: '/app/contexto-analise',
@@ -273,8 +279,8 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
       <button
         onClick={onToggle}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
-            ? 'bg-[#BF7960]/5 text-[#BF7960]'
-            : 'text-gray-700 hover:bg-gray-50'
+          ? 'bg-[#BF7960]/5 text-[#BF7960]'
+          : 'text-gray-700 hover:bg-gray-50'
           }`}
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -456,8 +462,8 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={() => navigate('/app/dashboard')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
-                ? 'bg-[#BF7960] text-white shadow-md shadow-[#BF7960]/20'
-                : 'text-gray-700 hover:bg-gray-50'
+              ? 'bg-[#BF7960] text-white shadow-md shadow-[#BF7960]/20'
+              : 'text-gray-700 hover:bg-gray-50'
               }`}
           >
             <LayoutDashboard size={20} />
