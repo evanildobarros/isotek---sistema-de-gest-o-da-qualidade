@@ -15,6 +15,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { DocumentsPage } from './components/DocumentsPage';
 import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
 import { AuditsPage } from './components/AuditsPage';
+import { UnitsPage } from './components/UnitsPage';
 
 const App: React.FC = () => {
   return (
@@ -32,27 +33,53 @@ const App: React.FC = () => {
               <Route path="dashboard" element={<SectionDashboard />} />
               <Route path="perfil" element={<SectionPerfil />} />
 
-              {/* Gestão da Qualidade */}
+              {/* Grupo A: Estratégia (Plan) */}
+              {/* 4.0 Contexto */}
+              <Route path="contexto-analise" element={<SectionContexto />} />
+              <Route path="partes-interessadas" element={<SectionPlaceholder title="Partes Interessadas" />} />
+              <Route path="processos-escopo" element={<SectionPlaceholder title="Processos e Escopo" />} />
+
+              {/* 5.0 Liderança */}
+              <Route path="politica-qualidade" element={<SectionPlaceholder title="Política da Qualidade" />} />
+              <Route path="responsabilidades" element={<SectionPlaceholder title="Responsabilidades" />} />
+
+              {/* 6.0 Planejamento */}
+              <Route path="matriz-riscos" element={<SectionPlaceholder title="Matriz de Riscos" />} />
+              <Route path="objetivos-qualidade" element={<SectionPlaceholder title="Objetivos da Qualidade" />} />
+
+              {/* Grupo B: Execução (Do) */}
+              {/* 7.0 Apoio */}
               <Route path="documentos" element={<DocumentsPage />} />
+              <Route path="treinamentos" element={<SectionPlaceholder title="Competências e Treinamentos" />} />
+
+              {/* 8.0 Operação */}
+              <Route path="comercial" element={<SectionPlaceholder title="Comercial e Requisitos" />} />
+              <Route path="fornecedores" element={<SectionPlaceholder title="Gestão de Fornecedores (PROCEM)" />} />
+              <Route path="producao" element={<SectionPlaceholder title="Controle de Produção" />} />
+              <Route path="saidas-nao-conformes" element={<SectionPlaceholder title="Saídas Não Conformes" />} />
+
+              {/* Grupo C: Checagem (Check/Act) */}
+              {/* 9.0 Avaliação */}
+              <Route path="indicadores" element={<SectionPlaceholder title="Indicadores de Desempenho" />} />
+              <Route path="auditorias" element={<AuditsPage />} />
+              <Route path="analise-critica" element={<SectionPlaceholder title="Análise Crítica" />} />
+
+              {/* 10.0 Melhoria */}
               <Route path="nao-conformidades" element={<SectionMelhoria />} />
               <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
-              <Route path="auditorias" element={<AuditsPage />} />
-
-              {/* Gestão de Riscos */}
-              <Route path="contexto" element={<SectionContexto />} />
-              <Route path="oportunidades" element={<SectionPlaceholder title="Oportunidades" />} />
-
-              {/* Gestão Administrativa */}
-              <Route path="colaboradores" element={<SectionPlaceholder title="Colaboradores" />} />
-              <Route path="treinamentos" element={<SectionPlaceholder title="Treinamentos" />} />
-
-              {/* Relatórios */}
-              <Route path="indicadores" element={<SectionPlaceholder title="Indicadores (KPIs)" />} />
-              <Route path="analise-critica" element={<SectionPlaceholder title="Análise Crítica" />} />
 
               {/* Configurações */}
               <Route path="usuarios" element={<UsersPage />} />
-              <Route path="sistema" element={<SectionPlaceholder title="Sistema" />} />
+              <Route path="unidades" element={<UnitsPage />} />
+              <Route path="configuracoes" element={<SectionPlaceholder title="Perfil da Empresa" />} />
+              <Route path="sistema" element={<Navigate to="/app/configuracoes" replace />} />
+
+              {/* Legacy Routes Redirects (Optional, or keep for compatibility) */}
+              <Route path="contexto" element={<Navigate to="/app/contexto-analise" replace />} />
+              <Route path="oportunidades" element={<Navigate to="/app/matriz-riscos" replace />} />
+              <Route path="sistema-infraestrutura" element={<Navigate to="/app/sistema" replace />} />
+              <Route path="sistema-recursos" element={<Navigate to="/app/sistema" replace />} />
+              <Route path="operacao-controle" element={<Navigate to="/app/producao" replace />} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/app/dashboard" replace />} />

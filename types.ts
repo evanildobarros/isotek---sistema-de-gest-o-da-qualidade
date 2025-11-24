@@ -1,39 +1,65 @@
 import React from 'react';
 
 export enum IsoSection {
-  // Main
-  DASHBOARD = 'Dashboard',
+  // Grupo A: Estratégia (Plan)
+  // 4.0 Contexto da Organização
+  CONTEXT_ANALYSIS = 'Análise de Contexto',
+  STAKEHOLDERS = 'Partes Interessadas',
+  PROCESSES_SCOPE = 'Processos e Escopo',
 
-  // Gestão da Qualidade
-  DOCUMENTS = 'Documentos (GED)',
-  NON_CONFORMANCES = 'Não Conformidades',
-  CORRECTIVE_ACTIONS = 'Ações Corretivas',
-  AUDITS = 'Auditorias',
+  // 5.0 Liderança
+  QUALITY_POLICY = 'Política da Qualidade',
+  RESPONSIBILITIES = 'Responsabilidades',
 
-  // Gestão de Riscos
+  // 6.0 Planejamento
   RISK_MATRIX = 'Matriz de Riscos',
-  OPPORTUNITIES = 'Oportunidades',
+  QUALITY_OBJECTIVES = 'Objetivos da Qualidade',
 
-  // Gestão Administrativa
-  EMPLOYEES = 'Colaboradores',
-  TRAININGS = 'Treinamentos',
+  // Grupo B: Execução (Do)
+  // 7.0 Apoio
+  DOCUMENTS = 'Gestão de Documentos (GED)',
+  COMPETENCIES_TRAINING = 'Competências e Treinamentos',
 
-  // Relatórios
-  KPIS = 'Indicadores',
+  // 8.0 Operação
+  COMMERCIAL_REQUIREMENTS = 'Comercial e Requisitos',
+  SUPPLIER_MANAGEMENT = 'Gestão de Fornecedores (PROCEM)',
+  PRODUCTION_CONTROL = 'Controle de Produção',
+  NON_CONFORMING_OUTPUTS = 'Saídas Não Conformes',
+
+  // Grupo C: Checagem (Check/Act)
+  // 9.0 Avaliação
+  PERFORMANCE_INDICATORS = 'Indicadores de Desempenho',
+  INTERNAL_AUDITS = 'Auditorias Internas',
   MANAGEMENT_REVIEW = 'Análise Crítica',
 
-  // Configurações
-  USERS = 'Usuários',
-  SYSTEM = 'Sistema',
+  // 10.0 Melhoria
+  NON_CONFORMANCES = 'Não Conformidades (RNC)',
+  CORRECTIVE_ACTIONS = 'Ações Corretivas',
 
-  // Legacy (Keep for compatibility during refactor, will be removed or remapped)
-  CONTEXTO = '4. Contexto da Organização',
-  LIDERANCA = '5. Liderança',
-  PLANEJAMENTO = '6. Planejamento',
-  APOIO = '7. Apoio (GED)',
-  OPERACAO = '8. Operação',
-  AVALIACAO = '9. Avaliação de Desempenho',
-  MELHORIA = '10. Melhoria'
+  // Configurações
+  SETTINGS = 'Configurações',
+  SETTINGS_USERS = 'Usuários',
+  SETTINGS_SYSTEM = 'Sistema',
+  UNITS = 'Minhas Unidades',
+  COMPANY_PROFILE = 'Perfil da Empresa',
+
+  // Legacy mappings (to avoid breaking existing code temporarily)
+  DASHBOARD = 'Painel de Controle',
+  CONTEXT_SWOT = 'Contexto (SWOT)',
+  CONTEXT_OPPORTUNITIES = 'Oportunidades',
+  CONTEXT_SYSTEM_INFRASTRUCTURE = 'Sistema (Infraestrutura)',
+  PLANNING_SWOT = 'Contexto (SWOT)',
+  PLANNING_OPPORTUNITIES = 'Oportunidades',
+  ADMINISTRATIVE_MANAGEMENT = 'Gestão Administrativa',
+  EMPLOYEES = 'Colaboradores',
+  TRAININGS = 'Treinamentos',
+  SYSTEM_RESOURCES = 'Sistema (Recursos)',
+  USERS = 'Usuários',
+  OPERATION_CONTROL = 'Operação e Controle',
+  REPORTS = 'Relatórios',
+  KPIS = 'Indicadores (KPIs)',
+  AUDITS = 'Auditorias',
+  QUALITY_MANAGEMENT = 'Gestão da Qualidade'
 }
 
 export interface NavigationItem {
@@ -68,4 +94,27 @@ export interface KpiMetric {
   target: number;
   unit: string;
   trend: 'up' | 'down' | 'stable';
+}
+
+export interface Unit {
+  id: string;
+  company_id: string;
+  name: string;
+  code?: string;
+  is_headquarters: boolean;
+  cnpj?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  created_at?: string;
+}
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  role: string | null;
+  avatar_url: string | null;
+  company_id: string;
+  unit_id?: string; // New field linking to Unit
 }

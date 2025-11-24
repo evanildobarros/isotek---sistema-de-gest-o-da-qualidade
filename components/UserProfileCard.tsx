@@ -2,12 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { Loader2 } from 'lucide-react';
-
-interface Profile {
-    full_name: string | null;
-    role: string | null;
-    avatar_url: string | null;
-}
+import { Profile } from '../types';
 
 const UserProfileCard: React.FC = () => {
     const { user, loading: authLoading } = useAuth();

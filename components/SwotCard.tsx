@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, X, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, X, AlertCircle, Zap } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
@@ -98,6 +98,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     const [items, setItems] = useState<SwotItem[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [processedItems, setProcessedItems] = useState<Set<string>>(new Set());
 
     // Form state
     const [description, setDescription] = useState('');
@@ -227,6 +228,45 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
         }
     };
 
+    const handlePromoteToRisk = async (item: SwotItem) => {
+        if (!isSupabaseConfigured) {
+            alert('⚠️ Funcionalidade disponível apenas no modo online.');
+            return;
+        }
+
+        if (!user) {
+            alert('⚠️ Você precisa estar logado para realizar esta ação.');
+            return;
+        }
+
+        const isRisk = item.type === 'fraqueza' || item.type === 'ameaca';
+        const targetType = isRisk ? 'risco' : 'oportunidade';
+        const targetDescription = `${item.description} (Origem: Análise SWOT)`;
+
+        try {
+            const { error } = await supabase
+                .from('risks_opportunities')
+                .insert([
+                    {
+                        description: targetDescription,
+                        type: targetType,
+                        probability: 1,
+                        severity: 1,
+                        user_id: user.id // Corrected from company_id to user_id to match schema pattern
+                    }
+                ]);
+
+            if (error) throw error;
+
+            setProcessedItems(prev => new Set(prev).add(item.id));
+            alert('Registro criado no Módulo de Planejamento! Acesse a tela de Riscos para definir a gravidade e o plano de ação.');
+
+        } catch (error: any) {
+            console.error('Erro ao promover item:', error);
+            alert(`❌ Erro ao criar registro: ${error.message || 'Tente novamente.'}`);
+        }
+    };
+
     const getImpactBadgeClass = (itemImpact: SwotItem['impact']) => {
         switch (itemImpact) {
             case 'alto':
@@ -293,16 +333,33 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                                     </span>
                                 </div>
 
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(item.id);
-                                    }}
-                                    className="flex-shrink-0 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                                    title="Remover item"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
+                                <div className="flex flex-col gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handlePromoteToRisk(item);
+                                        }}
+                                        disabled={processedItems.has(item.id)}
+                                        className={`flex-shrink-0 p-2 rounded-md transition-all ${processedItems.has(item.id)
+                                            ? 'text-gray-300 cursor-not-allowed'
+                                            : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'
+                                            }`}
+                                        title={processedItems.has(item.id) ? "Já processado" : "Gerar Risco/Oportunidade Associado"}
+                                    >
+                                        <Zap size={16} />
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(item.id);
+                                        }}
+                                        className="flex-shrink-0 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                        title="Remover item"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
                         ))
                     )}
