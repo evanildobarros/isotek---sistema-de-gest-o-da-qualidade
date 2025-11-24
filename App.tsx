@@ -17,6 +17,7 @@ import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
 import { AuditsPage } from './components/AuditsPage';
 import { UnitsPage } from './components/UnitsPage';
 import { StrategicDefinitionPage } from './components/StrategicDefinitionPage';
+import { RiskMatrixPage } from './components/RiskMatrixPage';
 
 const App: React.FC = () => {
   return (
@@ -40,6 +41,10 @@ const App: React.FC = () => {
               <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
               <Route path="partes-interessadas" element={<SectionPlaceholder title="Partes Interessadas" />} />
               <Route path="processos-escopo" element={<SectionPlaceholder title="Processos e Escopo" />} />
+
+              {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}
+              <Route path="matriz-riscos" element={<RiskMatrixPage />} />
+              <Route path="objetivos-qualidade" element={<SectionPlaceholder title="Objetivos da Qualidade" />} />
 
               {/* 5.0 Liderança */}
               <Route path="politica-qualidade" element={<SectionPlaceholder title="Política da Qualidade" />} />
