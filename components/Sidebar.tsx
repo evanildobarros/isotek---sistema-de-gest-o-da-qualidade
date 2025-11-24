@@ -24,13 +24,18 @@ import {
   BookOpen,
   ShieldCheck,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  HelpingHand,
+  LayoutDashboard
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../types';
+
+// --- Interfaces ---
 
 interface MenuSection {
   sectionNumber: string;
   sectionTitle: string;
+  icon: React.ElementType;
   items: NavigationItem[];
 }
 
@@ -39,6 +44,18 @@ interface MenuGroup {
   sections: MenuSection[];
 }
 
+interface SidebarGroupProps {
+  title: string;
+  sectionNumber?: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  isActive?: boolean;
+}
+
+// --- Data ---
+
 const menuGroups: MenuGroup[] = [
   {
     groupTitle: 'Grupo A: Estratégia (Plan)',
@@ -46,6 +63,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '4.0',
         sectionTitle: 'Contexto da Organização',
+        icon: Building2,
         items: [
           {
             label: 'Análise de Contexto',
@@ -70,6 +88,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '5.0',
         sectionTitle: 'Liderança',
+        icon: Users,
         items: [
           {
             label: 'Política da Qualidade',
@@ -88,6 +107,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '6.0',
         sectionTitle: 'Planejamento',
+        icon: Target,
         items: [
           {
             label: 'Matriz de Riscos',
@@ -111,6 +131,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '7.0',
         sectionTitle: 'Apoio',
+        icon: HelpingHand,
         items: [
           {
             label: 'Gestão de Documentos (GED)',
@@ -129,6 +150,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '8.0',
         sectionTitle: 'Operação',
+        icon: Factory,
         items: [
           {
             label: 'Comercial e Requisitos',
@@ -164,6 +186,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '9.0',
         sectionTitle: 'Avaliação',
+        icon: BarChart3,
         items: [
           {
             label: 'Indicadores de Desempenho',
@@ -188,6 +211,7 @@ const menuGroups: MenuGroup[] = [
       {
         sectionNumber: '10.0',
         sectionTitle: 'Melhoria',
+        icon: TrendingUp,
         items: [
           {
             label: 'Não Conformidades (RNC)',
@@ -210,6 +234,7 @@ const menuGroups: MenuGroup[] = [
 const settingsGroup: MenuSection = {
   sectionNumber: '',
   sectionTitle: 'Sistema',
+  icon: Settings,
   items: [
     {
       label: 'Minhas Unidades',
@@ -230,6 +255,61 @@ const settingsGroup: MenuSection = {
       icon: Settings
     }
   ]
+};
+
+// --- Components ---
+
+const SidebarGroup: React.FC<SidebarGroupProps> = ({
+  title,
+  sectionNumber,
+  icon: Icon,
+  children,
+  isOpen,
+  onToggle,
+  isActive
+}) => {
+  return (
+    <div className="mb-2">
+      <button
+        onClick={onToggle}
+        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
+            ? 'bg-[#BF7960]/5 text-[#BF7960]'
+            : 'text-gray-700 hover:bg-gray-50'
+          }`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-[#BF7960]/10' : 'bg-gray-100 group-hover:bg-gray-200'
+            }`}>
+            <Icon size={18} className={isActive ? 'text-[#BF7960]' : 'text-gray-500'} />
+          </div>
+          <div className="flex flex-col items-start text-left min-w-0">
+            {sectionNumber && (
+              <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? 'text-[#BF7960]' : 'text-gray-400'
+                }`}>
+                {sectionNumber}
+              </span>
+            )}
+            <span className={`text-sm font-semibold truncate w-full ${isActive ? 'text-[#BF7960]' : 'text-gray-700'
+              }`}>
+              {title}
+            </span>
+          </div>
+        </div>
+        <div className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+          <ChevronDown size={16} />
+        </div>
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+          }`}
+      >
+        <div className="pl-3 space-y-0.5 border-l-2 border-gray-100 ml-5">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const Sidebar: React.FC = () => {
@@ -253,18 +333,26 @@ export const Sidebar: React.FC = () => {
   // Auto-expand group if child is active
   useEffect(() => {
     const currentPath = location.pathname;
+
+    // Check main menu groups
     menuGroups.forEach(group => {
       group.sections.forEach(section => {
-        section.items.forEach(item => {
-          if (item.children) {
-            const hasActiveChild = item.children.some(child => child.path === currentPath);
-            if (hasActiveChild && !expandedGroups.includes(item.label)) {
-              setExpandedGroups(prev => [...prev, item.label]);
-            }
-          }
-        });
+        const hasActiveItem = section.items.some(item =>
+          item.path === currentPath ||
+          (item.children && item.children.some(child => child.path === currentPath))
+        );
+
+        if (hasActiveItem && !expandedGroups.includes(section.sectionTitle)) {
+          setExpandedGroups(prev => [...prev, section.sectionTitle]);
+        }
       });
     });
+
+    // Check settings group
+    const hasActiveSettings = settingsGroup.items.some(item => item.path === currentPath);
+    if (hasActiveSettings && !expandedGroups.includes(settingsGroup.sectionTitle)) {
+      setExpandedGroups(prev => [...prev, settingsGroup.sectionTitle]);
+    }
   }, [location.pathname]);
 
   const toggleGroup = (label: string) => {
@@ -329,22 +417,23 @@ export const Sidebar: React.FC = () => {
   };
 
   const renderSection = (section: MenuSection) => {
+    const isActive = section.items.some(item =>
+      item.path === location.pathname ||
+      (item.children && item.children.some(child => child.path === location.pathname))
+    );
+
     return (
-      <div key={section.sectionNumber + section.sectionTitle} className="mb-4">
-        <div className="px-3 mb-2 flex items-center gap-2">
-          {section.sectionNumber && (
-            <span className="text-xs font-bold text-[#BF7960] bg-[#BF7960]/10 px-1.5 py-0.5 rounded">
-              {section.sectionNumber}
-            </span>
-          )}
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            {section.sectionTitle}
-          </span>
-        </div>
-        <div className="space-y-0.5">
-          {section.items.map(item => renderMenuItem(item))}
-        </div>
-      </div>
+      <SidebarGroup
+        key={section.sectionTitle}
+        title={section.sectionTitle}
+        sectionNumber={section.sectionNumber}
+        icon={section.icon}
+        isOpen={expandedGroups.includes(section.sectionTitle)}
+        onToggle={() => toggleGroup(section.sectionTitle)}
+        isActive={isActive}
+      >
+        {section.items.map(item => renderMenuItem(item))}
+      </SidebarGroup>
     );
   };
 
@@ -363,9 +452,22 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <nav className="flex-1 flex flex-col py-4 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+        <div className="mb-2">
+          <button
+            onClick={() => navigate('/app/dashboard')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
+                ? 'bg-[#BF7960] text-white shadow-md shadow-[#BF7960]/20'
+                : 'text-gray-700 hover:bg-gray-50'
+              }`}
+          >
+            <LayoutDashboard size={20} />
+            <span className="font-semibold">Dashboard</span>
+          </button>
+        </div>
+
         {menuGroups.map((group, index) => (
-          <div key={group.groupTitle} className="mb-8">
-            <h3 className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">
+          <div key={group.groupTitle} className="mb-6">
+            <h3 className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
               {group.groupTitle}
             </h3>
             {group.sections.map(section => renderSection(section))}
