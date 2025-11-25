@@ -157,46 +157,77 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
         // Online mode - save to Supabase
         try {
-            console.log('Current User:', user);
-            console.log('Payload:', {
-                description: description.trim(),
-                impact: impact,
-                type: config.dbValue,
-                is_active: true,
-                user_id: user?.id,
-                company_id: company?.id
-            });
-
             if (!user || !company) {
                 alert('⚠️ Você precisa estar logado e vinculado a uma empresa para adicionar itens.');
                 setIsLoading(false);
                 return;
             }
 
-            const { data, error } = await supabase
+            // Check if item already exists (active or inactive)
+            const { data: existingItems, error: searchError } = await supabase
                 .from('swot_analysis')
-                .insert([
-                    {
-                        description: description.trim(),
+                .select('*')
+                .eq('company_id', company.id)
+                .eq('type', config.dbValue)
+                .ilike('description', description.trim()); // Case-insensitive match
+
+            if (searchError) throw searchError;
+
+            let data;
+            let error;
+
+            if (existingItems && existingItems.length > 0) {
+                // Item exists - update it
+                const existingItem = existingItems[0];
+                const { data: updatedData, error: updateError } = await supabase
+                    .from('swot_analysis')
+                    .update({
                         impact: impact,
-                        type: config.dbValue,
                         is_active: true,
-                        user_id: user.id,
-                        company_id: company.id
-                    }
-                ])
-                .select()
-                .single();
+                        created_at: new Date().toISOString() // Bring to top
+                    })
+                    .eq('id', existingItem.id)
+                    .select()
+                    .single();
+                
+                data = updatedData;
+                error = updateError;
+            } else {
+                // Item does not exist - insert new
+                const { data: newData, error: insertError } = await supabase
+                    .from('swot_analysis')
+                    .insert([
+                        {
+                            description: description.trim(),
+                            impact: impact,
+                            type: config.dbValue,
+                            is_active: true,
+                            user_id: user.id,
+                            company_id: company.id
+                        }
+                    ])
+                    .select()
+                    .single();
+                
+                data = newData;
+                error = insertError;
+            }
 
             if (error) throw error;
 
-            setItems([data, ...items]);
+            // Update local state
+            // If it was an update, we need to remove the old version from the list if it was there (unlikely if it was inactive, but possible if active)
+            // and add the new version to the top.
+            setItems(prev => {
+                const filtered = prev.filter(item => item.id !== data.id);
+                return [data, ...filtered];
+            });
+
             setDescription('');
             setImpact('medio');
             setIsModalOpen(false);
-            alert('✅ Item adicionado com sucesso!');
-        } catch (error) {
-            console.error('Erro ao adicionar item:', error);
+            alert('✅ Item salvo com sucesso!');
+        } catch (error: any) {
             console.error('Erro ao adicionar item:', error);
             alert(`❌ Erro ao adicionar item: ${error.message || 'Verifique sua conexão com o Supabase.'}`);
         } finally {

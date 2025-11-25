@@ -37,12 +37,18 @@ export const SectionPerfil: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
     // Fetch profile data on mount
     useEffect(() => {
         if (!user) return;
 
         const fetchProfile = async () => {
             setLoading(true);
+
+            // Check Super Admin Status
+            const isEvanildo = user.email === 'evanildobarros@gmail.com';
+
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -53,6 +59,12 @@ export const SectionPerfil: React.FC = () => {
                 setProfileData(data as ProfileData);
                 setFullName(data.full_name || '');
                 setDepartment(data.department || '');
+
+                // Set Super Admin flag
+                // @ts-ignore - is_super_admin might not be in the type definition yet
+                if (isEvanildo || data.is_super_admin) {
+                    setIsSuperAdmin(true);
+                }
             } else {
                 console.error('Error fetching profile:', error);
             }
@@ -379,6 +391,17 @@ export const SectionPerfil: React.FC = () => {
                     >
                         Alterar Senha
                     </button>
+
+                    {/* Super Admin Shortcut */}
+                    {isSuperAdmin && (
+                        <button
+                            onClick={() => window.location.href = '/super-admin'}
+                            className="px-6 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-900 transition-colors flex items-center gap-2"
+                        >
+                            <Shield size={18} />
+                            Painel Super Admin
+                        </button>
+                    )}
                 </div>
             </div>
 

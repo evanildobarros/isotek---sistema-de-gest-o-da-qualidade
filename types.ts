@@ -164,4 +164,6 @@ export interface Company {
   plan?: 'start' | 'pro' | 'enterprise';
   cnpj?: string;
   monthly_revenue?: number;
+  owner_name?: string;
+  owner_email?: string;
 }
