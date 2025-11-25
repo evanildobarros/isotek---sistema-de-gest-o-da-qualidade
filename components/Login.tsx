@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Loader2, User, Building2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
-    const { signIn, signUp, session } = useAuth();
-    const [isLoginMode, setIsLoginMode] = useState(true);
+    const { session } = useAuth();
 
     useEffect(() => {
         if (session) {
@@ -18,9 +17,6 @@ export const Login: React.FC = () => {
     // Form Fields
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [fullName, setFullName] = useState('');
-    const [companyName, setCompanyName] = useState('');
-
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -28,55 +24,23 @@ export const Login: React.FC = () => {
         setIsLoading(true);
 
         try {
-            if (isLoginMode) {
-                // LOGIN LOGIC
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
+            // LOGIN LOGIC
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
 
-                if (error) {
-                    console.error('Erro Login:', error.message);
-                    alert(error.message);
-                    setIsLoading(false);
-                    return;
-                }
+            if (error) {
+                console.error('Erro Login:', error.message);
+                alert('Falha no login. Verifique suas credenciais.');
+                setIsLoading(false);
+                return;
+            }
 
-                if (data.session) {
-                    console.log('Login Sucesso:', data);
-                    // Navigation handled by useEffect
-                    return;
-                }
-            } else {
-                // SIGN UP LOGIC
-                const result = await signUp(email, password, {
-                    data: {
-                        full_name: fullName,
-                        avatar_url: ''
-                    }
-                });
-
-                if (result.success && result.data?.user) {
-                    // Create Company Info
-                    const { error: companyError } = await supabase
-                        .from('company_info')
-                        .insert([
-                            {
-                                name: companyName,
-                                owner_id: result.data.user.id
-                            }
-                        ]);
-
-                    if (companyError) {
-                        console.error('Erro ao criar empresa:', companyError);
-                        // Continue anyway, user is created
-                    }
-
-                    alert('Conta criada com sucesso! Verifique seu e-mail para confirmar.');
-                    setIsLoginMode(true); // Switch back to login
-                } else {
-                    alert('Erro ao criar conta: ' + (result.error?.message || 'Tente novamente'));
-                }
+            if (data.session) {
+                console.log('Login Sucesso:', data);
+                // Navigation handled by useEffect
+                return;
             }
         } catch (error) {
             console.error('Erro inesperado:', error);
@@ -98,61 +62,16 @@ export const Login: React.FC = () => {
                     </svg>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    {isLoginMode ? 'Entrar na Plataforma' : 'Crie sua conta Isotek'}
+                    Entrar na Plataforma
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
-                    {isLoginMode ? 'Acesse sua conta Isotek' : 'Comece a gerenciar a qualidade hoje'}
+                    Acesse sua conta Isotek
                 </p>
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        {!isLoginMode && (
-                            <>
-                                <div>
-                                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                                        Nome Completo
-                                    </label>
-                                    <div className="mt-1 relative rounded-md shadow-sm">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                        </div>
-                                        <input
-                                            id="fullName"
-                                            name="fullName"
-                                            type="text"
-                                            required={!isLoginMode}
-                                            value={fullName}
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            className="focus:ring-isotek-500 focus:border-isotek-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 border"
-                                            placeholder="Seu Nome"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                                        Nome da Empresa
-                                    </label>
-                                    <div className="mt-1 relative rounded-md shadow-sm">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Building2 className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                        </div>
-                                        <input
-                                            id="companyName"
-                                            name="companyName"
-                                            type="text"
-                                            required={!isLoginMode}
-                                            value={companyName}
-                                            onChange={(e) => setCompanyName(e.target.value)}
-                                            className="focus:ring-isotek-500 focus:border-isotek-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 border"
-                                            placeholder="Sua Empresa Ltda"
-                                        />
-                                    </div>
-                                </div>
-                            </>
-                        )}
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                                 E-mail corporativo
@@ -227,23 +146,12 @@ export const Login: React.FC = () => {
                                     <Loader2 className="animate-spin h-5 w-5" />
                                 ) : (
                                     <span className="flex items-center gap-2">
-                                        {isLoginMode ? (isLoading ? 'Entrando...' : 'Entrar na Plataforma') : 'Criar Conta'} <ArrowRight size={16} />
+                                        Entrar na Plataforma <ArrowRight size={16} />
                                     </span>
                                 )}
                             </button>
                         </div>
                     </form>
-
-                    <div className="mt-6 text-center">
-                        <button
-                            onClick={() => setIsLoginMode(!isLoginMode)}
-                            className="text-sm font-medium text-isotek-600 hover:text-isotek-500 focus:outline-none underline"
-                        >
-                            {isLoginMode
-                                ? <>Ainda não tem uma conta? <strong>Cadastre-se gratuitamente</strong></>
-                                : 'Já tem uma conta? Faça login'}
-                        </button>
-                    </div>
 
                     <div className="mt-6">
                         <div className="relative">

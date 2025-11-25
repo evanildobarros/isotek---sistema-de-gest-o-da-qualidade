@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, AlertCircle, Zap } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 
 interface SwotItem {
     id: string;
@@ -93,7 +93,7 @@ const getMockData = (type: string): SwotItem[] => {
 
 export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     const config = typeConfig[type];
-    const { user } = useAuth();
+    const { user, company } = useAuthContext();
 
     const [items, setItems] = useState<SwotItem[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -163,11 +163,12 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                 impact: impact,
                 type: config.dbValue,
                 is_active: true,
-                user_id: user?.id
+                user_id: user?.id,
+                company_id: company?.id
             });
 
-            if (!user) {
-                alert('⚠️ Você precisa estar logado para adicionar itens.');
+            if (!user || !company) {
+                alert('⚠️ Você precisa estar logado e vinculado a uma empresa para adicionar itens.');
                 setIsLoading(false);
                 return;
             }
@@ -180,7 +181,8 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                         impact: impact,
                         type: config.dbValue,
                         is_active: true,
-                        user_id: user?.id
+                        user_id: user.id,
+                        company_id: company.id
                     }
                 ])
                 .select()

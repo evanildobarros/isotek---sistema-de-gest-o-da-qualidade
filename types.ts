@@ -109,6 +109,27 @@ export interface Unit {
   created_at?: string;
 }
 
+export interface QualityManual {
+  id: string;
+  company_id: string;
+  scope: string;
+  applies_to_all_units: boolean;
+  excluded_units?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Process {
+  id: string;
+  company_id: string;
+  name: string;
+  owner: string;
+  inputs: string;
+  outputs: string;
+  resources: string;
+  created_at?: string;
+}
+
 export interface Profile {
   id: string;
   user_id: string;
@@ -117,6 +138,7 @@ export interface Profile {
   avatar_url: string | null;
   company_id: string;
   unit_id?: string;
+  is_super_admin?: boolean;
 }
 
 export interface Stakeholder {
@@ -128,4 +150,18 @@ export interface Stakeholder {
   expectations: string;
   monitor_frequency: string;
   created_at?: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  logo_url?: string;
+  slogan?: string;
+  owner_id?: string;
+  created_at?: string;
+  // New fields for Super Admin
+  status?: 'active' | 'blocked' | 'inactive';
+  plan?: 'start' | 'pro' | 'enterprise';
+  cnpj?: string;
+  monthly_revenue?: number;
 }

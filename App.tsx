@@ -19,6 +19,8 @@ import { UnitsPage } from './components/UnitsPage';
 import { StrategicDefinitionPage } from './components/StrategicDefinitionPage';
 import { RiskMatrixPage } from './components/RiskMatrixPage';
 import { StakeholdersPage } from './components/StakeholdersPage';
+import { ScopePage } from './components/ScopePage';
+import { SuperAdminPage } from './components/SuperAdminPage';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +30,7 @@ const App: React.FC = () => {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/super-admin" element={<SuperAdminPage />} />
 
           {/* Protected Routes */}
           <Route path="/app" element={<ProtectedRoute />}>
@@ -41,7 +44,7 @@ const App: React.FC = () => {
               <Route path="contexto-analise" element={<SectionContexto />} />
               <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
               <Route path="partes-interessadas" element={<StakeholdersPage />} />
-              <Route path="processos-escopo" element={<SectionPlaceholder title="Processos e Escopo" />} />
+              <Route path="processos-escopo" element={<ScopePage />} />
 
               {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}
               <Route path="matriz-riscos" element={<RiskMatrixPage />} />

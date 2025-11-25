@@ -134,13 +134,13 @@ export const LandingPage: React.FC = () => {
                             <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-lg">
                                 Descubra os segredos da certificação sem burocracia.
                             </p>
-                            <button
-                                onClick={() => scrollToSection('funcionalidades')}
-                                className="px-8 py-4 bg-[#8C512E] text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#8C512E] transition-all shadow-lg flex items-center gap-2"
+                            <a
+                                href="#"
+                                className="px-8 py-4 bg-[#8C512E] text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#8C512E] transition-all shadow-lg flex items-center gap-2 inline-flex"
                             >
-                                Começar Agora
+                                Solicitar Demonstração
                                 <ArrowRight size={20} />
-                            </button>
+                            </a>
                         </div>
 
                         {/* Image */}
