@@ -18,6 +18,7 @@ import { AuditsPage } from './components/AuditsPage';
 import { UnitsPage } from './components/UnitsPage';
 import { StrategicDefinitionPage } from './components/StrategicDefinitionPage';
 import { RiskMatrixPage } from './components/RiskMatrixPage';
+import { StakeholdersPage } from './components/StakeholdersPage';
 
 const App: React.FC = () => {
   return (
@@ -39,7 +40,7 @@ const App: React.FC = () => {
               {/* 4.0 Contexto */}
               <Route path="contexto-analise" element={<SectionContexto />} />
               <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
-              <Route path="partes-interessadas" element={<SectionPlaceholder title="Partes Interessadas" />} />
+              <Route path="partes-interessadas" element={<StakeholdersPage />} />
               <Route path="processos-escopo" element={<SectionPlaceholder title="Processos e Escopo" />} />
 
               {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}

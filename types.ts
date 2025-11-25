@@ -116,5 +116,16 @@ export interface Profile {
   role: string | null;
   avatar_url: string | null;
   company_id: string;
-  unit_id?: string; // New field linking to Unit
+  unit_id?: string;
+}
+
+export interface Stakeholder {
+  id: string;
+  company_id: string;
+  name: string;
+  type: string; // 'Cliente', 'Fornecedor', 'Governo', 'Colaborador', 'Sociedade', etc.
+  needs: string;
+  expectations: string;
+  monitor_frequency: string;
+  created_at?: string;
 }
