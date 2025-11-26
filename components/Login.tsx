@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
@@ -55,12 +55,14 @@ export const Login: React.FC = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex justify-center">
-                    <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
-                        <path d="M15 40 H45 V85 C45 93.2843 38.2843 100 30 100 C21.7157 100 15 93.2843 15 85 V40 Z" fill="#2dd4bf" />
-                        <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
-                        <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
-                    </svg>
+                    <Link to="/" className="hover:opacity-80 transition-opacity" title="Voltar para Home">
+                        <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
+                            <path d="M15 40 H45 V85 C45 93.2843 38.2843 100 30 100 C21.7157 100 15 93.2843 15 85 V40 Z" fill="#2dd4bf" />
+                            <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
+                            <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
+                        </svg>
+                    </Link>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     Entrar na Plataforma

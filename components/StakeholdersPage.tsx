@@ -148,12 +148,15 @@ export const StakeholdersPage: React.FC = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Partes Interessadas Pertinentes</h1>
-                    <p className="text-gray-500 mt-1">Gestão de stakeholders e seus requisitos (ISO 9001:2015 - 4.2)</p>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Users className="w-7 h-7 text-[#025159]" />
+                        <h1 className="text-2xl font-bold text-[#025159]">Partes Interessadas Pertinentes</h1>
+                    </div>
+                    <p className="text-gray-500 text-sm">Gestão de stakeholders e seus requisitos (ISO 9001:2015 - 4.2)</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                    className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2 rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm"
                 >
                     <Plus className="w-5 h-5" />
                     Adicionar Parte

@@ -123,30 +123,62 @@ export const SectionPerfil: React.FC = () => {
     };
 
     const handleSavePhoto = async () => {
-        if (!previewUrl || !user) {
+        if (!selectedFile || !user) {
             alert('Por favor, selecione uma foto primeiro');
             return;
         }
 
         setSaving(true);
         try {
-            // Update avatar_url in database
-            const { error } = await supabase
+            // 1. Upload file to Supabase Storage
+            const fileExt = selectedFile.name.split('.').pop();
+            const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+            const filePath = `avatars/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('logos')  // Using logos bucket temporarily
+                .upload(filePath, selectedFile, {
+                    upsert: true
+                });
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get public URL
+            const { data } = supabase.storage
+                .from('logos')  // Using logos bucket temporarily
+                .getPublicUrl(filePath);
+
+            if (!data?.publicUrl) {
+                throw new Error('Failed to get public URL');
+            }
+
+            // 3. Update avatar_url in database using auth.uid()
+            const { error: updateError } = await supabase
                 .from('profiles')
-                .update({ avatar_url: previewUrl })
-                .eq('id', user.id);
+                .update({ avatar_url: data.publicUrl })
+                .eq('id', user.id)
+                .select()
+                .single();
 
-            if (error) throw error;
+            if (updateError) {
+                console.error('Update error:', updateError);
+                throw updateError;
+            }
 
-            // Update local state
-            setProfileData(prev => prev ? { ...prev, avatar_url: previewUrl } : null);
+            // 4. Update local state
+            setProfileData(prev => prev ? { ...prev, avatar_url: data.publicUrl } : null);
             setSelectedFile(null);
             setPreviewUrl(null);
             setIsPhotoModalOpen(false);
+
+            // Update localStorage and dispatch event for sidebar
+            localStorage.setItem('isotek_avatar', data.publicUrl);
+            window.dispatchEvent(new Event('avatarUpdated'));
+
             alert('Foto atualizada com sucesso!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving photo:', error);
-            alert('Erro ao atualizar foto. Tente novamente.');
+            alert('Erro ao atualizar foto: ' + (error.message || 'Tente novamente.'));
         } finally {
             setSaving(false);
         }
@@ -273,8 +305,16 @@ export const SectionPerfil: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* Header */}
+            <div className="mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                    <User className="w-7 h-7 text-[#025159]" />
+                    <h1 className="text-2xl font-bold text-[#025159]">Meu Perfil</h1>
+                </div>
+                <p className="text-gray-500 text-sm">Gerencie suas informações pessoais e configurações de conta.</p>
+            </div>
+
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Meu Perfil</h2>
 
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6 pb-6 border-b border-gray-200">

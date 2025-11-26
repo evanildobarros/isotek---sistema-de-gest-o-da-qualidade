@@ -6,6 +6,7 @@ export enum IsoSection {
   CONTEXT_ANALYSIS = 'Análise de Contexto',
   STAKEHOLDERS = 'Partes Interessadas',
   PROCESSES_SCOPE = 'Processos e Escopo',
+  STRATEGIC_DEFINITION = 'Identidade Corporativa',
 
   // 5.0 Liderança
   QUALITY_POLICY = 'Política da Qualidade',
@@ -42,6 +43,7 @@ export enum IsoSection {
   SETTINGS_SYSTEM = 'Sistema',
   UNITS = 'Minhas Unidades',
   COMPANY_PROFILE = 'Perfil da Empresa',
+  USER_PROFILE = 'Meu Perfil',
 
   // Legacy mappings (to avoid breaking existing code temporarily)
   DASHBOARD = 'Painel de Controle',

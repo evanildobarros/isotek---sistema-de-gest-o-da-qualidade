@@ -218,23 +218,27 @@ export const DocumentsPage: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Gestão de Documentos</h2>
-                        <p className="text-sm text-gray-500 mt-1">Controle da Informação Documentada (ISO 9001: 7.5)</p>
+            {/* Header */}
+            <div className="mb-8 flex justify-between items-start">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <FileText className="w-7 h-7 text-[#025159]" />
+                        <h1 className="text-2xl font-bold text-[#025159]">Gestão de Documentos</h1>
                     </div>
-                    <button
-                        onClick={() => setIsUploadModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors"
-                    >
-                        <Plus size={20} />
-                        Novo Documento
-                    </button>
+                    <p className="text-gray-500 text-sm">Controle da Informação Documentada (ISO 9001: 7.5)</p>
                 </div>
+                <button
+                    onClick={() => setIsUploadModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors"
+                >
+                    <Plus size={20} />
+                    Novo Documento
+                </button>
+            </div>
 
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 {/* Filters */}
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2">
                     <button
                         onClick={() => setStatusFilter('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'all'

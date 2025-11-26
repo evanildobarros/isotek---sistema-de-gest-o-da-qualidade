@@ -102,19 +102,24 @@ export const CorrectiveActionsPage: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <div className="mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">Ações Corretivas</h2>
-                    <p className="text-sm text-gray-500 mt-1">Investigação de causas raízes e planos de ação (ISO 9001: 10.2)</p>
+            {/* Header */}
+            <div className="mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                    <ClipboardList className="w-7 h-7 text-[#025159]" />
+                    <h1 className="text-2xl font-bold text-[#025159]">Ações Corretivas</h1>
                 </div>
+                <p className="text-gray-500 text-sm">Investigação de causas raízes e planos de ação (ISO 9001: 10.2)</p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 
                 {/* Filter Tabs */}
                 <div className="flex gap-2">
                     <button
                         onClick={() => setFilterTab('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterTab === 'all'
-                                ? 'bg-isotek-100 text-isotek-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-isotek-100 text-isotek-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Todas
@@ -122,8 +127,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                     <button
                         onClick={() => setFilterTab('mine')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterTab === 'mine'
-                                ? 'bg-isotek-100 text-isotek-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-isotek-100 text-isotek-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Minhas Ações
@@ -131,8 +136,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                     <button
                         onClick={() => setFilterTab('pending')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterTab === 'pending'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Pendentes de Eficácia
@@ -199,8 +204,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div
                                             className={`text-sm font-medium ${isOverdue(action.deadline)
-                                                    ? 'text-red-600'
-                                                    : 'text-gray-600'
+                                                ? 'text-red-600'
+                                                : 'text-gray-600'
                                                 }`}
                                         >
                                             {formatDate(action.deadline)}

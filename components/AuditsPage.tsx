@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, AlertTriangle, Plus } from 'lucide-react';
+import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, AlertTriangle, Plus, ClipboardCheck } from 'lucide-react';
 
 interface Audit {
     id: number;
@@ -127,14 +127,18 @@ export const AuditsPage: React.FC = () => {
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
             {/* Header */}
+            {/* Header */}
             <div className="mb-8 flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#8C512E] mb-2">Gestão de Auditorias</h1>
-                    <p className="text-gray-600">Planeje, execute e gerencie auditorias internas e externas.</p>
+                    <div className="flex items-center gap-2 mb-2">
+                        <ClipboardCheck className="w-7 h-7 text-[#025159]" />
+                        <h1 className="text-2xl font-bold text-[#025159]">Gestão de Auditorias</h1>
+                    </div>
+                    <p className="text-gray-600 text-sm">Planeje, execute e gerencie auditorias internas e externas.</p>
                 </div>
                 <button
                     onClick={handleCreate}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#BF7B54] text-white font-semibold rounded-lg hover:bg-[#8C512E] transition-colors shadow-md hover:shadow-lg"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white font-semibold rounded-lg hover:bg-[#025159]/90 transition-colors shadow-md hover:shadow-lg"
                 >
                     <Plus size={20} />
                     Nova Auditoria
@@ -194,15 +198,15 @@ export const AuditsPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-[#8C512E] text-white">
+                        <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Escopo</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tipo</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Auditor</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Data</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Progresso</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">Ações</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Escopo</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auditor</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progresso</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">

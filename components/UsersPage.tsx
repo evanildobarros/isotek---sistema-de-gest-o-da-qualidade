@@ -131,12 +131,15 @@ export const UsersPage: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Gestão de Usuários</h1>
-                    <p className="text-gray-600 mt-1">Gerencie os acessos e permissões dos colaboradores.</p>
+                    <div className="flex items-center gap-2 mb-2">
+                        <UserIcon className="w-7 h-7 text-[#025159]" />
+                        <h1 className="text-2xl font-bold text-[#025159]">Gestão de Usuários</h1>
+                    </div>
+                    <p className="text-gray-600 text-sm">Gerencie os acessos e permissões dos colaboradores.</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm">
+                <button className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors font-medium shadow-sm">
                     <UserPlus size={18} />
                     <span>Convidar Usuário</span>
                 </button>

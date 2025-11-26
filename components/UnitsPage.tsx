@@ -162,9 +162,12 @@ export const UnitsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Minhas Unidades</h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <header className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <Building2 className="w-7 h-7 text-[#025159]" />
+          <h1 className="text-2xl font-bold text-[#025159]">Minhas Unidades</h1>
+        </div>
+        <p className="text-gray-500 text-sm">
           Gerencie suas unidades (matriz e filiais)
         </p>
       </header>
@@ -175,7 +178,7 @@ export const UnitsPage: React.FC = () => {
           placeholder="Buscar unidades..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md rounded-lg border border-gray-300 bg-white px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent"
+          className="w-full max-w-md rounded-lg border border-gray-300 bg-white px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"
         />
       </div>
 
@@ -296,7 +299,7 @@ export const UnitsPage: React.FC = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     placeholder="Ex: Matriz São Luís"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"
                   />
                 </div>
 
@@ -311,7 +314,7 @@ export const UnitsPage: React.FC = () => {
                       setFormData({ ...formData, code: e.target.value })
                     }
                     placeholder="Ex: UNI-01"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"
                   />
                 </div>
 
@@ -326,7 +329,7 @@ export const UnitsPage: React.FC = () => {
                       setFormData({ ...formData, cnpj: e.target.value })
                     }
                     placeholder="00.000.000/0000-00"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"
                   />
                 </div>
 
@@ -341,7 +344,7 @@ export const UnitsPage: React.FC = () => {
                       setFormData({ ...formData, address: e.target.value })
                     }
                     placeholder="Rua, número, bairro"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"
                   />
                 </div>
 
@@ -356,7 +359,7 @@ export const UnitsPage: React.FC = () => {
                       setFormData({ ...formData, city: e.target.value })
                     }
                     placeholder="Ex: São Luís"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"
                   />
                 </div>
 
@@ -372,7 +375,7 @@ export const UnitsPage: React.FC = () => {
                     }
                     placeholder="Ex: MA"
                     maxLength={2}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BF7960] focus:border-transparent uppercase"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent uppercase"
                   />
                 </div>
 
@@ -387,7 +390,7 @@ export const UnitsPage: React.FC = () => {
                           is_headquarters: e.target.checked,
                         })
                       }
-                      className="w-4 h-4 text-[#BF7960] border-gray-300 rounded focus:ring-[#BF7960]"
+                      className="w-4 h-4 text-[#025159] border-gray-300 rounded focus:ring-[#025159]"
                     />
                     <span className="text-sm font-medium text-gray-700">
                       Esta é a Matriz
@@ -406,7 +409,7 @@ export const UnitsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-[#BF7960] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#A66850] transition-colors"
+                  className="flex-1 rounded-lg bg-[#025159] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3F858C] transition-colors"
                 >
                   {editingUnit ? 'Salvar Alterações' : 'Salvar Unidade'}
                 </button>

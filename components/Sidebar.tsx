@@ -279,23 +279,23 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
       <button
         onClick={onToggle}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
-          ? 'bg-[#BF7960]/5 text-[#BF7960]'
+          ? 'bg-[#025159]/5 text-[#025159]'
           : 'text-gray-700 hover:bg-gray-50'
           }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-[#BF7960]/10' : 'bg-gray-100 group-hover:bg-gray-200'
+          <div className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-[#025159]/10' : 'bg-gray-100 group-hover:bg-gray-200'
             }`}>
-            <Icon size={18} className={isActive ? 'text-[#BF7960]' : 'text-gray-500'} />
+            <Icon size={18} className={isActive ? 'text-[#025159]' : 'text-gray-500'} />
           </div>
           <div className="flex flex-col items-start text-left flex-1">
             {sectionNumber && (
-              <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? 'text-[#BF7960]' : 'text-gray-400'
+              <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? 'text-[#025159]' : 'text-gray-400'
                 }`}>
                 {sectionNumber}
               </span>
             )}
-            <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-[#BF7960]' : 'text-gray-700'
+            <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-[#025159]' : 'text-gray-700'
               }`}>
               {title}
             </span>
@@ -383,11 +383,11 @@ export const Sidebar: React.FC = () => {
         <div key={item.label} className="mb-1">
           <button
             onClick={() => toggleGroup(item.label)}
-            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isChildActive ? 'text-[#BF7960] bg-[#BF7960]/10' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isChildActive ? 'text-[#025159] bg-[#025159]/10' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
           >
             <div className="flex items-center gap-3">
-              {item.icon && <item.icon size={18} className={isChildActive ? 'text-[#BF7960]' : 'text-gray-400'} />}
+              {item.icon && <item.icon size={18} className={isChildActive ? 'text-[#025159]' : 'text-gray-400'} />}
               <span>{item.label}</span>
             </div>
             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -407,14 +407,14 @@ export const Sidebar: React.FC = () => {
         key={item.label}
         onClick={() => item.path && navigate(item.path)}
         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-          ? 'bg-[#BF7960]/10 text-[#BF7960]'
+          ? 'bg-[#025159]/10 text-[#025159]'
           : isGed ? 'text-gray-700 font-semibold hover:bg-gray-50' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
       >
         {item.icon && (
           <item.icon
             size={18}
-            className={isActive ? 'text-[#BF7960]' : isGed ? 'text-[#BF7960]' : 'text-gray-400'}
+            className={isActive ? 'text-[#025159]' : isGed ? 'text-[#025159]' : 'text-gray-400'}
           />
         )}
         {item.label}
@@ -462,7 +462,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={() => navigate('/app/dashboard')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
-              ? 'bg-[#BF7960] text-white shadow-md shadow-[#BF7960]/20'
+              ? 'bg-[#025159] text-white shadow-md shadow-[#025159]/20'
               : 'text-gray-700 hover:bg-gray-50'
               }`}
           >
@@ -487,7 +487,7 @@ export const Sidebar: React.FC = () => {
 
       <div className="p-4 border-t border-gray-200 bg-gray-50">
         <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
-          <CheckCircle2 size={12} className="text-[#BF7960]" />
+          <CheckCircle2 size={12} className="text-[#025159]" />
           <span>Metodologia <strong>PROCEM</strong></span>
         </div>
       </div>

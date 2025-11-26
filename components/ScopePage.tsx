@@ -8,12 +8,11 @@ export const ScopePage: React.FC = () => {
     const { user, company } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [savingScope, setSavingScope] = useState(false);
+    const [isEditingScope, setIsEditingScope] = useState(false);
 
     // Scope State
     const [scopeData, setScopeData] = useState<Partial<QualityManual>>({
-        scope: '',
-        applies_to_all_units: true,
-        excluded_units: ''
+        scope: ''
     });
     const [manualId, setManualId] = useState<string | null>(null);
 
@@ -59,9 +58,7 @@ export const ScopePage: React.FC = () => {
             if (manualData) {
                 setManualId(manualData.id);
                 setScopeData({
-                    scope: manualData.scope,
-                    applies_to_all_units: manualData.applies_to_all_units,
-                    excluded_units: manualData.excluded_units
+                    scope: manualData.scope
                 });
             }
 
@@ -94,8 +91,7 @@ export const ScopePage: React.FC = () => {
         try {
             const payload = {
                 ...scopeData,
-                company_id: company.id,
-                updated_at: new Date().toISOString()
+                company_id: company.id
             };
 
             if (manualId) {
@@ -115,6 +111,7 @@ export const ScopePage: React.FC = () => {
             }
 
             alert('Escopo salvo com sucesso!');
+            setIsEditingScope(false); // Exit edit mode after save
         } catch (error) {
             console.error('Erro ao salvar escopo:', error);
             alert(`Erro ao salvar escopo: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
@@ -227,79 +224,82 @@ export const ScopePage: React.FC = () => {
 
                     {/* SEÇÃO 1: DEFINIÇÃO DO ESCOPO (4.3) */}
                     <section>
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 mb-2">
+                                <FileText className="w-7 h-7 text-[#025159]" />
+                                <h1 className="text-2xl font-bold text-[#025159]">Escopo do Sistema de Gestão da Qualidade</h1>
+                            </div>
+                            <p className="text-gray-500 text-sm">Defina o que está incluído no seu SGQ (ISO 9001:2015 - Cláusula 4.3)</p>
+                        </div>
+
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-8 py-6 text-white">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <FileText className="w-6 h-6" />
-                                    Escopo do Sistema de Gestão da Qualidade
-                                </h2>
-                                <p className="text-blue-100 mt-1 text-sm">Defina o que está incluído no seu Sistema de Gestão da Qualidade (ISO 9001:2015 - Cláusula 4.3)</p>
-                            </div>
 
-                            <div className="p-8 space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Descrição do Escopo
-                                    </label>
-                                    <textarea
-                                        rows={4}
-                                        value={scopeData.scope}
-                                        onChange={e => setScopeData({ ...scopeData, scope: e.target.value })}
-                                        placeholder="Ex: Desenvolvimento, comercialização e suporte de softwares para gestão empresarial..."
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-700 leading-relaxed resize-y"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Descreva os produtos e serviços cobertos pelo SGQ.
-                                    </p>
-                                </div>
-
-                                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex items-center h-5">
-                                        <input
-                                            id="applies-all"
-                                            type="checkbox"
-                                            checked={scopeData.applies_to_all_units}
-                                            onChange={e => setScopeData({ ...scopeData, applies_to_all_units: e.target.checked })}
-                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label htmlFor="applies-all" className="font-medium text-gray-900 text-sm">
-                                            Aplica-se a todas as unidades e locais da organização?
-                                        </label>
-                                        <p className="text-xs text-gray-500 mt-0.5">
-                                            Se desmarcado, especifique quais unidades ou processos não estão inclusos.
-                                        </p>
-
-                                        {!scopeData.applies_to_all_units && (
-                                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                    Unidades ou Locais Excluídos
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={scopeData.excluded_units}
-                                                    onChange={e => setScopeData({ ...scopeData, excluded_units: e.target.value })}
-                                                    placeholder="Ex: Filial Norte, Depósito Externo..."
-                                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none text-sm"
-                                                />
+                            {/* View Mode - Show when scope exists and not editing */}
+                            {scopeData.scope && !isEditingScope ? (
+                                <div className="p-8">
+                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                                <h3 className="font-semibold text-gray-900">Escopo Definido</h3>
                                             </div>
-                                        )}
+                                            <button
+                                                onClick={() => setIsEditingScope(true)}
+                                                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                                Editar
+                                            </button>
+                                        </div>
+                                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {scopeData.scope}
+                                        </p>
                                     </div>
                                 </div>
+                            ) : (
+                                /* Edit Mode - Show when editing or no scope */
+                                <div className="p-8 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Descrição do Escopo
+                                        </label>
+                                        <textarea
+                                            rows={4}
+                                            value={scopeData.scope}
+                                            onChange={e => setScopeData({ ...scopeData, scope: e.target.value })}
+                                            placeholder="Ex: Desenvolvimento, comercialização e suporte de softwares para gestão empresarial..."
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-700 leading-relaxed resize-y"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Descreva os produtos e serviços cobertos pelo SGQ.
+                                        </p>
+                                    </div>
 
-                                {/* Botão Salvar */}
-                                <div className="flex justify-end pt-4 border-t border-gray-100">
-                                    <button
-                                        onClick={handleSaveScope}
-                                        disabled={savingScope}
-                                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <Save className="w-4 h-4" />
-                                        {savingScope ? 'Salvando...' : 'Salvar Escopo'}
-                                    </button>
+                                    {/* Botões */}
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                        {manualId && (
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditingScope(false);
+                                                    // Reload original data
+                                                    fetchData();
+                                                }}
+                                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={handleSaveScope}
+                                            disabled={savingScope}
+                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <Save className="w-4 h-4" />
+                                            {savingScope ? 'Salvando...' : 'Salvar Escopo'}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </section>
 

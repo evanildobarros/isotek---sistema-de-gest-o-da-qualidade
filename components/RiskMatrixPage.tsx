@@ -129,8 +129,11 @@ export const RiskMatrixPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Matriz de Riscos e Oportunidades</h1>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <div className="flex items-center gap-2 mb-2">
+                        <ShieldAlert className="w-7 h-7 text-[#025159]" />
+                        <h1 className="text-2xl font-bold text-[#025159]">Matriz de Riscos e Oportunidades</h1>
+                    </div>
+                    <p className="text-gray-500 text-sm">
                         Gestão baseada em riscos (ISO 9001: 6.1)
                     </p>
                 </div>
@@ -142,7 +145,7 @@ export const RiskMatrixPage: React.FC = () => {
                         <Download size={20} />
                         <span>Importar da SWOT</span>
                     </button>
-                    <button className="flex items-center gap-2 bg-[#BF7960] text-white px-4 py-2.5 rounded-lg hover:bg-[#A66850] transition-colors shadow-sm font-medium">
+                    <button className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium">
                         <Plus size={20} />
                         <span>Novo Item</span>
                     </button>
@@ -158,7 +161,7 @@ export const RiskMatrixPage: React.FC = () => {
                         placeholder="Buscar riscos..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#BF7960]/20 focus:border-[#BF7960]"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
                     />
                 </div>
                 <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">
@@ -206,8 +209,8 @@ export const RiskMatrixPage: React.FC = () => {
 
                                                 {/* Origin Badge */}
                                                 <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border w-fit ${isSwot
-                                                        ? 'bg-purple-50 text-purple-700 border-purple-100'
-                                                        : 'bg-gray-50 text-gray-600 border-gray-200'
+                                                    ? 'bg-purple-50 text-purple-700 border-purple-100'
+                                                    : 'bg-gray-50 text-gray-600 border-gray-200'
                                                     }`}>
                                                     <LinkIcon size={10} />
                                                     <span className="truncate max-w-[100px]" title={risk.origin}>{risk.origin}</span>
@@ -281,22 +284,22 @@ export const RiskMatrixPage: React.FC = () => {
                                     <label
                                         key={item.id}
                                         className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${selectedSwotItems.includes(item.id)
-                                                ? 'border-[#BF7960] bg-[#BF7960]/5'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-[#025159] bg-[#025159]/5'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={selectedSwotItems.includes(item.id)}
                                             onChange={() => toggleSwotSelection(item.id)}
-                                            className="mt-1 w-5 h-5 text-[#BF7960] border-gray-300 rounded focus:ring-[#BF7960]"
+                                            className="mt-1 w-5 h-5 text-[#025159] border-gray-300 rounded focus:ring-[#025159]"
                                         />
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${item.type === 'strength' ? 'bg-green-100 text-green-700' :
-                                                        item.type === 'weakness' ? 'bg-orange-100 text-orange-700' :
-                                                            item.type === 'opportunity' ? 'bg-blue-100 text-blue-700' :
-                                                                'bg-red-100 text-red-700'
+                                                    item.type === 'weakness' ? 'bg-orange-100 text-orange-700' :
+                                                        item.type === 'opportunity' ? 'bg-blue-100 text-blue-700' :
+                                                            'bg-red-100 text-red-700'
                                                     }`}>
                                                     {item.type === 'strength' ? 'Força' :
                                                         item.type === 'weakness' ? 'Fraqueza' :
@@ -320,7 +323,7 @@ export const RiskMatrixPage: React.FC = () => {
                             <button
                                 onClick={handleImportSwot}
                                 disabled={selectedSwotItems.length === 0}
-                                className="px-6 py-2 bg-[#BF7960] text-white font-medium rounded-lg hover:bg-[#A66850] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-2 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#3F858C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Importar {selectedSwotItems.length > 0 ? `(${selectedSwotItems.length})` : ''}
                             </button>
