@@ -279,12 +279,12 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
       <button
         onClick={onToggle}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
-          ? 'bg-[#025159]/5 text-[#025159]'
-          : 'text-gray-700 hover:bg-gray-50'
+          ? 'bg-[#025159]/5 text-[#025159] dark:bg-[#025159]/20'
+          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
           }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-[#025159]/10' : 'bg-gray-100 group-hover:bg-gray-200'
+          <div className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-[#025159]/10 dark:bg-[#025159]/20' : 'bg-gray-100 group-hover:bg-gray-200 dark:bg-gray-800 dark:group-hover:bg-gray-700'
             }`}>
             <Icon size={18} className={isActive ? 'text-[#025159]' : 'text-gray-500'} />
           </div>
@@ -295,7 +295,7 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
                 {sectionNumber}
               </span>
             )}
-            <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-[#025159]' : 'text-gray-700'
+            <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-[#025159]' : 'text-gray-700 dark:text-gray-300'
               }`}>
               {title}
             </span>
@@ -310,7 +310,7 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
         className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
           }`}
       >
-        <div className="pl-3 space-y-0.5 border-l-2 border-gray-100 ml-5">
+        <div className="pl-3 space-y-0.5 border-l-2 border-gray-100 dark:border-gray-800 ml-5">
           {children}
         </div>
       </div>
@@ -383,7 +383,7 @@ export const Sidebar: React.FC = () => {
         <div key={item.label} className="mb-1">
           <button
             onClick={() => toggleGroup(item.label)}
-            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isChildActive ? 'text-[#025159] bg-[#025159]/10' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isChildActive ? 'text-[#025159] bg-[#025159]/10 dark:bg-[#025159]/20' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
               }`}
           >
             <div className="flex items-center gap-3">
@@ -394,7 +394,7 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {isExpanded && (
-            <div className="ml-4 pl-3 border-l border-gray-100 mt-1 space-y-1">
+            <div className="ml-4 pl-3 border-l border-gray-100 dark:border-gray-800 mt-1 space-y-1">
               {item.children!.map(child => renderMenuItem(child))}
             </div>
           )}
@@ -407,8 +407,8 @@ export const Sidebar: React.FC = () => {
         key={item.label}
         onClick={() => item.path && navigate(item.path)}
         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-          ? 'bg-[#025159]/10 text-[#025159]'
-          : isGed ? 'text-gray-700 font-semibold hover:bg-gray-50' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
+          : isGed ? 'text-gray-700 font-semibold hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
           }`}
       >
         {item.icon && (
@@ -444,8 +444,8 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-72 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-20">
-      <div className="h-16 flex items-center px-6 border-b border-gray-100">
+    <aside className="w-72 bg-white dark:bg-gray-900 h-screen border-r border-gray-200 dark:border-gray-800 flex flex-col fixed left-0 top-0 z-20 transition-colors duration-200">
+      <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
           <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
@@ -453,7 +453,7 @@ export const Sidebar: React.FC = () => {
             <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
             <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
           </svg>
-          <span className="text-xl font-bold tracking-tight text-gray-900">Isotek</span>
+          <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Isotek</span>
         </div>
       </div>
 
@@ -463,7 +463,7 @@ export const Sidebar: React.FC = () => {
             onClick={() => navigate('/app/dashboard')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
               ? 'bg-[#025159] text-white shadow-md shadow-[#025159]/20'
-              : 'text-gray-700 hover:bg-gray-50'
+              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
               }`}
           >
             <LayoutDashboard size={20} />
@@ -480,12 +480,12 @@ export const Sidebar: React.FC = () => {
           </div>
         ))}
 
-        <div className="mt-auto pt-4 border-t border-gray-200">
+        <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
           {renderSection(settingsGroup)}
         </div>
       </nav>
 
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
         <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
           <CheckCircle2 size={12} className="text-[#025159]" />
           <span>Metodologia <strong>PROCEM</strong></span>

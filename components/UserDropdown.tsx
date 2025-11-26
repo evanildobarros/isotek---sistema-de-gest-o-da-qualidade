@@ -61,7 +61,7 @@ export const UserDropdown: React.FC = () => {
             {/* Trigger Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
                 {/* Avatar */}
                 {profile?.avatar_url ? (
@@ -78,8 +78,8 @@ export const UserDropdown: React.FC = () => {
 
                 {/* User Info */}
                 <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold text-gray-900">{profile?.full_name || user?.email || 'Usuário'}</p>
-                    <p className="text-xs text-gray-500">{profile?.role || 'Colaborador'}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{profile?.full_name || user?.email || 'Usuário'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{profile?.role || 'Colaborador'}</p>
                 </div>
 
                 {/* Chevron Icon */}
@@ -91,27 +91,27 @@ export const UserDropdown: React.FC = () => {
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 animate-fade-in">
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-100 dark:border-gray-800 py-1 z-50 animate-fade-in">
                     {/* User Info Header (visible on mobile) */}
-                    <div className="md:hidden px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-900">{profile?.full_name || user?.email || 'Usuário'}</p>
-                        <p className="text-xs text-gray-500">{user?.email || ''}</p>
+                    <div className="md:hidden px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{profile?.full_name || user?.email || 'Usuário'}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || ''}</p>
                     </div>
 
                     {/* Menu Items */}
                     <button
                         onClick={handleProfileClick}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                         <User size={18} className="text-gray-400" />
                         <span>Meu Perfil</span>
                     </button>
 
-                    <div className="border-t border-gray-100 my-1"></div>
+                    <div className="border-t border-gray-100 dark:border-gray-800 my-1"></div>
 
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                         <LogOut size={18} className="text-red-500" />
                         <span className="font-medium">Sair</span>
