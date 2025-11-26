@@ -1,12 +1,16 @@
 import React from 'react';
 import { SwotCard } from './SwotCard';
+import { Layers } from 'lucide-react';
 
 export const SwotAnalysis: React.FC = () => {
     return (
         <div className="space-y-6">
-            <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Análise SWOT (Matriz FOFA)</h2>
-                <p className="text-gray-600">
+            <div className="mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                    <Layers className="w-7 h-7 text-[#025159]" />
+                    <h1 className="text-2xl font-bold text-[#025159]">Análise SWOT (Matriz FOFA)</h1>
+                </div>
+                <p className="text-gray-500 text-sm">
                     Identifique forças, fraquezas, oportunidades e ameaças para o contexto da organização.
                 </p>
             </div>

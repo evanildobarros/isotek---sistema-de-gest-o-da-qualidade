@@ -305,17 +305,17 @@ export const ScopePage: React.FC = () => {
 
                     {/* SEÇÃO 2: MAPA DE PROCESSOS (4.4) */}
                     <section>
-                        <div className="flex justify-between items-end mb-6">
+                        <div className="flex justify-between items-end mb-8">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                    <Layers className="w-7 h-7 text-blue-600" />
-                                    Mapeamento de Processos
-                                </h2>
-                                <p className="text-gray-500 mt-1">Identificação dos processos, suas interações e recursos (ISO 9001:2015 - 4.4)</p>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Layers className="w-7 h-7 text-[#025159]" />
+                                    <h2 className="text-2xl font-bold text-[#025159]">Mapeamento de Processos</h2>
+                                </div>
+                                <p className="text-gray-500 text-sm">Identificação dos processos, suas interações e recursos (ISO 9001:2015 - 4.4)</p>
                             </div>
                             <button
                                 onClick={() => handleOpenModal()}
-                                className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                className="flex items-center gap-2 bg-[#025159] text-white px-5 py-2.5 rounded-xl hover:bg-[#025159]/90 transition-colors shadow-sm font-medium"
                             >
                                 <Plus className="w-5 h-5" />
                                 Novo Processo
