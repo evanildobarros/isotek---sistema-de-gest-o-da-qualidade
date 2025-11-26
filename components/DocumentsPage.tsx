@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, X, FileText, Download, History, Loader2, Filter, Plus } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 type DocumentStatus = 'vigente' | 'rascunho' | 'obsoleto' | 'em_aprovacao';
@@ -19,7 +19,7 @@ interface Document {
 }
 
 export const DocumentsPage: React.FC = () => {
-    const { user } = useAuth();
+    const { user, company } = useAuthContext();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,9 +49,16 @@ export const DocumentsPage: React.FC = () => {
     const fetchDocuments = async () => {
         setLoading(true);
         try {
+            if (!company) {
+                console.warn('Usuário não vinculado a uma empresa');
+                setDocuments([]);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from('documents')
                 .select('*')
+                .eq('company_id', company.id)
                 .order('uploaded_at', { ascending: false });
 
             if (error) throw error;
@@ -136,7 +143,12 @@ export const DocumentsPage: React.FC = () => {
                 .from('documents')
                 .getPublicUrl(filePath);
 
-            // 3. Insert metadata into documents table
+            // 3. Get company_id from context
+            if (!company) {
+                throw new Error('Usuário não vinculado a uma empresa');
+            }
+
+            // 4. Insert metadata into documents table
             const { error: insertError } = await supabase
                 .from('documents')
                 .insert([
@@ -148,7 +160,8 @@ export const DocumentsPage: React.FC = () => {
                         file_url: publicUrl,
                         file_name: selectedFile.name,
                         file_size: selectedFile.size,
-                        owner_id: user.id
+                        owner_id: user.id,
+                        company_id: company.id
                     }
                 ]);
 
@@ -225,8 +238,8 @@ export const DocumentsPage: React.FC = () => {
                     <button
                         onClick={() => setStatusFilter('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'all'
-                                ? 'bg-isotek-100 text-isotek-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-isotek-100 text-isotek-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Todos
@@ -234,8 +247,8 @@ export const DocumentsPage: React.FC = () => {
                     <button
                         onClick={() => setStatusFilter('vigente')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'vigente'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Vigentes
@@ -243,8 +256,8 @@ export const DocumentsPage: React.FC = () => {
                     <button
                         onClick={() => setStatusFilter('em_aprovacao')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'em_aprovacao'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Em Aprovação
@@ -252,8 +265,8 @@ export const DocumentsPage: React.FC = () => {
                     <button
                         onClick={() => setStatusFilter('obsoleto')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'obsoleto'
-                                ? 'bg-gray-200 text-gray-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-gray-200 text-gray-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         Obsoletos
@@ -431,8 +444,8 @@ export const DocumentsPage: React.FC = () => {
                                     onDragOver={handleDrag}
                                     onDrop={handleDrop}
                                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
-                                            ? 'border-isotek-500 bg-isotek-50'
-                                            : 'border-gray-300 hover:border-gray-400'
+                                        ? 'border-isotek-500 bg-isotek-50'
+                                        : 'border-gray-300 hover:border-gray-400'
                                         }`}
                                 >
                                     <input

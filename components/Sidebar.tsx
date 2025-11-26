@@ -283,19 +283,19 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
           : 'text-gray-700 hover:bg-gray-50'
           }`}
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3">
           <div className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-[#BF7960]/10' : 'bg-gray-100 group-hover:bg-gray-200'
             }`}>
             <Icon size={18} className={isActive ? 'text-[#BF7960]' : 'text-gray-500'} />
           </div>
-          <div className="flex flex-col items-start text-left min-w-0">
+          <div className="flex flex-col items-start text-left flex-1">
             {sectionNumber && (
               <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? 'text-[#BF7960]' : 'text-gray-400'
                 }`}>
                 {sectionNumber}
               </span>
             )}
-            <span className={`text-sm font-semibold truncate w-full ${isActive ? 'text-[#BF7960]' : 'text-gray-700'
+            <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-[#BF7960]' : 'text-gray-700'
               }`}>
               {title}
             </span>
@@ -444,7 +444,7 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-64 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-20">
+    <aside className="w-72 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-20">
       <div className="h-16 flex items-center px-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">

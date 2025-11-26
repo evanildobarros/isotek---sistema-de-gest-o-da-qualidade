@@ -5,9 +5,9 @@ import { Login } from './components/Login';
 import { DashboardLayout } from './components/DashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SectionDashboard } from './components/SectionDashboard';
-import { SectionContexto } from './components/SectionContexto';
 import { SectionMelhoria } from './components/SectionMelhoria';
 import { SectionPerfil } from './components/SectionPerfil';
+import { SwotAnalysis } from './components/SwotAnalysis';
 
 import { SectionPlaceholder } from './components/SectionPlaceholder';
 import { UsersPage } from './components/UsersPage';
@@ -40,8 +40,7 @@ const App: React.FC = () => {
               <Route path="perfil" element={<SectionPerfil />} />
 
               {/* Grupo A: Estratégia (Plan) */}
-              {/* 4.0 Contexto */}
-              <Route path="contexto-analise" element={<SectionContexto />} />
+              <Route path="contexto-analise" element={<SwotAnalysis />} />
               <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
               <Route path="partes-interessadas" element={<StakeholdersPage />} />
               <Route path="processos-escopo" element={<ScopePage />} />
@@ -50,13 +49,7 @@ const App: React.FC = () => {
               <Route path="matriz-riscos" element={<RiskMatrixPage />} />
               <Route path="objetivos-qualidade" element={<SectionPlaceholder title="Objetivos da Qualidade" />} />
 
-              {/* 5.0 Liderança */}
-              <Route path="politica-qualidade" element={<SectionPlaceholder title="Política da Qualidade" />} />
-              <Route path="responsabilidades" element={<SectionPlaceholder title="Responsabilidades" />} />
 
-              {/* 6.0 Planejamento */}
-              <Route path="matriz-riscos" element={<SectionPlaceholder title="Matriz de Riscos" />} />
-              <Route path="objetivos-qualidade" element={<SectionPlaceholder title="Objetivos da Qualidade" />} />
 
               {/* Grupo B: Execução (Do) */}
               {/* 7.0 Apoio */}

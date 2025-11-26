@@ -116,10 +116,18 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
     const loadItems = async () => {
         try {
+            // Verificar se o usuário está vinculado a uma empresa
+            if (!company) {
+                console.warn('Usuário não vinculado a uma empresa');
+                setItems([]);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from('swot_analysis')
                 .select('*')
                 .eq('type', config.dbValue)
+                .eq('company_id', company.id)
                 .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
@@ -189,7 +197,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                     .eq('id', existingItem.id)
                     .select()
                     .single();
-                
+
                 data = updatedData;
                 error = updateError;
             } else {
@@ -208,7 +216,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                     ])
                     .select()
                     .single();
-                
+
                 data = newData;
                 error = insertError;
             }

@@ -6,7 +6,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { Stakeholder } from '../types';
 
 export const StakeholdersPage: React.FC = () => {
-    const { user } = useAuthContext();
+    const { user, company } = useAuthContext();
     const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,9 +26,18 @@ export const StakeholdersPage: React.FC = () => {
     const fetchStakeholders = async () => {
         try {
             setLoading(true);
+
+            // Verificar se o usuário está vinculado a uma empresa
+            if (!company) {
+                console.warn('Usuário não vinculado a uma empresa');
+                setStakeholders([]);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from('stakeholders')
                 .select('*')
+                .eq('company_id', company.id)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
