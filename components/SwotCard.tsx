@@ -281,7 +281,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
         }
 
         const isRisk = item.type === 'fraqueza' || item.type === 'ameaca';
-        const targetType = isRisk ? 'risco' : 'oportunidade';
+        const targetType = isRisk ? 'risk' : 'opportunity';
         const targetDescription = `${item.description} (Origem: Análise SWOT)`;
 
         try {
@@ -289,11 +289,15 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                 .from('risks_opportunities')
                 .insert([
                     {
+                        company_id: company.id,
+                        swot_id: item.id,
                         description: targetDescription,
                         type: targetType,
+                        origin: 'SWOT - Análise de Contexto',
                         probability: 1,
-                        severity: 1,
-                        user_id: user.id // Corrected from company_id to user_id to match schema pattern
+                        impact: 1,
+                        action_plan: 'Definir plano de ação...',
+                        status: 'active'
                     }
                 ]);
 

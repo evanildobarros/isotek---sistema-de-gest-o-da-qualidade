@@ -1,80 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     AlertTriangle,
     TrendingUp,
     ShieldAlert,
     MoreVertical,
-    Plus,
     Search,
     Filter,
     Link as LinkIcon,
     Download,
-    X
+    X,
+    Loader2
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuthContext } from '../contexts/AuthContext';
 
 type RiskType = 'risk' | 'opportunity';
 
 interface RiskItem {
-    id: number;
+    id: string;
     type: RiskType;
-    origin: string; // New field
+    origin: string;
     description: string;
     probability: number;
     impact: number;
     action_plan: string;
+    company_id: string;
 }
 
-// Mock data for SWOT items to import
-const MOCK_SWOT_ITEMS = [
-    { id: 101, type: 'weakness', text: 'Baixa capacidade de investimento em marketing' },
-    { id: 102, type: 'threat', text: 'Entrada de novos concorrentes internacionais' },
-    { id: 103, type: 'strength', text: 'Equipe técnica altamente qualificada' },
-];
-
-const MOCK_DATA: RiskItem[] = [
-    {
-        id: 1,
-        type: 'risk',
-        origin: 'SWOT - Ameaça',
-        description: 'Dependência de fornecedor único (Matéria Prima X)',
-        probability: 5,
-        impact: 5,
-        action_plan: 'Homologar 2 novos fornecedores até Dez/24'
-    },
-    {
-        id: 2,
-        type: 'risk',
-        origin: 'Manual',
-        description: 'Falha no servidor local',
-        probability: 2,
-        impact: 5,
-        action_plan: 'Migrar backup para nuvem'
-    },
-    {
-        id: 3,
-        type: 'opportunity',
-        origin: 'SWOT - Oportunidade',
-        description: 'Novo incentivo fiscal para exportação',
-        probability: 4,
-        impact: 4,
-        action_plan: 'Consultar jurídico para adesão'
-    },
-    {
-        id: 4,
-        type: 'risk',
-        origin: 'Manual',
-        description: 'Rotatividade da equipe de vendas',
-        probability: 3,
-        impact: 3,
-        action_plan: 'Revisar política de comissões'
-    },
-];
+interface SwotItem {
+    id: string;
+    type: 'forca' | 'fraqueza' | 'oportunidade' | 'ameaca';
+    description: string;
+}
 
 export const RiskMatrixPage: React.FC = () => {
-    const [risks, setRisks] = useState<RiskItem[]>(MOCK_DATA);
+    const { user } = useAuthContext();
+    const [loading, setLoading] = useState(true);
+    const [risks, setRisks] = useState<RiskItem[]>([]);
+    const [swotItems, setSwotItems] = useState<SwotItem[]>([]);
+    const [companyId, setCompanyId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [selectedSwotItems, setSelectedSwotItems] = useState<number[]>([]);
+    const [selectedSwotItems, setSelectedSwotItems] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (user) loadData();
+    }, [user]);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+
+            // Get Company
+            const { data: company } = await supabase
+                .from('company_info')
+                .select('id')
+                .eq('owner_id', user?.id)
+                .single();
+
+            if (company) {
+                setCompanyId(company.id);
+
+                // Get risks from database (including swot_id)
+                const { data: risksData } = await supabase
+                    .from('risks_opportunities')
+                    .select('*')
+                    .eq('company_id', company.id)
+                    .eq('status', 'active')
+                    .order('created_at', { ascending: false });
+                setRisks(risksData || []);
+
+                // Get imported SWOT IDs (for items with swot_id)
+                const importedSwotIds = new Set(
+                    (risksData || [])
+                        .map(r => r.swot_id)
+                        .filter((id): id is string => id !== null)
+                );
+
+                // Get imported descriptions (fallback for legacy items without swot_id)
+                const importedDescriptions = new Set(
+                    (risksData || [])
+                        .filter(r => r.origin?.includes('SWOT'))
+                        .map(r => r.description.replace(/\s*\(Origem:.*?\)$/, '').trim())
+                );
+
+                // Get SWOT items that haven't been imported yet
+                const { data: swotData } = await supabase
+                    .from('swot_analysis')
+                    .select('id, description, type')
+                    .eq('company_id', company.id)
+                    .eq('is_active', true);
+
+                // Filter out already imported items (by ID or description)
+                const availableSwotItems = (swotData || []).filter(
+                    item => !importedSwotIds.has(item.id) && !importedDescriptions.has(item.description.trim())
+                );
+                setSwotItems(availableSwotItems);
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const calculateSeverity = (prob: number, imp: number) => prob * imp;
 
@@ -91,29 +119,43 @@ export const RiskMatrixPage: React.FC = () => {
         }
     };
 
-    const handleImportSwot = () => {
-        const newRisks: RiskItem[] = selectedSwotItems.map(id => {
-            const item = MOCK_SWOT_ITEMS.find(i => i.id === id);
-            if (!item) return null;
+    const handleImportSwot = async () => {
+        if (!companyId) return;
 
-            return {
-                id: Date.now() + Math.random(), // Simple ID generation
-                type: item.type === 'strength' || item.type === 'opportunity' ? 'opportunity' : 'risk',
-                origin: `SWOT - ${item.type === 'strength' ? 'Força' : item.type === 'weakness' ? 'Fraqueza' : item.type === 'opportunity' ? 'Oportunidade' : 'Ameaça'}`,
-                description: item.text,
-                probability: 1, // Default
-                impact: 1, // Default
-                action_plan: 'Definir plano de ação...'
-            };
-        }).filter((r): r is RiskItem => r !== null);
+        try {
+            const newRisks = selectedSwotItems.map(id => {
+                const item = swotItems.find(i => i.id === id);
+                if (!item) return null;
 
-        setRisks([...risks, ...newRisks]);
-        setIsImportModalOpen(false);
-        setSelectedSwotItems([]);
-        alert(`${newRisks.length} itens importados com sucesso!`);
+                return {
+                    company_id: companyId,
+                    swot_id: item.id,
+                    type: item.type === 'forca' || item.type === 'oportunidade' ? 'opportunity' : 'risk',
+                    origin: `SWOT - ${item.type === 'forca' ? 'Força' : item.type === 'fraqueza' ? 'Fraqueza' : item.type === 'oportunidade' ? 'Oportunidade' : 'Ameaça'}`,
+                    description: item.description,
+                    probability: 1,
+                    impact: 1,
+                    action_plan: 'Definir plano de ação...',
+                    status: 'active'
+                };
+            }).filter((r): r is any => r !== null);
+
+            const { error } = await supabase
+                .from('risks_opportunities')
+                .insert(newRisks);
+
+            if (error) throw error;
+
+            setIsImportModalOpen(false);
+            setSelectedSwotItems([]);
+            await loadData(); // Reload to show new items and update available SWOT items
+            alert(`${newRisks.length} itens importados com sucesso!`);
+        } catch (error: any) {
+            alert('Erro ao importar: ' + error.message);
+        }
     };
 
-    const toggleSwotSelection = (id: number) => {
+    const toggleSwotSelection = (id: string) => {
         setSelectedSwotItems(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
@@ -123,6 +165,14 @@ export const RiskMatrixPage: React.FC = () => {
         risk.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         risk.action_plan.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-[#025159]" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
@@ -137,19 +187,13 @@ export const RiskMatrixPage: React.FC = () => {
                         Gestão baseada em riscos (ISO 9001: 6.1)
                     </p>
                 </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium"
-                    >
-                        <Download size={20} />
-                        <span>Importar da SWOT</span>
-                    </button>
-                    <button className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium">
-                        <Plus size={20} />
-                        <span>Novo Item</span>
-                    </button>
-                </div>
+                <button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
+                >
+                    <Download size={20} />
+                    <span>Importar da SWOT</span>
+                </button>
             </div>
 
             {/* Filters */}
@@ -280,7 +324,7 @@ export const RiskMatrixPage: React.FC = () => {
 
                         <div className="p-6 overflow-y-auto flex-1">
                             <div className="space-y-3">
-                                {MOCK_SWOT_ITEMS.map(item => (
+                                {swotItems.length > 0 ? swotItems.map(item => (
                                     <label
                                         key={item.id}
                                         className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${selectedSwotItems.includes(item.id)
@@ -296,20 +340,22 @@ export const RiskMatrixPage: React.FC = () => {
                                         />
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${item.type === 'strength' ? 'bg-green-100 text-green-700' :
-                                                    item.type === 'weakness' ? 'bg-orange-100 text-orange-700' :
-                                                        item.type === 'opportunity' ? 'bg-blue-100 text-blue-700' :
+                                                <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${item.type === 'forca' ? 'bg-green-100 text-green-700' :
+                                                    item.type === 'fraqueza' ? 'bg-orange-100 text-orange-700' :
+                                                        item.type === 'oportunidade' ? 'bg-blue-100 text-blue-700' :
                                                             'bg-red-100 text-red-700'
                                                     }`}>
-                                                    {item.type === 'strength' ? 'Força' :
-                                                        item.type === 'weakness' ? 'Fraqueza' :
-                                                            item.type === 'opportunity' ? 'Oportunidade' : 'Ameaça'}
+                                                    {item.type === 'forca' ? 'Força' :
+                                                        item.type === 'fraqueza' ? 'Fraqueza' :
+                                                            item.type === 'oportunidade' ? 'Oportunidade' : 'Ameaça'}
                                                 </span>
                                             </div>
-                                            <p className="text-gray-700 font-medium">{item.text}</p>
+                                            <p className="text-gray-700 font-medium">{item.description}</p>
                                         </div>
                                     </label>
-                                ))}
+                                )) : (
+                                    <p className="text-center text-gray-500 py-8">Nenhum item SWOT encontrado. Adicione itens na Análise de Contexto primeiro.</p>
+                                )}
                             </div>
                         </div>
 

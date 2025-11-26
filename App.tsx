@@ -23,6 +23,7 @@ import { StakeholdersPage } from './components/StakeholdersPage';
 import { ScopePage } from './components/ScopePage';
 import { SuperAdminPage } from './components/SuperAdminPage';
 import { LeadershipPage } from './components/LeadershipPage';
+import { QualityObjectivesPage } from './components/QualityObjectivesPage';
 
 const App: React.FC = () => {
   return (
@@ -54,7 +55,7 @@ const App: React.FC = () => {
 
                 {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}
                 <Route path="matriz-riscos" element={<RiskMatrixPage />} />
-                <Route path="objetivos-qualidade" element={<SectionPlaceholder title="Objetivos da Qualidade" />} />
+                <Route path="objetivos-qualidade" element={<QualityObjectivesPage />} />
 
 
 
