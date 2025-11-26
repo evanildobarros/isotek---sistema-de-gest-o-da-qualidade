@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, X, FileText, Download, History, Loader2, Filter, Plus } from 'lucide-react';
+import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -24,6 +24,8 @@ export const DocumentsPage: React.FC = () => {
     const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
 
     // Upload modal states
@@ -72,7 +74,6 @@ export const DocumentsPage: React.FC = () => {
     };
 
     const handleFileSelect = (file: File) => {
-        // Validate file type
         const allowedTypes = [
             'application/pdf',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -83,11 +84,10 @@ export const DocumentsPage: React.FC = () => {
         ];
 
         if (!allowedTypes.includes(file.type)) {
-            alert('Tipo de arquivo não permitido. Use PDF, DOCX ou imagens (PNG/JPG).');
+            alert('Tipo de arquivo não permitido. Use PDF, DOCX ou imagens (PNG/ JPG).');
             return;
         }
 
-        // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('O arquivo deve ter no máximo 10MB');
             return;
@@ -125,7 +125,6 @@ export const DocumentsPage: React.FC = () => {
 
         setUploading(true);
         try {
-            // 1. Upload file to Supabase Storage
             const fileExt = selectedFile.name.split('.').pop();
             const fileName = `${Date.now()}_${uploadTitle.replace(/\s+/g, '_')}.${fileExt}`;
             const filePath = `${user.id}/${fileName}`;
@@ -138,17 +137,14 @@ export const DocumentsPage: React.FC = () => {
                 throw new Error(`Erro no upload: ${uploadError.message}`);
             }
 
-            // 2. Get public URL
             const { data: { publicUrl } } = supabase.storage
                 .from('documents')
                 .getPublicUrl(filePath);
 
-            // 3. Get company_id from context
             if (!company) {
                 throw new Error('Usuário não vinculado a uma empresa');
             }
 
-            // 4. Insert metadata into documents table
             const { error: insertError } = await supabase
                 .from('documents')
                 .insert([
@@ -171,14 +167,12 @@ export const DocumentsPage: React.FC = () => {
 
             alert('Documento enviado com sucesso!');
 
-            // Reset form
             setUploadTitle('');
             setUploadCode('');
             setUploadVersion('1.0');
             setSelectedFile(null);
             setIsUploadModalOpen(false);
 
-            // Refresh documents list
             fetchDocuments();
         } catch (error: any) {
             console.error('Upload error:', error);
@@ -186,6 +180,45 @@ export const DocumentsPage: React.FC = () => {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleApprove = async (docId: string) => {
+        if (!confirm('Deseja aprovar este documento? Ele ficará vigente.')) return;
+
+        try {
+            const { error } = await supabase
+                .from('documents')
+                .update({ status: 'vigente' })
+                .eq('id', docId);
+
+            if (error) throw error;
+
+            alert('✅ Documento aprovado com sucesso!');
+            fetchDocuments();
+        } catch (error: any) {
+            alert('❌ Erro ao aprovar: ' + error.message);
+        }
+    };
+
+    const getFileIcon = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+
+        if (!ext) return {
+            icon: FileText,
+            colorClass: 'text-gray-500',
+            bgClass: 'bg-gray-100'
+        };
+
+        const iconMap: Record<string, { icon: any; colorClass: string; bgClass: string }> = {
+            'pdf': { icon: File, colorClass: 'text-red-500', bgClass: 'bg-red-50' },
+            'doc': { icon: FileText, colorClass: 'text-blue-500', bgClass: 'bg-blue-50' },
+            'docx': { icon: FileText, colorClass: 'text-blue-500', bgClass: 'bg-blue-50' },
+            'png': { icon: ImageIcon, colorClass: 'text-purple-500', bgClass: 'bg-purple-50' },
+            'jpg': { icon: ImageIcon, colorClass: 'text-purple-500', bgClass: 'bg-purple-50' },
+            'jpeg': { icon: ImageIcon, colorClass: 'text-purple-500', bgClass: 'bg-purple-50' }
+        };
+
+        return iconMap[ext] || { icon: FileText, colorClass: 'text-gray-500', bgClass: 'bg-gray-100' };
     };
 
     const getStatusBadge = (status: DocumentStatus) => {
@@ -215,9 +248,13 @@ export const DocumentsPage: React.FC = () => {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
 
+    const canPreviewFile = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        return ['pdf', 'png', 'jpg', 'jpeg'].includes(ext || '');
+    };
+
     return (
         <div className="space-y-6">
-            {/* Header */}
             {/* Header */}
             <div className="mb-8 flex justify-between items-start">
                 <div>
@@ -236,13 +273,13 @@ export const DocumentsPage: React.FC = () => {
                 </button>
             </div>
 
+            {/* Status Filters */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                {/* Filters */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     <button
                         onClick={() => setStatusFilter('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'all'
-                            ? 'bg-isotek-100 text-isotek-700'
+                            ? 'bg-[#025159] text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
@@ -256,6 +293,15 @@ export const DocumentsPage: React.FC = () => {
                             }`}
                     >
                         Vigentes
+                    </button>
+                    <button
+                        onClick={() => setStatusFilter('rascunho')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'rascunho'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                    >
+                        Rascunhos
                     </button>
                     <button
                         onClick={() => setStatusFilter('em_aprovacao')}
@@ -278,103 +324,102 @@ export const DocumentsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Documents Table */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                {loading ? (
-                    <div className="flex items-center justify-center p-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-isotek-600" />
-                    </div>
-                ) : filteredDocuments.length === 0 ? (
-                    <div className="text-center p-12">
-                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">Nenhum documento encontrado</p>
-                        <button
-                            onClick={() => setIsUploadModalOpen(true)}
-                            className="mt-4 text-isotek-600 hover:text-isotek-700 font-medium text-sm"
-                        >
-                            Fazer primeiro upload
-                        </button>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Código
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Título
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Versão
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Data de Upload
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Tamanho
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        Ações
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {filteredDocuments.map((doc) => (
-                                    <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-mono rounded">
-                                                {doc.code || '-'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <FileText size={18} className="text-gray-400" />
-                                                <span className="font-medium text-gray-900">{doc.title}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {doc.version}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {getStatusBadge(doc.status)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {formatDate(doc.uploaded_at)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {formatFileSize(doc.file_size)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex gap-2">
-                                                <a
-                                                    href={doc.file_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
-                                                    title="Download"
-                                                >
-                                                    <Download size={18} className="text-gray-400 group-hover:text-blue-600" />
-                                                </a>
-                                                <button
-                                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
-                                                    title="Histórico"
-                                                >
-                                                    <History size={18} className="text-gray-400 group-hover:text-gray-600" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+            {/* Documents Grid */}
+            {loading ? (
+                <div className="flex items-center justify-center p-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#025159]" />
+                </div>
+            ) : filteredDocuments.length === 0 ? (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 mb-4">Nenhum documento encontrado</p>
+                    <button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        className="text-[#025159] hover:text-[#025159]/80 font-medium text-sm"
+                    >
+                        Fazer primeiro upload
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {filteredDocuments.map((doc) => {
+                        const { icon: Icon, colorClass, bgClass } = getFileIcon(doc.file_name);
+
+                        return (
+                            <div
+                                key={doc.id}
+                                className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition-all overflow-hidden group"
+                            >
+                                {/* Icon Area */}
+                                <div className={`${bgClass} py-8 flex items-center justify-center`}>
+                                    <div className={`${bgClass} rounded-full p-4`}>
+                                        <Icon size={48} className={colorClass} />
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-4">
+                                    {/* Code */}
+                                    {doc.code && (
+                                        <span className="text-xs text-gray-500 font-mono">
+                                            {doc.code}
+                                        </span>
+                                    )}
+
+                                    {/* Title */}
+                                    <h3 className="font-medium text-gray-900 mt-1 mb-3 line-clamp-2" title={doc.title}>
+                                        {doc.title}
+                                    </h3>
+
+                                    {/* Footer */}
+                                    <div className="flex items-center justify-between">
+                                        {getStatusBadge(doc.status)}
+                                        <span className="text-xs text-gray-500">v{doc.version}</span>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+                                        {canPreviewFile(doc.file_name) && (
+                                            <button
+                                                onClick={() => {
+                                                    setPreviewDocument(doc);
+                                                    setIsPreviewModalOpen(true);
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                                                title="Visualizar"
+                                            >
+                                                <Eye size={16} />
+                                                <span>Visualizar</span>
+                                            </button>
+                                        )}
+
+                                        {doc.status === 'rascunho' && (
+                                            <button
+                                                onClick={() => handleApprove(doc.id)}
+                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                                                title="Aprovar Documento"
+                                            >
+                                                <CheckCircle size={16} />
+                                                <span>Aprovar</span>
+                                            </button>
+                                        )}
+
+                                        <a
+                                            href={doc.file_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="Download"
+                                        >
+                                            <Download size={18} />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Upload Modal */}
             {isUploadModalOpen && (
@@ -405,7 +450,7 @@ export const DocumentsPage: React.FC = () => {
                                     type="text"
                                     value={uploadTitle}
                                     onChange={(e) => setUploadTitle(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
                                     placeholder="Ex: Procedimento de Inspeção de Entrada"
                                 />
                             </div>
@@ -419,7 +464,7 @@ export const DocumentsPage: React.FC = () => {
                                         type="text"
                                         value={uploadCode}
                                         onChange={(e) => setUploadCode(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
                                         placeholder="PR-001"
                                     />
                                 </div>
@@ -432,7 +477,7 @@ export const DocumentsPage: React.FC = () => {
                                         type="text"
                                         value={uploadVersion}
                                         onChange={(e) => setUploadVersion(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
                                     />
                                 </div>
                             </div>
@@ -448,7 +493,7 @@ export const DocumentsPage: React.FC = () => {
                                     onDragOver={handleDrag}
                                     onDrop={handleDrop}
                                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
-                                        ? 'border-isotek-500 bg-isotek-50'
+                                        ? 'border-[#025159] bg-[#025159]/5'
                                         : 'border-gray-300 hover:border-gray-400'
                                         }`}
                                 >
@@ -489,7 +534,7 @@ export const DocumentsPage: React.FC = () => {
                             <button
                                 onClick={handleUpload}
                                 disabled={uploading || !selectedFile || !uploadTitle}
-                                className="flex-1 px-4 py-2.5 bg-isotek-600 text-white font-medium rounded-lg hover:bg-isotek-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                className="flex-1 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                             >
                                 {uploading ? (
                                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -510,6 +555,59 @@ export const DocumentsPage: React.FC = () => {
                             >
                                 Cancelar
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Preview Modal */}
+            {isPreviewModalOpen && previewDocument && (
+                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">{previewDocument.title}</h3>
+                                <p className="text-sm text-gray-500">v{previewDocument.version}</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsPreviewModalOpen(false);
+                                    setPreviewDocument(null);
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X size={24} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-hidden">
+                            {previewDocument.file_name.toLowerCase().endsWith('.pdf') ? (
+                                <iframe
+                                    src={previewDocument.file_url}
+                                    className="w-full h-full"
+                                    title="Document Preview"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-50 p-8">
+                                    <img
+                                        src={previewDocument.file_url}
+                                        alt={previewDocument.title}
+                                        className="max-w-full max-h-full object-contain"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                            <a
+                                href={previewDocument.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors"
+                            >
+                                <Download size={18} />
+                                Baixar Arquivo
+                            </a>
                         </div>
                     </div>
                 </div>

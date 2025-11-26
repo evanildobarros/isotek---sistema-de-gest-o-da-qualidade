@@ -3,7 +3,8 @@ import {
     AlertTriangle,
     TrendingUp,
     ShieldAlert,
-    MoreVertical,
+    Edit2,
+    Trash2,
     Search,
     Filter,
     Link as LinkIcon,
@@ -42,6 +43,22 @@ export const RiskMatrixPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedSwotItems, setSelectedSwotItems] = useState<string[]>([]);
+
+    // Edit modal state
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingRisk, setEditingRisk] = useState<RiskItem | null>(null);
+    const [editForm, setEditForm] = useState({
+        probability: 1,
+        impact: 1,
+        action_plan: ''
+    });
+
+    // Filter state
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [filters, setFilters] = useState({
+        type: 'all' as 'all' | 'risk' | 'opportunity',
+        severity: 'all' as 'all' | 'low' | 'medium' | 'high' | 'critical'
+    });
 
     useEffect(() => {
         if (user) loadData();
@@ -161,10 +178,78 @@ export const RiskMatrixPage: React.FC = () => {
         );
     };
 
-    const filteredRisks = risks.filter(risk =>
-        risk.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        risk.action_plan.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const openEditModal = (risk: RiskItem) => {
+        setEditingRisk(risk);
+        setEditForm({
+            probability: risk.probability,
+            impact: risk.impact,
+            action_plan: risk.action_plan || ''
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateRisk = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingRisk) return;
+
+        try {
+            const { error } = await supabase
+                .from('risks_opportunities')
+                .update({
+                    probability: editForm.probability,
+                    impact: editForm.impact,
+                    action_plan: editForm.action_plan
+                })
+                .eq('id', editingRisk.id);
+
+            if (error) throw error;
+
+            setIsEditModalOpen(false);
+            await loadData();
+            alert('✅ Risco atualizado com sucesso!');
+        } catch (error: any) {
+            alert('❌ Erro ao atualizar: ' + error.message);
+        }
+    };
+
+    const handleDeleteRisk = async (id: string) => {
+        if (!confirm('Deseja realmente excluir este item?')) return;
+
+        try {
+            const { error } = await supabase
+                .from('risks_opportunities')
+                .update({ status: 'archived' })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            await loadData();
+            alert('✅ Item excluído com sucesso!');
+        } catch (error: any) {
+            alert('❌ Erro ao excluir: ' + error.message);
+        }
+    };
+
+    const filteredRisks = risks.filter(risk => {
+        // Search filter
+        const matchesSearch = risk.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            risk.action_plan.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Type filter
+        const matchesType = filters.type === 'all' || risk.type === filters.type;
+
+        // Severity filter
+        const severity = calculateSeverity(risk.probability, risk.impact);
+        let matchesSeverity = true;
+        if (filters.severity !== 'all') {
+            if (filters.severity === 'critical') matchesSeverity = severity >= 15;
+            else if (filters.severity === 'high') matchesSeverity = severity >= 8 && severity < 15;
+            else if (filters.severity === 'medium') matchesSeverity = severity >= 4 && severity < 8;
+            else if (filters.severity === 'low') matchesSeverity = severity < 4;
+        }
+
+        return matchesSearch && matchesType && matchesSeverity;
+    });
 
     if (loading) {
         return (
@@ -208,9 +293,17 @@ export const RiskMatrixPage: React.FC = () => {
                         className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
                     />
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">
+                <button
+                    onClick={() => setIsFilterModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
+                >
                     <Filter size={20} />
                     <span>Filtros</span>
+                    {(filters.type !== 'all' || filters.severity !== 'all') && (
+                        <span className="ml-1 px-2 py-0.5 bg-[#025159] text-white text-xs rounded-full">
+                            {[filters.type !== 'all' ? 1 : 0, filters.severity !== 'all' ? 1 : 0].reduce((a, b) => a + b)}
+                        </span>
+                    )}
                 </button>
             </div>
 
@@ -287,9 +380,22 @@ export const RiskMatrixPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-                                                <MoreVertical size={18} />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => openEditModal(risk)}
+                                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteRisk(risk.id)}
+                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -373,6 +479,225 @@ export const RiskMatrixPage: React.FC = () => {
                             >
                                 Importar {selectedSwotItems.length > 0 ? `(${selectedSwotItems.length})` : ''}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {isEditModalOpen && editingRisk && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">Editar Risco/Oportunidade</h3>
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdateRisk} className="space-y-4">
+                            <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                                <p className="text-sm text-gray-700 font-medium">{editingRisk.description}</p>
+                                <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${editingRisk.type === 'risk'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                    {editingRisk.type === 'risk' ? 'Risco' : 'Oportunidade'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Probabilidade (1-5)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="5"
+                                        required
+                                        value={editForm.probability}
+                                        onChange={e => setEditForm({ ...editForm, probability: parseInt(e.target.value) })}
+                                        className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Impacto (1-5)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="5"
+                                        required
+                                        value={editForm.impact}
+                                        onChange={e => setEditForm({ ...editForm, impact: parseInt(e.target.value) })}
+                                        className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-700">Nível Calculado (P×I):</span>
+                                    <span className="text-lg font-bold text-[#025159]">
+                                        {editForm.probability * editForm.impact}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Plano de Ação
+                                </label>
+                                <textarea
+                                    value={editForm.action_plan}
+                                    onChange={e => setEditForm({ ...editForm, action_plan: e.target.value })}
+                                    className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] resize-none"
+                                    rows={4}
+                                    placeholder="Descreva as ações necessárias..."
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors"
+                                >
+                                    Salvar Alterações
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Filter Modal */}
+            {isFilterModalOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">Filtros</h3>
+                            <button
+                                onClick={() => setIsFilterModalOpen(false)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.type === 'all'}
+                                            onChange={() => setFilters({ ...filters, type: 'all' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Todos</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.type === 'risk'}
+                                            onChange={() => setFilters({ ...filters, type: 'risk' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Apenas Riscos</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.type === 'opportunity'}
+                                            onChange={() => setFilters({ ...filters, type: 'opportunity' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Apenas Oportunidades</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Nível de Severidade</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.severity === 'all'}
+                                            onChange={() => setFilters({ ...filters, severity: 'all' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Todos</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.severity === 'critical'}
+                                            onChange={() => setFilters({ ...filters, severity: 'critical' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Crítico (≥15)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.severity === 'high'}
+                                            onChange={() => setFilters({ ...filters, severity: 'high' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Alto (8-14)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.severity === 'medium'}
+                                            onChange={() => setFilters({ ...filters, severity: 'medium' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Médio (4-7)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            checked={filters.severity === 'low'}
+                                            onChange={() => setFilters({ ...filters, severity: 'low' })}
+                                            className="text-[#025159]"
+                                        />
+                                        <span className="text-sm">Baixo (&lt;4)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t">
+                                <button
+                                    onClick={() => {
+                                        setFilters({ type: 'all', severity: 'all' });
+                                        setIsFilterModalOpen(false);
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                    Limpar Filtros
+                                </button>
+                                <button
+                                    onClick={() => setIsFilterModalOpen(false)}
+                                    className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors"
+                                >
+                                    Aplicar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

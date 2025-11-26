@@ -169,3 +169,63 @@ export interface Company {
   owner_name?: string;
   owner_email?: string;
 }
+
+export interface Employee {
+  id: string;
+  company_id: string;
+  name: string;
+  job_title: string;
+  department?: string;
+  admission_date: string;
+  status: 'active' | 'inactive';
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EmployeeTraining {
+  id: string;
+  employee_id: string;
+  training_name: string;
+  date_completed: string;
+  expiration_date?: string;
+  certificate_url?: string;
+  notes?: string;
+  status?: 'completed' | 'pending' | 'expired' | 'expiring_soon';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Supplier {
+  id: string;
+  company_id: string;
+  name: string;
+  cnpj?: string;
+  email?: string;
+  phone?: string;
+  category: string;
+  status: 'homologado' | 'em_analise' | 'bloqueado';
+  iqf_score: number;
+  last_evaluation?: string;
+  blocked_reason?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SupplierEvaluation {
+  id: string;
+  supplier_id: string;
+  evaluator_id: string;
+  evaluation_date: string;
+  criteria_quality: number; // 0-10
+  criteria_deadline: number; // 0-10
+  criteria_communication: number; // 0-10
+  final_score: number; // Calculated average
+  comments?: string;
+  created_at?: string;
+
+  // Joined fields from view
+  supplier_name?: string;
+  supplier_category?: string;
+  evaluator_name?: string;
+}

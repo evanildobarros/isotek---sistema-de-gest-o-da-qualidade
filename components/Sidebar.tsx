@@ -140,7 +140,7 @@ const menuGroups: MenuGroup[] = [
         icon: HelpingHand,
         items: [
           {
-            label: 'Gestão de Documentos (GED)',
+            label: 'Gestão de Documentos',
             section: IsoSection.DOCUMENTS,
             path: '/app/documentos',
             icon: FileText

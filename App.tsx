@@ -24,6 +24,8 @@ import { ScopePage } from './components/ScopePage';
 import { SuperAdminPage } from './components/SuperAdminPage';
 import { LeadershipPage } from './components/LeadershipPage';
 import { QualityObjectivesPage } from './components/QualityObjectivesPage';
+import { CompetenciesPage } from './components/CompetenciesPage';
+import { SuppliersPage } from './components/SuppliersPage';
 
 const App: React.FC = () => {
   return (
@@ -62,11 +64,11 @@ const App: React.FC = () => {
                 {/* Grupo B: Execução (Do) */}
                 {/* 7.0 Apoio */}
                 <Route path="documentos" element={<DocumentsPage />} />
-                <Route path="treinamentos" element={<SectionPlaceholder title="Competências e Treinamentos" />} />
+                <Route path="treinamentos" element={<CompetenciesPage />} />
 
                 {/* 8.0 Operação */}
                 <Route path="comercial" element={<SectionPlaceholder title="Comercial e Requisitos" />} />
-                <Route path="fornecedores" element={<SectionPlaceholder title="Gestão de Fornecedores (PROCEM)" />} />
+                <Route path="fornecedores" element={<SuppliersPage />} />
                 <Route path="producao" element={<SectionPlaceholder title="Controle de Produção" />} />
                 <Route path="saidas-nao-conformes" element={<SectionPlaceholder title="Saídas Não Conformes" />} />
 
