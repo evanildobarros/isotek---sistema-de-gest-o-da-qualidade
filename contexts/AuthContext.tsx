@@ -11,6 +11,7 @@ interface AuthContextType {
     loading: boolean;
     loadingCompany: boolean;
     signOut: () => Promise<void>;
+    refreshCompany: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,58 +42,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return () => subscription.unsubscribe();
     }, []);
 
-    // 3. Fetch Company Data when User changes
-    useEffect(() => {
-        const fetchCompany = async () => {
-            if (!user) {
+    const fetchCompany = async () => {
+        if (!user) {
+            setCompany(null);
+            setLoadingCompany(false);
+            return;
+        }
+
+        try {
+            setLoadingCompany(true);
+            // 1. Get company_id from profile
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('company_id')
+                .eq('id', user.id)
+                .single();
+
+            if (profileError) {
+                console.error('Error fetching profile:', profileError);
                 setCompany(null);
-                setLoadingCompany(false);
                 return;
             }
 
-            try {
-                setLoadingCompany(true);
-                // 1. Get company_id from profile
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('company_id')
-                    .eq('id', user.id)
-                    .single();
-
-                if (profileError) {
-                    console.error('Error fetching profile:', profileError);
-                    setCompany(null);
-                    return;
-                }
-
-                if (!profile?.company_id) {
-                    console.warn('User has no company_id');
-                    setCompany(null);
-                    return;
-                }
-
-                // 2. Get company details
-                const { data: companyData, error: companyError } = await supabase
-                    .from('company_info')
-                    .select('*')
-                    .eq('id', profile.company_id)
-                    .single();
-
-                if (companyError) {
-                    console.error('Error fetching company:', companyError);
-                    setCompany(null);
-                    return;
-                }
-
-                setCompany(companyData);
-            } catch (error) {
-                console.error('Unexpected error fetching company:', error);
+            if (!profile?.company_id) {
+                console.warn('User has no company_id');
                 setCompany(null);
-            } finally {
-                setLoadingCompany(false);
+                return;
             }
-        };
 
+            // 2. Get company details
+            const { data: companyData, error: companyError } = await supabase
+                .from('company_info')
+                .select('*')
+                .eq('id', profile.company_id)
+                .single();
+
+            if (companyError) {
+                console.error('Error fetching company:', companyError);
+                setCompany(null);
+                return;
+            }
+
+            setCompany(companyData);
+        } catch (error) {
+            console.error('Unexpected error fetching company:', error);
+            setCompany(null);
+        } finally {
+            setLoadingCompany(false);
+        }
+    };
+
+    // 3. Fetch Company Data when User changes
+    useEffect(() => {
         fetchCompany();
     }, [user]);
 
@@ -119,7 +120,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         company,
         loading,
         loadingCompany,
-        signOut
+        signOut,
+        refreshCompany: fetchCompany
     };
 
     return (

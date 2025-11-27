@@ -59,7 +59,6 @@ export const AuditsPage: React.FC = () => {
         const audit = audits.find(a => a.id === id);
         if (window.confirm(`Tem certeza que deseja excluir a auditoria "${audit?.scope}"?`)) {
             setAudits(prevAudits => prevAudits.filter(a => a.id !== id));
-            console.log(`Auditoria ${id} excluída com sucesso`);
         }
     };
 
@@ -69,7 +68,6 @@ export const AuditsPage: React.FC = () => {
         if (audit) {
             setSelectedAudit(audit);
             setIsModalOpen(true);
-            console.log('Editando auditoria:', audit);
         }
     };
 
@@ -77,10 +75,8 @@ export const AuditsPage: React.FC = () => {
     const handlePlay = (id: number) => {
         const audit = audits.find(a => a.id === id);
         if (audit?.status === 'Agendada') {
-            console.log(`Iniciando auditoria ${id}...`);
             alert(`Iniciando auditoria: ${audit.scope}`);
         } else if (audit?.status === 'Em Andamento') {
-            console.log(`Continuando auditoria ${id}...`);
             alert(`Continuando auditoria: ${audit.scope}`);
         }
     };

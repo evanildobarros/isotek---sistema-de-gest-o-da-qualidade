@@ -14,7 +14,6 @@ import { UsersPage } from './components/UsersPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { DocumentsPage } from './components/DocumentsPage';
-import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
 import { AuditsPage } from './components/AuditsPage';
 import { UnitsPage } from './components/UnitsPage';
 import { StrategicDefinitionPage } from './components/StrategicDefinitionPage';
@@ -26,6 +25,13 @@ import { LeadershipPage } from './components/LeadershipPage';
 import { QualityObjectivesPage } from './components/QualityObjectivesPage';
 import { CompetenciesPage } from './components/CompetenciesPage';
 import { SuppliersPage } from './components/SuppliersPage';
+import { NonConformityPage } from './components/NonConformityPage';
+import { SalesRequirementsPage } from './components/SalesRequirementsPage';
+import { ProductionControlPage } from './components/ProductionControlPage';
+import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
+import { IndicatorsPage } from './components/IndicatorsPage';
+import { ManagementReviewPage } from './components/ManagementReviewPage';
+import { CompanyProfilePage } from './components/CompanyProfilePage';
 
 const App: React.FC = () => {
   return (
@@ -59,33 +65,31 @@ const App: React.FC = () => {
                 <Route path="matriz-riscos" element={<RiskMatrixPage />} />
                 <Route path="objetivos-qualidade" element={<QualityObjectivesPage />} />
 
-
-
                 {/* Grupo B: Execução (Do) */}
                 {/* 7.0 Apoio */}
                 <Route path="documentos" element={<DocumentsPage />} />
                 <Route path="treinamentos" element={<CompetenciesPage />} />
 
                 {/* 8.0 Operação */}
-                <Route path="comercial" element={<SectionPlaceholder title="Comercial e Requisitos" />} />
+                <Route path="comercial" element={<SalesRequirementsPage />} />
                 <Route path="fornecedores" element={<SuppliersPage />} />
-                <Route path="producao" element={<SectionPlaceholder title="Controle de Produção" />} />
-                <Route path="saidas-nao-conformes" element={<SectionPlaceholder title="Saídas Não Conformes" />} />
+                <Route path="producao" element={<ProductionControlPage />} />
 
                 {/* Grupo C: Checagem (Check/Act) */}
                 {/* 9.0 Avaliação */}
-                <Route path="indicadores" element={<SectionPlaceholder title="Indicadores de Desempenho" />} />
+                <Route path="indicadores" element={<IndicatorsPage />} />
                 <Route path="auditorias" element={<AuditsPage />} />
-                <Route path="analise-critica" element={<SectionPlaceholder title="Análise Crítica" />} />
+                <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
+                <Route path="analise-critica" element={<ManagementReviewPage />} />
 
                 {/* 10.0 Melhoria */}
-                <Route path="nao-conformidades" element={<SectionMelhoria />} />
-                <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
+                <Route path="nao-conformidades" element={<CorrectiveActionsPage />} />
+                <Route path="acoes-corretivas" element={<Navigate to="/app/nao-conformidades" replace />} />
 
                 {/* Configurações */}
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="unidades" element={<UnitsPage />} />
-                <Route path="configuracoes" element={<SectionPlaceholder title="Perfil da Empresa" />} />
+                <Route path="configuracoes" element={<CompanyProfilePage />} />
                 <Route path="sistema" element={<Navigate to="/app/configuracoes" replace />} />
 
                 {/* Legacy Routes Redirects (Optional, or keep for compatibility) */}

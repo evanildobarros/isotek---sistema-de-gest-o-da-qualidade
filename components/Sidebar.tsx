@@ -146,7 +146,7 @@ const menuGroups: MenuGroup[] = [
             icon: FileText
           },
           {
-            label: 'Competências e Treinamentos',
+            label: 'Capacitação',
             section: IsoSection.COMPETENCIES_TRAINING,
             path: '/app/treinamentos',
             icon: GraduationCap
@@ -175,12 +175,6 @@ const menuGroups: MenuGroup[] = [
             section: IsoSection.PRODUCTION_CONTROL,
             path: '/app/producao',
             icon: Factory
-          },
-          {
-            label: 'Saídas Não Conformes',
-            section: IsoSection.NON_CONFORMING_OUTPUTS,
-            path: '/app/saidas-nao-conformes',
-            icon: AlertOctagon
           }
         ]
       }
@@ -195,7 +189,7 @@ const menuGroups: MenuGroup[] = [
         icon: BarChart3,
         items: [
           {
-            label: 'Indicadores de Desempenho',
+            label: 'Indicadores',
             section: IsoSection.PERFORMANCE_INDICATORS,
             path: '/app/indicadores',
             icon: BarChart3
@@ -220,16 +214,10 @@ const menuGroups: MenuGroup[] = [
         icon: TrendingUp,
         items: [
           {
-            label: 'Não Conformidades (RNC)',
+            label: 'Não Conformidades',
             section: IsoSection.NON_CONFORMANCES,
             path: '/app/nao-conformidades',
             icon: AlertTriangle
-          },
-          {
-            label: 'Ações Corretivas',
-            section: IsoSection.CORRECTIVE_ACTIONS,
-            path: '/app/acoes-corretivas',
-            icon: CheckCircle2
           }
         ]
       }

@@ -39,7 +39,6 @@ export const Login: React.FC = () => {
             }
 
             if (data.session) {
-                console.log('Login Sucesso:', data);
                 // Navigation handled by useEffect
                 return;
             }

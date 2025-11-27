@@ -168,6 +168,9 @@ export interface Company {
   monthly_revenue?: number;
   owner_name?: string;
   owner_email?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface Employee {
@@ -229,3 +232,158 @@ export interface SupplierEvaluation {
   supplier_category?: string;
   evaluator_name?: string;
 }
+
+export interface NonConformityProduct {
+  id: string;
+  company_id: string;
+  description: string;
+  date_occurred: string;
+  origin: 'Produção' | 'Fornecedor' | 'Cliente/Reclamação';
+  severity: 'Baixa' | 'Média' | 'Crítica';
+  status: 'open' | 'analyzing' | 'resolved';
+  disposition?: 'Retrabalho' | 'Refugo' | 'Concessão/Aceite' | 'Devolução';
+  quantity_affected?: number;
+  photo_url?: string;
+  responsible_id?: string;
+  disposition_justification?: string;
+  authorized_by?: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields
+  responsible_name?: string;
+}
+
+export interface SalesOrder {
+  id: string;
+  company_id: string;
+  code: string; // Número do pedido/contrato
+  client_name: string;
+  description: string; // Produto/serviço vendido
+  delivery_deadline: string;
+  status: 'pending_review' | 'approved' | 'rejected' | 'delivered';
+  review_notes?: string;
+
+  // Checklist da análise crítica (ISO 8.2.3)
+  requirements_defined?: boolean;
+  has_capacity?: boolean;
+  risks_considered?: boolean;
+
+  reviewed_by?: string;
+  reviewed_at?: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields
+  reviewer_name?: string;
+}
+
+export interface ProductionOrder {
+  id: string;
+  company_id: string;
+  code: string; // Número da OP/OS
+  sales_order_id?: string; // FK opcional para sales_orders
+  product_service: string; // O que está sendo produzido/executado
+  status: 'scheduled' | 'in_progress' | 'quality_check' | 'completed';
+  start_date?: string;
+  end_date?: string;
+  batch_number?: string; // Rastreabilidade (Lote/Série)
+  work_instructions?: string; // Instruções documentadas
+  notes?: string; // Registros de execução
+  current_stage?: string; // Etapa atual
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields
+  sales_order_code?: string;
+  client_name?: string;
+}
+
+export interface CorrectiveAction {
+  id: string;
+  company_id: string;
+  code: string; // RNC-2024-01
+  origin: string; // Auditoria, Reclamação Cliente, Indicador
+  description: string; // O problema
+  root_cause?: string; // Análise 5 Porquês / Ishikawa
+  immediate_action?: string; // Ação imediata
+  deadline: string;
+  responsible_id: string;
+  status: 'open' | 'root_cause_analysis' | 'implementation' | 'effectiveness_check' | 'closed';
+  effectiveness_verified?: boolean; // Problema voltou a ocorrer?
+  effectiveness_notes?: string; // Parecer do gestor
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields
+  responsible_name?: string;
+  tasks?: CorrectiveActionTask[];
+}
+
+export interface CorrectiveActionTask {
+  id: string;
+  corrective_action_id: string;
+  description: string; // O que fazer
+  responsible_id: string; // Quem
+  due_date: string; // Quando
+  completed: boolean;
+  completed_at?: string;
+  created_at?: string;
+
+  // Joined
+  responsible_name?: string;
+}
+
+export interface QualityObjective {
+  id: string;
+  company_id: string;
+  name: string;
+  target_value: number;
+  unit: string;
+  frequency: string;
+  deadline: string;
+  status: 'pending' | 'on_track' | 'at_risk' | 'completed';
+  linked_process?: string;
+  created_at?: string;
+}
+
+export interface KpiMeasurement {
+  id: string;
+  company_id: string;
+  objective_id: string;
+  date: string;
+  value: number;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface CustomerSurvey {
+  id: string;
+  company_id: string;
+  date: string;
+  client_name: string;
+  score: number;
+  feedback?: string;
+  created_at?: string;
+}
+
+export interface ManagementReview {
+  id: string;
+  company_id: string;
+  date: string;
+  period_analyzed: string;
+  participants: string;
+  inputs_json: {
+    previous_actions: string;
+    context_changes: string;
+    customer_satisfaction: string;
+    supplier_performance: string;
+    audit_results: string;
+    process_performance: string;
+  };
+  outputs_decisions: string;
+  status: 'draft' | 'concluded';
+  created_at?: string;
+  updated_at?: string;
+}
+
