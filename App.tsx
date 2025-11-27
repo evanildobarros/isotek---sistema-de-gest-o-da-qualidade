@@ -74,17 +74,17 @@ const App: React.FC = () => {
                 <Route path="comercial" element={<SalesRequirementsPage />} />
                 <Route path="fornecedores" element={<SuppliersPage />} />
                 <Route path="producao" element={<ProductionControlPage />} />
+                <Route path="saidas-nao-conformes" element={<NonConformityPage />} />
 
                 {/* Grupo C: Checagem (Check/Act) */}
                 {/* 9.0 Avaliação */}
                 <Route path="indicadores" element={<IndicatorsPage />} />
                 <Route path="auditorias" element={<AuditsPage />} />
-                <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
                 <Route path="analise-critica" element={<ManagementReviewPage />} />
 
                 {/* 10.0 Melhoria */}
-                <Route path="nao-conformidades" element={<CorrectiveActionsPage />} />
-                <Route path="acoes-corretivas" element={<Navigate to="/app/nao-conformidades" replace />} />
+                <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
+                <Route path="nao-conformidades" element={<Navigate to="/app/acoes-corretivas" replace />} />
 
                 {/* Configurações */}
                 <Route path="usuarios" element={<UsersPage />} />

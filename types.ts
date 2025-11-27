@@ -80,15 +80,7 @@ export interface SwotItem {
   impact: 'High' | 'Medium' | 'Low';
 }
 
-export interface NonConformance {
-  id: string;
-  code: string;
-  description: string;
-  source: string; // e.g., Audit, Client Complaint
-  status: 'Open' | 'Analysis' | 'Implementation' | 'Closed';
-  dateOpened: string;
-  severity: 'Critical' | 'Major' | 'Minor';
-}
+
 
 export interface KpiMetric {
   name: string;

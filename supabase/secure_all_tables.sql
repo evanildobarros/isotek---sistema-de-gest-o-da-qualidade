@@ -21,7 +21,7 @@ DROP POLICY IF EXISTS "Users can view own company documents" ON public.documents
 CREATE POLICY "Users can view own company documents" ON public.documents
 FOR SELECT USING (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
-    OR (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_super_admin = true)
 );
 
 DROP POLICY IF EXISTS "Users can insert own company documents" ON public.documents;
@@ -63,7 +63,7 @@ DROP POLICY IF EXISTS "Users can view own company audits" ON public.audits;
 CREATE POLICY "Users can view own company audits" ON public.audits
 FOR SELECT USING (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
-    OR (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_super_admin = true)
 );
 
 DROP POLICY IF EXISTS "Users can insert own company audits" ON public.audits;
@@ -88,40 +88,40 @@ FOR DELETE USING (
 -- =============================================================================
 -- 3. NON CONFORMITIES (RNC)
 -- =============================================================================
-ALTER TABLE public.non_conformities ADD COLUMN IF NOT EXISTS company_id uuid REFERENCES public.company_info(id);
+ALTER TABLE public.non_conformities_products ADD COLUMN IF NOT EXISTS company_id uuid REFERENCES public.company_info(id);
 
 -- Backfill
-UPDATE public.non_conformities n
+UPDATE public.non_conformities_products n
 SET company_id = p.company_id
 FROM public.profiles p
 WHERE n.responsible_id = p.id
 AND n.company_id IS NULL;
 
 -- Enable RLS
-ALTER TABLE public.non_conformities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.non_conformities_products ENABLE ROW LEVEL SECURITY;
 
 -- Policies
-DROP POLICY IF EXISTS "Users can view own company RNCs" ON public.non_conformities;
-CREATE POLICY "Users can view own company RNCs" ON public.non_conformities
+DROP POLICY IF EXISTS "Users can view own company RNCs" ON public.non_conformities_products;
+CREATE POLICY "Users can view own company RNCs" ON public.non_conformities_products
 FOR SELECT USING (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
-    OR (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_super_admin = true)
 );
 
-DROP POLICY IF EXISTS "Users can insert own company RNCs" ON public.non_conformities;
-CREATE POLICY "Users can insert own company RNCs" ON public.non_conformities
+DROP POLICY IF EXISTS "Users can insert own company RNCs" ON public.non_conformities_products;
+CREATE POLICY "Users can insert own company RNCs" ON public.non_conformities_products
 FOR INSERT WITH CHECK (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
 );
 
-DROP POLICY IF EXISTS "Users can update own company RNCs" ON public.non_conformities;
-CREATE POLICY "Users can update own company RNCs" ON public.non_conformities
+DROP POLICY IF EXISTS "Users can update own company RNCs" ON public.non_conformities_products;
+CREATE POLICY "Users can update own company RNCs" ON public.non_conformities_products
 FOR UPDATE USING (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
 );
 
-DROP POLICY IF EXISTS "Users can delete own company RNCs" ON public.non_conformities;
-CREATE POLICY "Users can delete own company RNCs" ON public.non_conformities
+DROP POLICY IF EXISTS "Users can delete own company RNCs" ON public.non_conformities_products;
+CREATE POLICY "Users can delete own company RNCs" ON public.non_conformities_products
 FOR DELETE USING (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
 );
@@ -136,7 +136,7 @@ ALTER TABLE public.corrective_actions ADD COLUMN IF NOT EXISTS company_id uuid R
 UPDATE public.corrective_actions c
 SET company_id = p.company_id
 FROM public.profiles p
-WHERE c.owner_id = p.id
+WHERE c.responsible_id = p.id
 AND c.company_id IS NULL;
 
 -- Enable RLS
@@ -147,7 +147,7 @@ DROP POLICY IF EXISTS "Users can view own company actions" ON public.corrective_
 CREATE POLICY "Users can view own company actions" ON public.corrective_actions
 FOR SELECT USING (
     company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
-    OR (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_super_admin = true)
 );
 
 DROP POLICY IF EXISTS "Users can insert own company actions" ON public.corrective_actions;

@@ -1,4 +1,6 @@
 -- Function to delete a company (Super Admin only)
+DROP FUNCTION IF EXISTS public.delete_company(uuid);
+
 CREATE OR REPLACE FUNCTION public.delete_company(p_company_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -8,13 +10,13 @@ DECLARE
     v_caller_is_admin boolean;
 BEGIN
     -- Security Check
-    SELECT (is_super_admin IS TRUE OR auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    SELECT (is_super_admin IS TRUE)
     INTO v_caller_is_admin
     FROM public.profiles
     WHERE id = auth.uid();
 
     IF v_caller_is_admin IS NULL THEN
-        v_caller_is_admin := (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com');
+        v_caller_is_admin := false;
     END IF;
 
     IF v_caller_is_admin IS NOT TRUE THEN

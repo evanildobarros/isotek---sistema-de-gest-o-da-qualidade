@@ -1,4 +1,6 @@
 -- Function to fetch all companies (Super Admin only)
+DROP FUNCTION IF EXISTS public.get_all_companies();
+
 CREATE OR REPLACE FUNCTION public.get_all_companies()
 RETURNS SETOF public.company_info
 LANGUAGE plpgsql
@@ -8,14 +10,14 @@ DECLARE
     v_caller_is_admin boolean;
 BEGIN
     -- 1. Security Check: Ensure caller is Super Admin
-    SELECT (is_super_admin IS TRUE OR auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    SELECT (is_super_admin IS TRUE)
     INTO v_caller_is_admin
     FROM public.profiles
     WHERE id = auth.uid();
 
     -- Fallback
     IF v_caller_is_admin IS NULL THEN
-        v_caller_is_admin := (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com');
+        v_caller_is_admin := false;
     END IF;
 
     IF v_caller_is_admin IS NOT TRUE THEN

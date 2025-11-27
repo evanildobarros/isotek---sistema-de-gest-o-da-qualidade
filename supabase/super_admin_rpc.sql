@@ -1,4 +1,6 @@
 -- Function to create a company and link it to a user (Super Admin only)
+DROP FUNCTION IF EXISTS public.create_client_company(text, text, text, uuid, numeric);
+
 CREATE OR REPLACE FUNCTION public.create_client_company(
     p_name text,
     p_cnpj text,
@@ -15,14 +17,14 @@ DECLARE
     v_caller_is_admin boolean;
 BEGIN
     -- 1. Security Check: Ensure caller is Super Admin
-    SELECT (is_super_admin IS TRUE OR auth.jwt() ->> 'email' = 'evanildobarros@gmail.com')
+    SELECT (is_super_admin IS TRUE)
     INTO v_caller_is_admin
     FROM public.profiles
     WHERE id = auth.uid();
 
     -- Fallback if profile not found (shouldn't happen for logged in user, but safety first)
     IF v_caller_is_admin IS NULL THEN
-        v_caller_is_admin := (auth.jwt() ->> 'email' = 'evanildobarros@gmail.com');
+        v_caller_is_admin := false;
     END IF;
 
     IF v_caller_is_admin IS NOT TRUE THEN
