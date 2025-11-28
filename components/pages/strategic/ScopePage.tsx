@@ -256,8 +256,26 @@ export const ScopePage: React.FC = () => {
                                         </p>
                                     </div>
                                 </div>
+                            ) : !isEditingScope ? (
+                                /* Empty State - Show when no scope and not editing */
+                                <div className="p-8">
+                                    <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">Escopo não definido</h3>
+                                        <p className="text-gray-500 max-w-md mx-auto mb-6">
+                                            Defina o escopo do seu Sistema de Gestão da Qualidade para atender aos requisitos da ISO 9001.
+                                        </p>
+                                        <button
+                                            onClick={() => setIsEditingScope(true)}
+                                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Definir Escopo
+                                        </button>
+                                    </div>
+                                </div>
                             ) : (
-                                /* Edit Mode - Show when editing or no scope */
+                                /* Edit Mode - Show when editing */
                                 <div className="p-8 space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -265,10 +283,11 @@ export const ScopePage: React.FC = () => {
                                         </label>
                                         <textarea
                                             rows={4}
-                                            value={scopeData.scope}
+                                            value={scopeData.scope || ''}
                                             onChange={e => setScopeData({ ...scopeData, scope: e.target.value })}
                                             placeholder="Ex: Desenvolvimento, comercialização e suporte de softwares para gestão empresarial..."
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-700 leading-relaxed resize-y"
+                                            autoFocus
                                         />
                                         <p className="text-xs text-gray-500 mt-2">
                                             Descreva os produtos e serviços cobertos pelo SGQ.
@@ -277,18 +296,16 @@ export const ScopePage: React.FC = () => {
 
                                     {/* Botões */}
                                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                                        {manualId && (
-                                            <button
-                                                onClick={() => {
-                                                    setIsEditingScope(false);
-                                                    // Reload original data
-                                                    fetchData();
-                                                }}
-                                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
-                                            >
-                                                Cancelar
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => {
+                                                setIsEditingScope(false);
+                                                // Reload original data
+                                                fetchData();
+                                            }}
+                                            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                                        >
+                                            Cancelar
+                                        </button>
                                         <button
                                             onClick={handleSaveScope}
                                             disabled={savingScope}
