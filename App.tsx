@@ -1,37 +1,56 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LandingPage } from './components/LandingPage';
-import { Login } from './components/Login';
-import { DashboardLayout } from './components/DashboardLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { SectionDashboard } from './components/SectionDashboard';
-import { SectionMelhoria } from './components/SectionMelhoria';
-import { SectionPerfil } from './components/SectionPerfil';
-import { SwotAnalysis } from './components/SwotAnalysis';
-
-import { SectionPlaceholder } from './components/SectionPlaceholder';
-import { UsersPage } from './components/UsersPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { DocumentsPage } from './components/DocumentsPage';
-import { AuditsPage } from './components/AuditsPage';
-import { UnitsPage } from './components/UnitsPage';
-import { StrategicDefinitionPage } from './components/StrategicDefinitionPage';
-import { RiskMatrixPage } from './components/RiskMatrixPage';
-import { StakeholdersPage } from './components/StakeholdersPage';
-import { ScopePage } from './components/ScopePage';
-import { SuperAdminPage } from './components/SuperAdminPage';
-import { LeadershipPage } from './components/LeadershipPage';
-import { QualityObjectivesPage } from './components/QualityObjectivesPage';
-import { CompetenciesPage } from './components/CompetenciesPage';
-import { SuppliersPage } from './components/SuppliersPage';
-import { NonConformityPage } from './components/NonConformityPage';
-import { SalesRequirementsPage } from './components/SalesRequirementsPage';
-import { ProductionControlPage } from './components/ProductionControlPage';
-import { CorrectiveActionsPage } from './components/CorrectiveActionsPage';
-import { IndicatorsPage } from './components/IndicatorsPage';
-import { ManagementReviewPage } from './components/ManagementReviewPage';
-import { CompanyProfilePage } from './components/CompanyProfilePage';
+
+// Auth components
+import { Login, ProtectedRoute } from './components/auth';
+
+// Layout components
+import { DashboardLayout } from './components/layout';
+
+// Landing Page
+import { LandingPage } from './LandingPage';
+
+// Section components
+import { SectionDashboard, SectionPerfil } from './components/sections';
+
+// Page components - Strategic
+import {
+  SwotAnalysis,
+  StakeholdersPage,
+  ScopePage,
+  StrategicDefinitionPage,
+  LeadershipPage,
+  RiskMatrixPage,
+  QualityObjectivesPage
+} from './components/pages/strategic';
+
+// Page components - Execution
+import {
+  DocumentsPage,
+  CompetenciesPage,
+  SalesRequirementsPage,
+  SuppliersPage,
+  ProductionControlPage
+} from './components/pages/execution';
+
+// Page components - Improvement
+import {
+  NonConformityPage,
+  CorrectiveActionsPage,
+  IndicatorsPage,
+  AuditsPage,
+  ManagementReviewPage
+} from './components/pages/improvement';
+
+// Page components - Settings
+import {
+  UsersPage,
+  UnitsPage,
+  CompanyProfilePage,
+  SuperAdminPage
+} from './components/pages/settings';
 
 const App: React.FC = () => {
   return (
