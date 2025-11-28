@@ -262,11 +262,11 @@ export const SuppliersPage: React.FC = () => {
     };
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
             {/* Header */}
-            <div className="flex justify-between items-start mb-8">
+            <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6 md:mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                    <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-1">
                         Gestão de Fornecedores e Compras
                     </h1>
                     <p className="text-gray-500 text-sm">
@@ -275,10 +275,10 @@ export const SuppliersPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => handleOpenSupplierModal()}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium w-full md:w-auto"
                 >
                     <Plus className="w-5 h-5" />
-                    Novo Fornecedor
+                    <span>Novo Fornecedor</span>
                 </button>
             </div>
 
@@ -288,30 +288,32 @@ export const SuppliersPage: React.FC = () => {
                     <div className="flex">
                         <button
                             onClick={() => setActiveTab('directory')}
-                            className={`px-6 py-3 font-semibold text-sm transition-colors ${activeTab === 'directory'
-                                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
-                                    : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 px-3 md:px-6 py-3 font-semibold text-xs md:text-sm transition-colors ${activeTab === 'directory'
+                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                                : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            DIRETÓRIO DE FORNECEDORES
+                            <span className="hidden sm:inline">DIRETÓRIO DE FORNECEDORES</span>
+                            <span className="sm:hidden">FORNECEDORES</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('evaluations')}
-                            className={`px-6 py-3 font-semibold text-sm transition-colors ${activeTab === 'evaluations'
-                                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
-                                    : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 px-3 md:px-6 py-3 font-semibold text-xs md:text-sm transition-colors ${activeTab === 'evaluations'
+                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                                : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            AVALIAÇÕES (IQF)
+                            <span className="hidden sm:inline">AVALIAÇÕES (IQF)</span>
+                            <span className="sm:hidden">AVALIAÇÕES</span>
                         </button>
                     </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                     {activeTab === 'directory' && (
                         <div>
-                            {/* Table Header */}
-                            <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 rounded-lg mb-3 font-semibold text-sm text-gray-600">
+                            {/* Table Header - Desktop Only */}
+                            <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 rounded-lg mb-3 font-semibold text-sm text-gray-600">
                                 <div className="col-span-3">EMPRESA</div>
                                 <div className="col-span-2">CATEGORIA</div>
                                 <div className="col-span-2">STATUS</div>
@@ -327,7 +329,8 @@ export const SuppliersPage: React.FC = () => {
 
                                     return (
                                         <div key={supplier.id} className="border border-gray-100 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                                            <div className="grid grid-cols-12 gap-4 px-4 py-4 items-center">
+                                            {/* Desktop Layout */}
+                                            <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-4 items-center">
                                                 {/* Company */}
                                                 <div className="col-span-3 flex items-center gap-3">
                                                     <div className="p-2 bg-gray-50 rounded-lg">
@@ -403,6 +406,76 @@ export const SuppliersPage: React.FC = () => {
                                                 </div>
                                             </div>
 
+                                            {/* Mobile Layout */}
+                                            <div className="lg:hidden p-4 space-y-3">
+                                                {/* Header: Icon + Name + Status */}
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                                                        {getCategoryIcon(supplier.category)}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-bold text-gray-900">
+                                                            {supplier.name}
+                                                        </h3>
+                                                        {supplier.cnpj && (
+                                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                                {supplier.cnpj}
+                                                            </p>
+                                                        )}
+                                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                            <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md">
+                                                                {supplier.category}
+                                                            </span>
+                                                            {getStatusBadge(supplier.status)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* IQF Score */}
+                                                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                                                    <span className="text-sm text-gray-600 font-medium">Nota IQF:</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                                        <span className={`text-xl font-bold ${hasLowScore ? 'text-red-600' : 'text-gray-900'}`}>
+                                                            {supplier.iqf_score.toFixed(0)}/100
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Actions */}
+                                                <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                                                    <button
+                                                        onClick={() => handleOpenEvaluationModal(supplier)}
+                                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                                    >
+                                                        <Star className="w-4 h-4" />
+                                                        Avaliar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenSupplierModal(supplier)}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteSupplier(supplier.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                    {supplier.status === 'bloqueado' && supplier.blocked_reason && (
+                                                        <button
+                                                            onClick={() => setExpandedSupplierId(isExpanded ? null : supplier.id)}
+                                                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                                                        >
+                                                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
                                             {/* Expanded Block Reason */}
                                             {isExpanded && supplier.blocked_reason && (
                                                 <div className="px-4 pb-4 border-t border-gray-100 bg-red-50/30">
@@ -433,27 +506,30 @@ export const SuppliersPage: React.FC = () => {
                     {activeTab === 'evaluations' && (
                         <div className="space-y-4">
                             {evaluations.map(evaluation => (
-                                <div key={evaluation.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow">
+                                <div key={evaluation.id} className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow">
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2">
                                             <span className="font-semibold text-gray-900">{evaluation.supplier_name}</span>
-                                            <span className="text-xs text-gray-500">•</span>
+                                            <span className="hidden sm:inline text-xs text-gray-500">•</span>
                                             <span className="text-sm text-gray-600">{formatDate(evaluation.evaluation_date)}</span>
                                         </div>
                                         {evaluation.comments && (
-                                            <p className="text-sm text-gray-600">{evaluation.comments}</p>
+                                            <p className="text-sm text-gray-600 mb-2">{evaluation.comments}</p>
                                         )}
-                                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                        <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs text-gray-500">
                                             <span>Qualidade: {evaluation.criteria_quality.toFixed(1)}</span>
                                             <span>Prazos: {evaluation.criteria_deadline.toFixed(1)}</span>
                                             <span>Comunicação: {evaluation.criteria_communication.toFixed(1)}</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                                        <span className="text-xl font-bold text-gray-900">
-                                            {evaluation.final_score.toFixed(1)}
-                                        </span>
+                                    <div className="flex items-center justify-between md:justify-end gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100">
+                                        <span className="md:hidden text-sm text-gray-600 font-medium">Nota Final:</span>
+                                        <div className="flex items-center gap-2">
+                                            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                            <span className="text-xl font-bold text-gray-900">
+                                                {evaluation.final_score.toFixed(1)}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -461,8 +537,8 @@ export const SuppliersPage: React.FC = () => {
                             {evaluations.length === 0 && (
                                 <div className="text-center py-12 bg-gray-50 rounded-lg">
                                     <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                    <h3 className="text-lg font-medium text-gray-900">Nenhuma avaliação registrada</h3>
-                                    <p className="text-gray-500">As avaliações de fornecedores aparecerão aqui.</p>
+                                    <h3 className="text-base md:text-lg font-medium text-gray-900">Nenhuma avaliação registrada</h3>
+                                    <p className="text-sm text-gray-500">As avaliações de fornecedores aparecerão aqui.</p>
                                 </div>
                             )}
                         </div>
@@ -473,18 +549,18 @@ export const SuppliersPage: React.FC = () => {
             {/* Supplier Modal */}
             {isSupplierModalOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h2 className="text-lg font-bold text-gray-900">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
+                            <h2 className="text-base md:text-lg font-bold text-gray-900">
                                 {editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}
                             </h2>
-                            <button onClick={() => setIsSupplierModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsSupplierModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveSupplier} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSaveSupplier} className="p-4 md:p-6 space-y-4 overflow-y-auto flex-1">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Nome da Empresa *</label>
                                     <input
@@ -573,17 +649,17 @@ export const SuppliersPage: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3">
+                            <div className="pt-4 flex flex-col-reverse md:flex-row justify-end gap-2 md:gap-3 sticky bottom-0 bg-white pb-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsSupplierModalOpen(false)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="w-full md:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
                                 >
                                     Salvar
                                 </button>
@@ -596,18 +672,18 @@ export const SuppliersPage: React.FC = () => {
             {/* Evaluation Modal */}
             {isEvaluationModalOpen && evaluatingSupplier && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900">Avaliação de Desempenho</h2>
-                                <p className="text-sm text-gray-600">{evaluatingSupplier.name}</p>
+                                <h2 className="text-base md:text-lg font-bold text-gray-900">Avaliação de Desempenho</h2>
+                                <p className="text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">{evaluatingSupplier.name}</p>
                             </div>
-                            <button onClick={() => setIsEvaluationModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsEvaluationModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveEvaluation} className="p-6 space-y-6">
+                        <form onSubmit={handleSaveEvaluation} className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1">
                             {/* Quality Slider */}
                             <div>
                                 <div className="flex justify-between items-center mb-2">
@@ -697,17 +773,17 @@ export const SuppliersPage: React.FC = () => {
                                 />
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3">
+                            <div className="pt-4 flex flex-col-reverse md:flex-row justify-end gap-2 md:gap-3 sticky bottom-0 bg-white pb-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsEvaluationModalOpen(false)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="w-full md:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
                                 >
                                     Salvar Avaliação
                                 </button>

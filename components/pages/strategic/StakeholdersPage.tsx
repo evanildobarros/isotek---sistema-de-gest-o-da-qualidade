@@ -145,83 +145,86 @@ export const StakeholdersPage: React.FC = () => {
     };
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <Users className="w-7 h-7 text-[#025159]" />
-                        <h1 className="text-2xl font-bold text-[#025159]">Partes Interessadas Pertinentes</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-[#025159]">Partes Interessadas Pertinentes</h1>
                     </div>
                     <p className="text-gray-500 text-sm">Gestão de stakeholders e seus requisitos (ISO 9001:2015 - 4.2)</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2 rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm"
+                    className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm w-full md:w-auto"
                 >
                     <Plus className="w-5 h-5" />
-                    Adicionar Parte
+                    <span>Adicionar Parte</span>
                 </button>
             </div>
 
             <div className="grid gap-4">
                 {stakeholders.map((item) => (
-                    <div key={item.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 flex items-center gap-6">
-                        {/* Esquerda: Ícone e Nome */}
-                        <div className="flex items-center gap-4 min-w-[200px]">
-                            <div className="p-3 bg-gray-50 rounded-lg">
-                                {getIconByType(item.type)}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-900">{item.name}</h3>
-                                <span className="text-xs text-gray-500 font-medium px-2 py-0.5 bg-gray-100 rounded-full">
-                                    {item.type}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Meio: Necessidades e Expectativas */}
-                        <div className="flex-1 grid grid-cols-2 gap-8 border-l border-r border-gray-100 px-8">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Shield className="w-4 h-4 text-gray-400" />
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Necessidades (Requisitos)</span>
+                    <div key={item.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 md:p-6">
+                        {/* Layout Mobile: Vertical Stack */}
+                        <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                            {/* Ícone e Nome */}
+                            <div className="flex items-center gap-3 md:gap-4 md:min-w-[200px]">
+                                <div className="p-2.5 md:p-3 bg-gray-50 rounded-lg flex-shrink-0">
+                                    {getIconByType(item.type)}
                                 </div>
-                                <p className="text-sm text-gray-600 leading-relaxed">{item.needs}</p>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Target className="w-4 h-4 text-gray-400" />
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Expectativas (Desejável)</span>
-                                </div>
-                                <p className="text-sm text-gray-600 leading-relaxed">{item.expectations}</p>
-                            </div>
-                        </div>
-
-                        {/* Direita: Monitoramento e Ações */}
-                        <div className="flex items-center gap-6 min-w-[150px] justify-end">
-                            <div className="flex flex-col items-end">
-                                <span className="text-xs text-gray-400 mb-1">Revisão</span>
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium">
-                                    <Calendar className="w-3.5 h-3.5" />
-                                    {item.monitor_frequency}
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-gray-900 truncate">{item.name}</h3>
+                                    <span className="text-xs text-gray-500 font-medium px-2 py-0.5 bg-gray-100 rounded-full inline-block mt-1">
+                                        {item.type}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => handleOpenModal(item)}
-                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Editar"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(item.id)}
-                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Excluir"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                            {/* Necessidades e Expectativas */}
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 md:border-l md:border-r border-gray-100 md:px-8">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Shield className="w-4 h-4 text-gray-400" />
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Necessidades</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed">{item.needs}</p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Target className="w-4 h-4 text-gray-400" />
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Expectativas</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed">{item.expectations}</p>
+                                </div>
+                            </div>
+
+                            {/* Monitoramento e Ações */}
+                            <div className="flex items-center justify-between md:justify-end gap-4 md:gap-6 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100">
+                                <div className="flex flex-col md:items-end">
+                                    <span className="text-xs text-gray-400 mb-1">Revisão</span>
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span className="whitespace-nowrap">{item.monitor_frequency}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleOpenModal(item)}
+                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Editar"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(item.id)}
+                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -239,18 +242,18 @@ export const StakeholdersPage: React.FC = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h2 className="text-lg font-bold text-gray-900">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col">
+                        <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
+                            <h2 className="text-base md:text-lg font-bold text-gray-900">
                                 {editingId ? 'Editar Parte Interessada' : 'Nova Parte Interessada'}
                             </h2>
-                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 p-1">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSave} className="p-6 space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
+                        <form onSubmit={handleSave} className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Quem é? (Nome)</label>
                                     <input
@@ -259,7 +262,7 @@ export const StakeholdersPage: React.FC = () => {
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                                         placeholder="Ex: Clientes, Anvisa, Acionistas"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                                     />
                                 </div>
 
@@ -268,7 +271,7 @@ export const StakeholdersPage: React.FC = () => {
                                     <select
                                         value={formData.type}
                                         onChange={e => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white"
                                     >
                                         <option value="Cliente">Cliente</option>
                                         <option value="Fornecedor">Fornecedor</option>
@@ -316,17 +319,17 @@ export const StakeholdersPage: React.FC = () => {
                                 </select>
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3">
+                            <div className="pt-4 flex flex-col-reverse md:flex-row justify-end gap-2 md:gap-3 sticky bottom-0 bg-white pb-2">
                                 <button
                                     type="button"
                                     onClick={handleCloseModal}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="w-full md:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
                                 >
                                     Salvar
                                 </button>

@@ -399,28 +399,28 @@ export const DocumentsPage: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="p-4 md:p-6 lg:p-8 space-y-6">
             {/* Header */}
-            <div className="mb-8 flex justify-between items-start">
+            <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between md:items-start gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <FileText className="w-7 h-7 text-[#025159]" />
-                        <h1 className="text-2xl font-bold text-[#025159]">Gestão de Documentos</h1>
+                        <FileText className="w-6 h-6 md:w-7 md:h-7 text-[#025159]" />
+                        <h1 className="text-xl md:text-2xl font-bold text-[#025159]">Gestão de Documentos</h1>
                     </div>
                     <p className="text-gray-500 text-sm">Controle da Informação Documentada (ISO 9001: 7.5)</p>
                 </div>
                 <button
                     onClick={() => setIsUploadModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors w-full md:w-auto"
                 >
                     <Plus size={20} />
-                    Novo Documento
+                    <span>Novo Documento</span>
                 </button>
             </div>
 
             {/* Status Filters */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex gap-2 flex-wrap">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm">
+                <div className="grid grid-cols-2 sm:flex gap-2 flex-wrap">
                     <button
                         onClick={() => setStatusFilter('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'all'
@@ -486,7 +486,7 @@ export const DocumentsPage: React.FC = () => {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                     {filteredDocuments.map((doc) => {
                         const { icon: Icon, colorClass, bgClass } = getFileIcon(doc.file_name);
                         const canCreateVersion = doc.status === 'vigente' || doc.status === 'obsoleto';
@@ -534,7 +534,7 @@ export const DocumentsPage: React.FC = () => {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                                    <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
                                         {/* Sempre mostrar Visualizar (se aplicável) */}
                                         {canPreviewFile(doc.file_name) && (
                                             <button
@@ -542,7 +542,7 @@ export const DocumentsPage: React.FC = () => {
                                                     setPreviewDocument(doc);
                                                     setIsPreviewModalOpen(true);
                                                 }}
-                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                                                 title="Visualizar"
                                             >
                                                 <Eye size={16} />
@@ -617,27 +617,27 @@ export const DocumentsPage: React.FC = () => {
             {/* Upload Modal */}
             {isUploadModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 flex-shrink-0">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">
                                     {isVersionMode ? 'Nova Versão do Documento' : 'Novo Documento'}
                                 </h3>
                                 {isVersionMode && versionBaseDocument && (
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-xs md:text-sm text-gray-500 mt-1 truncate">
                                         Baseado em: {versionBaseDocument.title} (v{versionBaseDocument.version})
                                     </p>
                                 )}
                             </div>
                             <button
                                 onClick={resetModalStates}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
                             >
                                 <X size={20} className="text-gray-500" />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="p-4 md:p-6 space-y-4 overflow-y-auto flex-1">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Título do Documento *
@@ -646,12 +646,12 @@ export const DocumentsPage: React.FC = () => {
                                     type="text"
                                     value={uploadTitle}
                                     onChange={(e) => setUploadTitle(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
                                     placeholder="Ex: Procedimento de Inspeção de Entrada"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Código {isVersionMode && <span className="text-gray-500">(herdado)</span>}
@@ -729,7 +729,14 @@ export const DocumentsPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-6">
+                        <div className="p-4 md:p-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
+                            <button
+                                onClick={resetModalStates}
+                                disabled={uploading}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
                             <button
                                 onClick={handleUpload}
                                 disabled={uploading || !selectedFile || !uploadTitle}
@@ -741,13 +748,6 @@ export const DocumentsPage: React.FC = () => {
                                     isVersionMode ? 'Criar Nova Versão' : 'Fazer Upload'
                                 )}
                             </button>
-                            <button
-                                onClick={resetModalStates}
-                                disabled={uploading}
-                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                            >
-                                Cancelar
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -755,21 +755,21 @@ export const DocumentsPage: React.FC = () => {
 
             {/* Preview Modal */}
             {isPreviewModalOpen && previewDocument && (
-                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
-                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">{previewDocument.title}</h3>
-                                <p className="text-sm text-gray-500">v{previewDocument.version}</p>
+                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 md:p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[95vh] md:h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-3 md:p-4 border-b border-gray-200 flex-shrink-0">
+                            <div className="flex-1 min-w-0 pr-3">
+                                <h3 className="text-base md:text-lg font-bold text-gray-900 truncate">{previewDocument.title}</h3>
+                                <p className="text-xs md:text-sm text-gray-500">v{previewDocument.version}</p>
                             </div>
                             <button
                                 onClick={() => {
                                     setIsPreviewModalOpen(false);
                                     setPreviewDocument(null);
                                 }}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
                             >
-                                <X size={24} className="text-gray-500" />
+                                <X size={20} className="text-gray-500" />
                             </button>
                         </div>
 
@@ -791,15 +791,15 @@ export const DocumentsPage: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                        <div className="p-3 md:p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 flex-shrink-0">
                             <a
                                 href={previewDocument.file_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors"
+                                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors w-full sm:w-auto"
                             >
                                 <Download size={18} />
-                                Baixar Arquivo
+                                <span>Baixar Arquivo</span>
                             </a>
                         </div>
                     </div>
