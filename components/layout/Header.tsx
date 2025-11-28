@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book } from 'lucide-react';
+import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book, Menu } from 'lucide-react';
 import { UserDropdown } from './UserDropdown';
 import { IsoSection } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface HeaderProps {
   activeSection: IsoSection;
+  onMenuClick?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
+export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -21,18 +22,26 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 left-72 z-10 px-8 flex items-center justify-between transition-colors duration-200">
+    <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 lg:left-72 left-0 z-10 px-4 md:px-8 flex items-center justify-between transition-colors duration-200">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-2 text-gray-600 hover:text-[#025159] hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+      >
+        <Menu size={24} />
+      </button>
+
       {/* Breadcrumbs */}
-      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="hidden md:flex items-center text-sm text-gray-500 dark:text-gray-400">
         <span className="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer">Home</span>
         <ChevronRight size={16} className="mx-2" />
         <span className="font-medium text-gray-900 dark:text-white">{activeSection}</span>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Search */}
-        <div className="relative">
+        <div className="relative hidden md:block">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={16} className="text-gray-400" />
           </div>
@@ -63,8 +72,8 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
               setShowHelp(false);
             }}
             className={`p-2 rounded-full transition-colors relative ${showNotifications
-                ? 'text-[#025159] bg-[#025159]/10'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+              ? 'text-[#025159] bg-[#025159]/10'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
           >
             <Bell size={20} />
@@ -109,8 +118,8 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
               setShowNotifications(false);
             }}
             className={`p-2 rounded-full transition-colors ${showHelp
-                ? 'text-[#025159] bg-[#025159]/10'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+              ? 'text-[#025159] bg-[#025159]/10'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
           >
             <HelpCircle size={20} />

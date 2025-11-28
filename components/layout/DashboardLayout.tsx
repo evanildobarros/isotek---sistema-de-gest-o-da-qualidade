@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -6,6 +6,7 @@ import { IsoSection } from '../../types';
 
 export const DashboardLayout: React.FC = () => {
     const location = useLocation();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Helper to determine active section for Header title
     // This is a simple mapping based on path
@@ -51,12 +52,18 @@ export const DashboardLayout: React.FC = () => {
 
     return (
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-            <Sidebar />
+            <Sidebar
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
+            />
 
-            <div className="flex-1 flex flex-col pl-72">
-                <Header activeSection={activeTitle as IsoSection} />
+            <div className="flex-1 flex flex-col lg:pl-72">
+                <Header
+                    activeSection={activeTitle as IsoSection}
+                    onMenuClick={() => setIsMobileMenuOpen(true)}
+                />
 
-                <main className="flex-1 overflow-y-auto p-8 mt-16 scroll-smooth">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 mt-16 scroll-smooth">
                     <div className="max-w-7xl mx-auto">
                         <Outlet />
                     </div>

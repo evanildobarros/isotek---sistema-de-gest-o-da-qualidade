@@ -306,7 +306,12 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
   );
 };
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -432,53 +437,68 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-72 bg-white dark:bg-gray-900 h-screen border-r border-gray-200 dark:border-gray-800 flex flex-col fixed left-0 top-0 z-20 transition-colors duration-200">
-      <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-3">
-          <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
-            <path d="M15 40 H45 V85 C45 93.2843 38.2843 100 30 100 C21.7157 100 15 93.2843 15 85 V40 Z" fill="#2dd4bf" />
-            <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
-            <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
-          </svg>
-          <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Isotek</span>
-        </div>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300"
+          onClick={onClose}
+        />
+      )}
 
-      <nav className="flex-1 flex flex-col py-4 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-        <div className="mb-2">
-          <button
-            onClick={() => navigate('/app/dashboard')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
-              ? 'bg-[#025159] text-white shadow-md shadow-[#025159]/20'
-              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-              }`}
-          >
-            <LayoutDashboard size={20} />
-            <span className="font-semibold">Dashboard</span>
-          </button>
-        </div>
-
-        {menuGroups.map((group, index) => (
-          <div key={group.groupTitle} className="mb-6">
-            <h3 className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              {group.groupTitle}
-            </h3>
-            {group.sections.map(section => renderSection(section))}
+      {/* Sidebar */}
+      <aside className={`
+        w-72 bg-white dark:bg-gray-900 h-screen border-r border-gray-200 dark:border-gray-800 
+        flex flex-col fixed left-0 top-0 z-50 transition-all duration-300
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
+              <path d="M15 40 H45 V85 C45 93.2843 38.2843 100 30 100 C21.7157 100 15 93.2843 15 85 V40 Z" fill="#2dd4bf" />
+              <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
+              <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
+            </svg>
+            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Isotek</span>
           </div>
-        ))}
-
-        <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
-          {renderSection(settingsGroup)}
         </div>
-      </nav>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-        <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
-          <CheckCircle2 size={12} className="text-[#025159]" />
-          <span>Metodologia <strong>PROCEM</strong></span>
+        <nav className="flex-1 flex flex-col py-4 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+          <div className="mb-2">
+            <button
+              onClick={() => navigate('/app/dashboard')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
+                ? 'bg-[#025159] text-white shadow-md shadow-[#025159]/20'
+                : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                }`}
+            >
+              <LayoutDashboard size={20} />
+              <span className="font-semibold">Dashboard</span>
+            </button>
+          </div>
+
+          {menuGroups.map((group, index) => (
+            <div key={group.groupTitle} className="mb-6">
+              <h3 className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                {group.groupTitle}
+              </h3>
+              {group.sections.map(section => renderSection(section))}
+            </div>
+          ))}
+
+          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+            {renderSection(settingsGroup)}
+          </div>
+        </nav>
+
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+          <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
+            <CheckCircle2 size={12} className="text-[#025159]" />
+            <span>Metodologia <strong>PROCEM</strong></span>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
