@@ -239,83 +239,86 @@ export const LeadershipPage: React.FC = () => {
 
             {/* Content */}
             {activeTab === 'policy' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Editor */}
-                    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                            <Edit2 size={20} className="text-[#025159] dark:text-[#03A6A6]" />
-                            Editor da Política
-                        </h2>
-
-                        <div className="space-y-4">
-                            <textarea
-                                value={policyData.content}
-                                onChange={(e) => setPolicyData({ ...policyData, content: e.target.value })}
-                                placeholder="Escreva aqui a Política da Qualidade da sua empresa..."
-                                className="w-full h-64 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] resize-none placeholder-gray-400 dark:placeholder-gray-500"
-                            />
-
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Aprovação</label>
-                                    <input
-                                        type="date"
-                                        value={policyData.date}
-                                        onChange={(e) => setPolicyData({ ...policyData, date: e.target.value })}
-                                        className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
-                                    />
-                                </div>
-                                <div className="w-32">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Versão</label>
-                                    <input
-                                        type="text"
-                                        value={policyData.version}
-                                        onChange={(e) => setPolicyData({ ...policyData, version: e.target.value })}
-                                        placeholder="1.0"
-                                        className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-4 flex justify-end">
-                                <button
-                                    onClick={handleSavePolicy}
-                                    disabled={saving}
-                                    className="flex items-center gap-2 bg-[#025159] text-white px-6 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-lg disabled:opacity-70"
-                                >
-                                    {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                                    Salvar Política
-                                </button>
-                            </div>
+                <div className="space-y-6">
+                    {/* 1. Preview (Visualização) - Top Full Width */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Visualização</h2>
+                        <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border-l-4 border-[#025159] italic text-gray-700 dark:text-gray-300">
+                            {policyData.content || "A política aparecerá aqui..."}
+                        </div>
+                        <div className="mt-4 text-xs text-gray-500 text-right">
+                            Versão: {policyData.version || "N/A"} | Data: {policyData.date || "N/A"}
                         </div>
                     </div>
 
-                    {/* Preview & Checklist */}
-                    <div className="space-y-6">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Visualização</h2>
-                            <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border-l-4 border-[#025159] italic text-gray-700 dark:text-gray-300">
-                                {policyData.content || "A política aparecerá aqui..."}
-                            </div>
-                            <div className="mt-4 text-xs text-gray-500 text-right">
-                                Versão: {policyData.version || "N/A"} | Data: {policyData.date || "N/A"}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* 2. Editor - Left Side */}
+                        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                                <Edit2 size={20} className="text-[#025159] dark:text-[#03A6A6]" />
+                                Editor da Política
+                            </h2>
+
+                            <div className="space-y-4">
+                                <textarea
+                                    value={policyData.content}
+                                    onChange={(e) => setPolicyData({ ...policyData, content: e.target.value })}
+                                    placeholder="Escreva aqui a Política da Qualidade da sua empresa..."
+                                    className="w-full h-64 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] resize-none placeholder-gray-400 dark:placeholder-gray-500"
+                                />
+
+                                <div className="flex gap-4">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Aprovação</label>
+                                        <input
+                                            type="date"
+                                            value={policyData.date}
+                                            onChange={(e) => setPolicyData({ ...policyData, date: e.target.value })}
+                                            className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                        />
+                                    </div>
+                                    <div className="w-32">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Versão</label>
+                                        <input
+                                            type="text"
+                                            value={policyData.version}
+                                            onChange={(e) => setPolicyData({ ...policyData, version: e.target.value })}
+                                            placeholder="1.0"
+                                            className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex justify-end">
+                                    <button
+                                        onClick={handleSavePolicy}
+                                        disabled={saving}
+                                        className="flex items-center gap-2 bg-[#025159] text-white px-6 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-lg disabled:opacity-70"
+                                    >
+                                        {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                                        Salvar Política
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800">
-                            <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
-                                <CheckCircle size={18} />
-                                Requisitos ISO 9001
-                            </h3>
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 cursor-pointer">
-                                    <input type="checkbox" className="rounded text-[#025159] focus:ring-[#025159]" defaultChecked />
-                                    Comunicada e entendida na organização
-                                </label>
-                                <label className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 cursor-pointer">
-                                    <input type="checkbox" className="rounded text-[#025159] focus:ring-[#025159]" defaultChecked />
-                                    Disponível para partes interessadas
-                                </label>
+                        {/* 3. Checklist - Right Side */}
+                        <div className="space-y-6">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800">
+                                <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                                    <CheckCircle size={18} />
+                                    Requisitos ISO 9001
+                                </h3>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 cursor-pointer">
+                                        <input type="checkbox" className="rounded text-[#025159] focus:ring-[#025159]" defaultChecked />
+                                        Comunicada e entendida na organização
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 cursor-pointer">
+                                        <input type="checkbox" className="rounded text-[#025159] focus:ring-[#025159]" defaultChecked />
+                                        Disponível para partes interessadas
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
