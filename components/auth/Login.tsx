@@ -33,7 +33,12 @@ export const Login: React.FC = () => {
 
             if (error) {
                 console.error('Erro Login:', error.message);
-                alert('Falha no login. Verifique suas credenciais.');
+                // Show detailed error message to help diagnose the issue
+                if (error.message.includes('Email not confirmed')) {
+                    alert('Seu email ainda não foi confirmado. Entre em contato com o administrador.');
+                } else {
+                    alert(`Falha no login: ${error.message}\n\nVerifique suas credenciais.`);
+                }
                 setIsLoading(false);
                 return;
             }

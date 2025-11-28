@@ -214,11 +214,12 @@ export const SuperAdminPage: React.FC = () => {
     const handleCreateClient = async () => {
         setWizardLoading(true);
         try {
-            // 1. Create User (SignUp)
+            // 1. Create User (SignUp) - BYPASS EMAIL VERIFICATION
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: userForm.email,
                 password: userForm.password,
                 options: {
+                    emailRedirectTo: undefined, // Don't send confirmation email
                     data: {
                         full_name: userForm.name,
                         avatar_url: ''
