@@ -302,7 +302,7 @@ export interface CorrectiveAction {
   deadline: string;
   responsible_id: string;
   status: 'open' | 'root_cause_analysis' | 'implementation' | 'effectiveness_check' | 'closed';
-  effectiveness_verified?: boolean; // Problema voltou a ocorrer?
+  effectiveness_verified?: boolean; // Problem voltou a ocorrer?
   effectiveness_notes?: string; // Parecer do gestor
   created_at?: string;
   updated_at?: string;
@@ -379,3 +379,16 @@ export interface ManagementReview {
   updated_at?: string;
 }
 
+export interface Audit {
+  id: string;
+  company_id: string;
+  scope: string; // Escopo da auditoria (ex: "Vendas e Marketing", "Produção")
+  type: string; // 'Auditoria Interna', 'Auditoria de Processo', 'Auditoria Externa'
+  auditor: string; // Nome do auditor responsável
+  date: string; // Data planejada/realizada (formato YYYY-MM-DD)
+  status: 'Agendada' | 'Em Andamento' | 'Concluída' | 'Atrasada';
+  progress: number; // 0-100
+  notes?: string; // Notas/observações adicionais
+  created_at?: string;
+  updated_at?: string;
+}
