@@ -36,7 +36,7 @@ export const LandingPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white font-sans text-[#025159]">
+        <div className="min-h-screen bg-white font-sans text-[#025159] snap-y snap-mandatory overflow-y-scroll h-screen">
             {/* NAVBAR */}
             <header
                 className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'
@@ -116,7 +116,7 @@ export const LandingPage: React.FC = () => {
             </header>
 
             {/* A. HERO SECTION */}
-            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 bg-[#7AB8BF] relative overflow-hidden">
+            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 bg-[#7AB8BF] relative overflow-hidden snap-start min-h-screen flex items-center">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Text Content */}
@@ -151,7 +151,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* B. SEÇÃO "SOBRE A ISOTEK" */}
-            <section id="sobre" className="py-20 bg-white">
+            <section id="sobre" className="py-20 bg-white snap-start min-h-screen flex items-center">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         {/* Image (Left) */}
@@ -191,7 +191,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* C. O MÉTODO (01, 02, 03) */}
-            <section id="funcionalidades" className="py-20 bg-[#F0F9FA]">
+            <section id="funcionalidades" className="py-20 bg-[#F0F9FA] snap-start min-h-screen flex items-center">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-20">
                         <h2 className="text-3xl font-bold text-[#025159]">O Método Isotek</h2>
@@ -235,7 +235,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* D. DEPOIMENTO (FileText) */}
-            <section className="py-24 bg-[#7AB8BF] relative">
+            <section className="py-24 bg-[#7AB8BF] relative snap-start min-h-screen flex items-center">
                 <div className="max-w-4xl mx-auto px-4 text-center">
                     <div className="mb-8 flex justify-center">
                         <FileText size={64} className="text-[#A67458] opacity-80" fill="currentColor" />
@@ -256,7 +256,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* E. RODAPÉ PROFISSIONAL (Split Footer) */}
-            <footer id="contato" className="flex flex-col md:flex-row">
+            <footer id="contato" className="flex flex-col md:flex-row snap-start">
                 {/* Left Side (Dark) */}
                 <div className="w-full md:w-1/2 bg-[#025159] text-white p-12 lg:p-20">
                     <div className="max-w-md mx-auto md:mx-0">
