@@ -215,6 +215,7 @@ export const IndicatorsPage: React.FC = () => {
                 icon={BarChart3}
                 title="Indicadores de Desempenho"
                 subtitle="ISO 9001: 9.1 - Monitoramento, medição, análise e avaliação"
+                iconColor="yellow"
             />
 
             {/* Section A: Customer Satisfaction */}

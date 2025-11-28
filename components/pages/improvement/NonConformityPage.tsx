@@ -288,8 +288,8 @@ export const NonConformityPage: React.FC = () => {
                                                 {nc.origin}
                                             </span>
                                             <span className={`px-2 py-0.5 rounded text-xs font-medium ${nc.severity === 'Crítica' ? 'bg-red-100 text-red-700' :
-                                                    nc.severity === 'Média' ? 'bg-yellow-100 text-yellow-700' :
-                                                        'bg-green-100 text-green-700'
+                                                nc.severity === 'Média' ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-green-100 text-green-700'
                                                 }`}>
                                                 {nc.severity}
                                             </span>
@@ -350,6 +350,7 @@ export const NonConformityPage: React.FC = () => {
                 icon={AlertTriangle}
                 title="Controle de Saídas Não Conformes"
                 subtitle="ISO 9001:2015 - 8.7 - Gestão de produtos/serviços defeituosos"
+                iconColor="indigo"
                 action={
                     <button
                         onClick={() => {

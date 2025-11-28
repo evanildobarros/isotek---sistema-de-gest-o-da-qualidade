@@ -201,6 +201,7 @@ export const ManagementReviewPage: React.FC = () => {
                 icon={FileText}
                 title="Análise Crítica pela Direção"
                 subtitle="ISO 9001: 9.3 - Reuniões de Análise do SGQ"
+                iconColor="orange"
                 action={
                     <button
                         onClick={handleOpenModal}

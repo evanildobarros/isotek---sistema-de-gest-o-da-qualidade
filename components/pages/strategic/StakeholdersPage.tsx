@@ -149,7 +149,9 @@ export const StakeholdersPage: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-7 h-7 text-[#025159]" />
+                        <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                        </div>
                         <h1 className="text-xl md:text-2xl font-bold text-[#025159]">Partes Interessadas Pertinentes</h1>
                     </div>
                     <p className="text-gray-500 text-sm">Gestão de stakeholders e seus requisitos (ISO 9001:2015 - 4.2)</p>

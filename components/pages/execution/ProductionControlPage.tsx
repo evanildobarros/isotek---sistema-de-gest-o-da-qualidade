@@ -214,6 +214,7 @@ export const ProductionControlPage: React.FC = () => {
                 icon={Package}
                 title="Controle de Produção e Serviços"
                 subtitle="ISO 9001: 8.5 - Execução Controlada"
+                iconColor="blue"
                 action={
                     <button
                         onClick={() => {
@@ -233,8 +234,8 @@ export const ProductionControlPage: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('open')}
                     className={`pb-3 px-1 font-medium transition-colors relative ${activeTab === 'open'
-                            ? 'text-blue-600'
-                            : 'text-gray-500 hover:text-gray-700'
+                        ? 'text-blue-600'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     EM ABERTO
@@ -245,8 +246,8 @@ export const ProductionControlPage: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`pb-3 px-1 font-medium transition-colors relative ${activeTab === 'history'
-                            ? 'text-blue-600'
-                            : 'text-gray-500 hover:text-gray-700'
+                        ? 'text-blue-600'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     HISTÓRICO

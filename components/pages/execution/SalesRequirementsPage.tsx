@@ -191,6 +191,7 @@ export const SalesRequirementsPage: React.FC = () => {
                 icon={FileText}
                 title="Comercial e Requisitos de Clientes"
                 subtitle="ISO 9001: 8.2 - Análise Crítica de Requisitos"
+                iconColor="sky"
                 action={
                     <button
                         onClick={() => {

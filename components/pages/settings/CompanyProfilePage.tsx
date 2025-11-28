@@ -126,6 +126,7 @@ export const CompanyProfilePage: React.FC = () => {
                 icon={Building2}
                 title="Perfil da Empresa"
                 subtitle="Gerencie as informações cadastrais e identidade visual da sua organização."
+                iconColor="purple"
             />
 
             <div className="max-w-5xl mx-auto space-y-6">

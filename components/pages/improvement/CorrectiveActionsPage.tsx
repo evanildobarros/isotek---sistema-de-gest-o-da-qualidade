@@ -434,6 +434,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                 icon={TrendingUp}
                 title="Ações Corretivas e Melhoria"
                 subtitle="ISO 9001: 10.1 - Não Conformidade e Ação Corretiva"
+                iconColor="orange"
                 action={
                     <div className="flex gap-2">
                         <button

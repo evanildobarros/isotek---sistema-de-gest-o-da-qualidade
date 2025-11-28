@@ -265,7 +265,9 @@ export const RiskMatrixPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <ShieldAlert className="w-7 h-7 text-[#025159]" />
+                        <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <ShieldAlert className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
                         <h1 className="text-2xl font-bold text-[#025159]">Matriz de Riscos e Oportunidades</h1>
                     </div>
                     <p className="text-gray-500 text-sm">

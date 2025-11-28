@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Plus, Edit2, Trash2, Save, Loader2, TrendingUp, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Target, Plus, Edit2, Trash2, Save, Loader2, TrendingUp, Calendar, CheckCircle2, AlertCircle, Rocket, Users2, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 
@@ -12,7 +12,7 @@ interface QualityObjective {
     id: string;
     name: string;
     process_id: string | null;
-    process?: Process; // Joined data
+    process?: Process;
     deadline: string;
     metric_name: string;
     target_value: number;
@@ -26,6 +26,7 @@ export const QualityObjectivesPage: React.FC = () => {
     const [objectives, setObjectives] = useState<QualityObjective[]>([]);
     const [processes, setProcesses] = useState<Process[]>([]);
     const [companyId, setCompanyId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     // Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,7 +55,6 @@ export const QualityObjectivesPage: React.FC = () => {
         try {
             setLoading(true);
 
-            // Get Company
             const { data: company } = await supabase
                 .from('company_info')
                 .select('id')
@@ -64,14 +64,12 @@ export const QualityObjectivesPage: React.FC = () => {
             if (company) {
                 setCompanyId(company.id);
 
-                // Get Processes
                 const { data: processesData } = await supabase
                     .from('processes')
                     .select('id, name')
                     .eq('company_id', company.id);
                 setProcesses(processesData || []);
 
-                // Get Objectives
                 const { data: objectivesData, error } = await supabase
                     .from('quality_objectives')
                     .select(`
@@ -227,81 +225,102 @@ export const QualityObjectivesPage: React.FC = () => {
                 </button>
             </header>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {objectives.map(obj => {
                     const progress = Math.min((obj.current_value / obj.target_value) * 100, 100);
-                    const isSuccess = progress >= 100;
+                    const isExpanded = expandedId === obj.id;
 
                     return (
-                        <div key={obj.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
-                            <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                        <Target size={20} className="text-red-500" />
-                                        {obj.name}
-                                    </h3>
-                                    <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                        {obj.process && (
-                                            <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md flex items-center gap-1">
-                                                Processo: {obj.process.name}
+                        <div key={obj.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all">
+                            <div className="p-5">
+                                {/* Header */}
+                                <div className="flex items-start gap-4 mb-4">
+                                    {/* Colored Icon */}
+                                    <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg shrink-0">
+                                        <Rocket className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">
+                                            {obj.name}
+                                        </h3>
+                                        <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                            {obj.process && (
+                                                <span className="bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-md">
+                                                    Processo: {obj.process.name}
+                                                </span>
+                                            )}
+                                            <span className="flex items-center gap-1">
+                                                <Calendar size={14} />
+                                                Prazo: {new Date(obj.deadline).toLocaleDateString('pt-BR')}
                                             </span>
-                                        )}
-                                        <span className="flex items-center gap-1">
-                                            <Calendar size={14} />
-                                            Prazo: {new Date(obj.deadline).toLocaleDateString('pt-BR')}
-                                        </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={() => openUpdateModal(obj)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#025159] text-white rounded-lg text-sm font-medium hover:bg-[#3F858C] transition-colors"
+                                        >
+                                            <Edit2 size={14} />
+                                            Atualizar Medição
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(obj.id)}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => openUpdateModal(obj)}
-                                        className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                                    >
-                                        Atualizar Medição
-                                    </button>
-                                    <button
-                                        onClick={() => openModal(obj)}
-                                        className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                    >
-                                        <Edit2 size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(obj.id)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
 
-                            {/* Progress Bar */}
-                            <div className="mb-4">
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                                        Meta: {obj.target_value} {obj.metric_name} | Atual: {obj.current_value}
-                                    </span>
-                                    <span className="font-bold text-[#025159] dark:text-[#03A6A6]">{Math.round(progress)}%</span>
+                                {/* Progress Bar */}
+                                <div className="space-y-1.5">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600 dark:text-gray-400">
+                                            Meta: {obj.target_value} | Atual: {obj.current_value}
+                                        </span>
+                                        <span className="font-bold text-gray-900 dark:text-white">
+                                            {Math.round(progress)}% Concluído
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                                        <div
+                                            className="h-full bg-green-500 transition-all duration-500 rounded-full"
+                                            style={{ width: `${progress}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full transition-all duration-500 ${isSuccess ? 'bg-green-500' : 'bg-[#025159]'}`}
-                                        style={{ width: `${progress}%` }}
-                                    ></div>
-                                </div>
-                            </div>
 
-                            {/* Action Plan */}
-                            {obj.action_plan && (
-                                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-                                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                                        <TrendingUp size={16} />
-                                        Plano de Ação
-                                    </h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                        {obj.action_plan}
-                                    </p>
-                                </div>
-                            )}
+                                {/* Action Plan Toggle */}
+                                {obj.action_plan && (
+                                    <div className="mt-4">
+                                        <button
+                                            onClick={() => setExpandedId(isExpanded ? null : obj.id)}
+                                            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                        >
+                                            <TrendingUp size={16} />
+                                            Plano de Ação
+                                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div className="mt-2 pl-6 text-sm text-gray-600 dark:text-gray-400 border-l-2 border-gray-200 dark:border-gray-700">
+                                                <ul className="space-y-1.5">
+                                                    {obj.action_plan.split('\n').filter(line => line.trim()).map((line, idx) => (
+                                                        <li key={idx} className="flex items-start gap-2">
+                                                            <input type="checkbox" className="mt-0.5 rounded" />
+                                                            <span>{line.trim()}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     );
                 })}

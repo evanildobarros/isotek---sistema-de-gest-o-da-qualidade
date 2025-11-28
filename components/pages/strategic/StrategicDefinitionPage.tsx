@@ -151,7 +151,9 @@ export const StrategicDefinitionPage: React.FC = () => {
             <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Target className="w-7 h-7 text-[#025159]" />
+                        <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
                         <h1 className="text-2xl font-bold text-[#025159]">Identidade Corporativa</h1>
                     </div>
                     <p className="text-gray-500 text-sm">

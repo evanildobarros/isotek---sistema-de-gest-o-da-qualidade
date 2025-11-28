@@ -201,7 +201,9 @@ export const LeadershipPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-200">
             <header className="mb-8">
                 <div className="flex items-center gap-2 mb-2">
-                    <Shield className="w-7 h-7 text-[#025159] dark:text-[#03A6A6]" />
+                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                        <Shield className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
                     <h1 className="text-2xl font-bold text-[#025159] dark:text-[#03A6A6]">Liderança e Compromisso</h1>
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">

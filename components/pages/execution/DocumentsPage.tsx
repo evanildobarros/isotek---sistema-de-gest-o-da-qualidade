@@ -404,7 +404,9 @@ export const DocumentsPage: React.FC = () => {
             <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between md:items-start gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <FileText className="w-6 h-6 md:w-7 md:h-7 text-[#025159]" />
+                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
                         <h1 className="text-xl md:text-2xl font-bold text-[#025159]">Gestão de Documentos</h1>
                     </div>
                     <p className="text-gray-500 text-sm">Controle da Informação Documentada (ISO 9001: 7.5)</p>

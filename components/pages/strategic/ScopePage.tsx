@@ -226,7 +226,9 @@ export const ScopePage: React.FC = () => {
                     <section>
                         <div className="mb-8">
                             <div className="flex items-center gap-2 mb-2">
-                                <FileText className="w-7 h-7 text-[#025159]" />
+                                <div className="p-3 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                                    <FileText className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                                </div>
                                 <h1 className="text-2xl font-bold text-[#025159]">Escopo do Sistema de Gestão da Qualidade</h1>
                             </div>
                             <p className="text-gray-500 text-sm">Defina o que está incluído no seu SGQ (ISO 9001:2015 - Cláusula 4.3)</p>
