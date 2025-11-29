@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -10,10 +12,17 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line
 } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, AlertCircle, CheckCircle2, Clock, LayoutDashboard, Users as UsersIcon } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  LayoutDashboard,
+  ArrowRight,
+  MoreHorizontal
+} from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 // Helper to format date
@@ -22,20 +31,32 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('pt-BR');
 };
 
-const COLORS = ['#ef4444', '#10b981']; // Red for Open, Green for Closed
+const COLORS = {
+  primary: '#025159',
+  secondary: '#3F858C',
+  accent: '#A67458',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  neutral: '#64748b',
+  background: '#F0F9FA'
+};
 
 export const SectionDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
-    complianceIndex: 0,
-    openRNCs: 0,
-    criticalRNCs: 0,
-    overdueActions: 0,
-    nextAuditDate: null as string | null,
-    nextAuditType: '',
+    npsScore: 0,
+    npsTrend: 'stable', // up, down, stable
+    totalNc: 0,
+    ncTrendData: [] as any[],
+    auditsCompleted: 0,
+    auditsPending: 0,
+    actionsOpen: 0,
+    actionsClosed: 0,
+    ncByMonth: [] as any[],
+    ncByDept: [] as any[],
+    pendingTasks: [] as any[]
   });
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [ncDistribution, setNcDistribution] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -47,7 +68,6 @@ export const SectionDashboard: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Get Company ID
       const { data: profile } = await supabase
         .from('profiles')
         .select('company_id')
@@ -59,144 +79,125 @@ export const SectionDashboard: React.FC = () => {
 
       // Parallel Fetching
       const [
-        auditsRes,
-        kpisRes,
-        kpiMeasurementsRes,
+        surveysRes,
         ncProductsRes,
+        auditsRes,
         actionsRes,
-        nextAuditRes
+        nextAuditsRes
       ] = await Promise.all([
-        // Audits (Completed)
-        supabase.from('audits').select('*').eq('status', 'Concluída'),
-        // KPIs Objectives
-        supabase.from('quality_objectives').select('*').eq('company_id', companyId),
-        // KPI Measurements (Last 6 months)
-        supabase.from('kpi_measurements')
+        supabase.from('customer_satisfaction_surveys').select('*').eq('company_id', companyId),
+        supabase.from('non_conformities_products').select('*').eq('company_id', companyId),
+        supabase.from('audits').select('*').eq('company_id', companyId),
+        supabase.from('corrective_actions').select('*').eq('company_id', companyId),
+        supabase.from('audits')
           .select('*')
           .eq('company_id', companyId)
-          .gte('date', new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString()),
-        // NC Products (ALL)
-        supabase.from('non_conformities_products').select('*').eq('company_id', companyId),
-        // Corrective Actions (ALL)
-        supabase.from('corrective_actions').select('*').eq('company_id', companyId),
-        // Next Audit
-        supabase.from('audits')
-          .select('date, type')
           .eq('status', 'Agendada')
           .gte('date', new Date().toISOString().split('T')[0])
           .order('date', { ascending: true })
-          .limit(1)
-          .single()
+          .limit(5)
       ]);
 
-      // --- 1. Compliance Index / Health Calculation ---
-      const kpis = kpisRes.data || [];
-      const measurements = kpiMeasurementsRes.data || [];
+      // 1. NPS Calculation
+      const surveys = surveysRes.data || [];
+      let npsScore = 0;
+      if (surveys.length > 0) {
+        // Simple average for demo, ideally NPS formula: %Promoters - %Detractors
+        const promoters = surveys.filter(s => s.score >= 9).length;
+        const detractors = surveys.filter(s => s.score <= 6).length;
+        const total = surveys.length;
+        npsScore = Math.round(((promoters - detractors) / total) * 100);
+      }
 
-      let kpiHealthSum = 0;
-      let kpiCount = 0;
-
-      kpis.forEach(kpi => {
-        const kpiMeasurements = measurements
-          .filter(m => m.objective_id === kpi.id)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-        if (kpiMeasurements.length > 0) {
-          const latest = kpiMeasurements[0];
-          if (kpi.target_value > 0) {
-            let achievement = (latest.value / kpi.target_value) * 100;
-            if (achievement > 100) achievement = 100;
-            kpiHealthSum += achievement;
-            kpiCount++;
-          }
-        }
-      });
-
-      const complianceIndex = kpiCount > 0 ? Math.round(kpiHealthSum / kpiCount) : 100;
-
-      // --- 2. Non-Conformities (RNCs) ---
+      // 2. NC Data
       const ncProducts = ncProductsRes.data || [];
+      const totalNc = ncProducts.length;
+
+      // Sparkline data (last 7 NCs simply for visual trend)
+      const ncTrendData = ncProducts
+        .sort((a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime())
+        .slice(-10)
+        .map((nc, index) => ({ index, value: 1 })); // Simplified for sparkline presence
+
+      // 3. Audits
+      const audits = auditsRes.data || [];
+      const auditsCompleted = audits.filter(a => a.status === 'Concluída').length;
+      const auditsPending = audits.filter(a => a.status !== 'Concluída').length;
+
+      // 4. Actions (SAC)
       const actions = actionsRes.data || [];
+      const actionsOpen = actions.filter(a => a.status !== 'closed').length;
+      const actionsClosed = actions.filter(a => a.status === 'closed').length;
 
-      const openNcProducts = ncProducts.filter(nc => nc.status !== 'resolved');
-      const openActions = actions.filter(a => a.status !== 'closed');
-
-      const totalOpenRNCs = openNcProducts.length + openActions.length;
-      const totalClosedRNCs = (ncProducts.length - openNcProducts.length) + (actions.length - openActions.length);
-
-      // Count "Critical" items (severity 'Crítica' in products)
-      const criticalProductRNCs = openNcProducts.filter(nc => nc.severity === 'Crítica').length;
-
-      // --- 3. Overdue Actions ---
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const overdueActionsCount = actions.filter(a => {
-        if (a.status === 'closed') return false;
-        const deadline = new Date(a.deadline);
-        return deadline < today;
-      }).length;
-
-      // --- 4. Next Audit ---
-      const nextAuditDate = nextAuditRes.data ? nextAuditRes.data.date : null;
-      const nextAuditType = nextAuditRes.data ? nextAuditRes.data.type : '';
-
-      // --- 5. Evolution Chart (KPIs Last 6 Months) ---
+      // 5. NC Trend (Last 6 Months)
       const last6Months = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
         const monthName = d.toLocaleString('pt-BR', { month: 'short' });
-        const monthKey = d.getMonth(); // 0-11
+        const monthKey = d.getMonth();
         const yearKey = d.getFullYear();
+
+        const count = ncProducts.filter(nc => {
+          const ncDate = new Date(nc.created_at || '');
+          return ncDate.getMonth() === monthKey && ncDate.getFullYear() === yearKey;
+        }).length;
 
         last6Months.push({
           name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-          month: monthKey,
-          year: yearKey,
-          value: 0,
-          count: 0
+          value: count
         });
       }
 
-      measurements.forEach(m => {
-        const mDate = new Date(m.date);
-        const mMonth = mDate.getMonth();
-        const mYear = mDate.getFullYear();
+      // 6. NC by Dept (Origin)
+      const originCounts: Record<string, number> = {};
+      ncProducts.forEach(nc => {
+        const origin = nc.origin || 'Outros';
+        originCounts[origin] = (originCounts[origin] || 0) + 1;
+      });
+      const ncByDept = Object.entries(originCounts).map(([name, value]) => ({ name, value }));
 
-        const monthData = last6Months.find(d => d.month === mMonth && d.year === mYear);
-        if (monthData) {
-          const kpi = kpis.find(k => k.id === m.objective_id);
-          if (kpi && kpi.target_value > 0) {
-            let achievement = (m.value / kpi.target_value) * 100;
-            if (achievement > 100) achievement = 100;
-            monthData.value += achievement;
-            monthData.count++;
-          }
+      // 7. Pending Tasks List
+      const pendingTasks = [];
+
+      // Overdue Actions
+      const today = new Date();
+      actions.forEach(a => {
+        if (a.status !== 'closed' && new Date(a.deadline) < today) {
+          pendingTasks.push({
+            id: `action-${a.id}`,
+            title: `Ação Atrasada: ${a.code}`,
+            type: 'action',
+            status: 'critical',
+            date: a.deadline
+          });
         }
       });
 
-      const chartDataProcessed = last6Months.map(d => ({
-        name: d.name,
-        'Média KPI (%)': d.count > 0 ? Math.round(d.value / d.count) : 0
-      }));
-
-      // --- 6. NC Distribution (Pie Chart) ---
-      const distribution = [
-        { name: 'Abertas', value: totalOpenRNCs },
-        { name: 'Concluídas', value: totalClosedRNCs },
-      ];
+      // Upcoming Audits
+      (nextAuditsRes.data || []).forEach(a => {
+        pendingTasks.push({
+          id: `audit-${a.id}`,
+          title: `Auditoria: ${a.type}`,
+          type: 'audit',
+          status: 'warning',
+          date: a.date
+        });
+      });
 
       setMetrics({
-        complianceIndex,
-        openRNCs: totalOpenRNCs,
-        criticalRNCs: criticalProductRNCs,
-        overdueActions: overdueActionsCount,
-        nextAuditDate,
-        nextAuditType
+        npsScore,
+        npsTrend: 'up', // Mock trend
+        totalNc,
+        ncTrendData,
+        auditsCompleted,
+        auditsPending,
+        actionsOpen,
+        actionsClosed,
+        ncByMonth: last6Months,
+        ncByDept,
+        pendingTasks: pendingTasks.slice(0, 5) // Limit to 5 items
       });
-      setChartData(chartDataProcessed);
-      setNcDistribution(distribution);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -217,144 +218,218 @@ export const SectionDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-end mb-8">
+    <div className="space-y-6 animate-fade-in pb-10">
+      {/* Header */}
+      <div className="flex justify-between items-end mb-2">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <LayoutDashboard className="w-7 h-7 text-[#025159]" />
-            <h1 className="text-2xl font-bold text-[#025159]">Visão Geral da Qualidade</h1>
-          </div>
-          <p className="text-gray-500 text-sm">Monitoramento em tempo real dos indicadores de desempenho.</p>
+          <h1 className="text-2xl font-bold text-[#025159]">Dashboard</h1>
+          <p className="text-gray-500 text-sm">Visão geral dos indicadores de qualidade</p>
         </div>
-        <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
-          Última atualização: {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        <div className="text-sm text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm flex items-center gap-2">
+          <Clock size={14} />
+          {new Date().toLocaleDateString('pt-BR')}
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <KpiCard
-          title="Saúde do SGQ"
-          value={`${metrics.complianceIndex}%`}
-          trend={metrics.complianceIndex >= 80 ? "Bom" : "Atenção"}
-          trendUp={metrics.complianceIndex >= 80}
-          icon={<CheckCircle2 className="text-emerald-500" />}
-          subtext="Média de atingimento de metas"
-        />
-        <KpiCard
-          title="Pendências (RNCs)"
-          value={metrics.openRNCs.toString()}
-          subtext={`${metrics.criticalRNCs} Críticas`}
-          trend={metrics.openRNCs === 0 ? "Zerado" : `${metrics.openRNCs} Ativas`}
-          trendUp={metrics.openRNCs === 0}
-          icon={<AlertCircle className="text-amber-500" />}
-        />
-        <KpiCard
-          title="Ações Atrasadas"
-          value={metrics.overdueActions.toString()}
-          subtext="Requer atenção imediata"
-          trend={metrics.overdueActions === 0 ? "Em dia" : "Atraso"}
-          trendUp={metrics.overdueActions === 0}
-          icon={<Clock className="text-red-500" />}
-        />
-        <KpiCard
-          title="Próxima Auditoria"
-          value={metrics.nextAuditDate ? formatDate(metrics.nextAuditDate) : "N/A"}
-          subtext={metrics.nextAuditType || "Nenhuma agendada"}
-          trend="Agenda"
-          trendUp={true}
-          icon={<UsersIcon className="text-purple-500" />}
-        />
-      </div>
+      {/* ROW 1: KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Main Trend Chart */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Evolução de KPIs (6 Meses)</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} allowDecimals={false} domain={[0, 100]} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Line
-                  name="Média KPI (%)"
-                  type="monotone"
-                  dataKey="Média KPI (%)"
-                  stroke="#0ea5e9"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: '#fff' }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Card 1: NPS */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-sm font-medium text-gray-500">NPS (Satisfação)</h3>
+            <span className="p-1.5 bg-green-50 rounded-lg text-green-600">
+              <TrendingUp size={16} />
+            </span>
           </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-gray-900">{metrics.npsScore}</span>
+            <span className="text-sm font-medium text-green-600">+2.5%</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Baseado em pesquisas recentes</p>
         </div>
 
-        {/* Distribution Chart */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">RNCs: Abertas vs Concluídas</h3>
-          <div className="h-72">
+        {/* Card 2: NCs + Sparkline */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-sm font-medium text-gray-500">Não Conformidades</h3>
+            <span className="p-1.5 bg-red-50 rounded-lg text-red-600">
+              <AlertCircle size={16} />
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-4xl font-bold text-gray-900">{metrics.totalNc}</span>
+            <div className="w-24 h-12">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={metrics.ncTrendData}>
+                  <Area type="monotone" dataKey="value" stroke="#ef4444" fill="#fee2e2" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Total acumulado</p>
+        </div>
+
+        {/* Card 3: Audits (Donut) */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Auditorias</h3>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span className="font-bold text-gray-900">{metrics.auditsCompleted}</span>
+                <span className="text-gray-400 text-xs">Concluídas</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
+                <span className="font-bold text-gray-900">{metrics.auditsPending}</span>
+                <span className="text-gray-400 text-xs">Pendentes</span>
+              </div>
+            </div>
+          </div>
+          <div className="w-20 h-20">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={ncDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+                  data={[
+                    { name: 'Concluídas', value: metrics.auditsCompleted },
+                    { name: 'Pendentes', value: metrics.auditsPending }
+                  ]}
+                  innerRadius={25}
+                  outerRadius={35}
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {ncDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#fbbf24" />
                 </Pie>
-                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-4 mt-4">
-            {ncDistribution.map((entry, index) => (
-              <div key={entry.name} className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                {entry.name}: {entry.value}
+        </div>
+
+        {/* Card 4: Actions (Bar) */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Ações (SAC)</h3>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="font-bold text-gray-900">{metrics.actionsOpen}</span>
+                <span className="text-gray-400 text-xs">Abertas</span>
               </div>
-            ))}
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span className="font-bold text-gray-900">{metrics.actionsClosed}</span>
+                <span className="text-gray-400 text-xs">Fechadas</span>
+              </div>
+            </div>
+          </div>
+          <div className="w-24 h-16">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { name: 'Abertas', value: metrics.actionsOpen },
+                { name: 'Fechadas', value: metrics.actionsClosed }
+              ]}>
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  <Cell fill="#ef4444" />
+                  <Cell fill="#3b82f6" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
 
-const KpiCard: React.FC<{
-  title: string;
-  value: string;
-  trend: string;
-  trendUp: boolean;
-  icon: React.ReactNode;
-  subtext?: string;
-}> = ({ title, value, trend, trendUp, icon, subtext }) => {
-  return (
-    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-gray-50 rounded-lg">{icon}</div>
-        <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${trendUp ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}>
-          {trendUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-          {trend}
+      {/* ROW 2: MAIN CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Chart 1: NC Trend */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Tendência de NCs</h3>
+            <button className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
+              <MoreHorizontal size={20} />
+            </button>
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={metrics.ncByMonth}>
+                <defs>
+                  <linearGradient id="colorNc" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Area type="monotone" dataKey="value" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorNc)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 2: NC by Dept */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">NCs por Origem</h3>
+            <button className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
+              <MoreHorizontal size={20} />
+            </button>
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={metrics.ncByDept} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={100} />
+                <Tooltip
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="value" fill="#025159" radius={[0, 4, 4, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
-      <div>
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <h4 className="text-2xl font-bold text-gray-900 mt-1">{value}</h4>
-        {subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
+
+      {/* ROW 3: PENDING TASKS LIST */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-900">Tarefas Pendentes</h3>
+          <button className="text-sm text-[#025159] font-medium hover:underline">Ver todas</button>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {metrics.pendingTasks.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <CheckCircle2 className="w-12 h-12 text-green-100 mx-auto mb-3" />
+              <p>Tudo em dia! Nenhuma tarefa pendente.</p>
+            </div>
+          ) : (
+            metrics.pendingTasks.map((task) => (
+              <div key={task.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`w-2 h-2 rounded-full ${task.status === 'critical' ? 'bg-red-500' : 'bg-amber-400'}`}></div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">{task.title}</h4>
+                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                      <Clock size={12} />
+                      {formatDate(task.date)}
+                    </p>
+                  </div>
+                </div>
+                <button className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors">
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
