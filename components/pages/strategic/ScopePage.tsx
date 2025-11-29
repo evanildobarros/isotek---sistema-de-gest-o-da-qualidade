@@ -327,7 +327,9 @@ export const ScopePage: React.FC = () => {
                         <div className="flex justify-between items-end mb-8">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Layers className="w-7 h-7 text-[#025159]" />
+                                    <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+                                        <Layers className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                                    </div>
                                     <h2 className="text-2xl font-bold text-[#025159]">Mapeamento de Processos</h2>
                                 </div>
                                 <p className="text-gray-500 text-sm">Identificação dos processos, suas interações e recursos (ISO 9001:2015 - 4.4)</p>

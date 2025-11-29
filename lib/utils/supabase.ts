@@ -90,3 +90,205 @@ export async function isSuperAdmin(): Promise<boolean> {
 
     return profile?.is_super_admin || false;
 }
+
+// ============================================
+// SUBSCRIPTION MANAGEMENT
+// ============================================
+
+import type { Plan, PlanId } from '../../types';
+
+/**
+ * Definições dos planos disponíveis
+ */
+export function getAvailablePlans(): Plan[] {
+    return [
+        {
+            id: 'start',
+            name: 'Start',
+            price: 0,
+            billingPeriod: 'monthly',
+            description: 'Perfeito para começar',
+            features: [
+                'Gestão de documentos básica',
+                'Indicadores essenciais',
+                'Suporte por email',
+                'Dashboard básico',
+                'Gestão de não conformidades'
+            ],
+            limits: {
+                maxUsers: 5,
+                maxStorageGb: 5,
+                hasAdvancedReports: false,
+                hasApiAccess: false,
+                hasPrioritySupport: false
+            }
+        },
+        {
+            id: 'pro',
+            name: 'Pro',
+            price: 199,
+            billingPeriod: 'monthly',
+            description: 'Para empresas em crescimento',
+            popular: true,
+            features: [
+                'Tudo do plano Start',
+                'Relatórios avançados',
+                'Auditorias ilimitadas',
+                'Integrações via API',
+                'Múltiplas unidades',
+                'Suporte prioritário',
+                'Análise de riscos avançada'
+            ],
+            limits: {
+                maxUsers: 25,
+                maxStorageGb: 50,
+                hasAdvancedReports: true,
+                hasApiAccess: true,
+                hasPrioritySupport: true
+            }
+        },
+        {
+            id: 'enterprise',
+            name: 'Enterprise',
+            price: 0, // Sob consulta
+            billingPeriod: 'monthly',
+            description: 'Para grandes organizações',
+            features: [
+                'Tudo do plano Pro',
+                'SSO / SAML',
+                'SLA garantido',
+                'Gerente de conta dedicado',
+                'Treinamento personalizado',
+                'Customizações',
+                'Usuários ilimitados',
+                'Armazenamento ilimitado'
+            ],
+            limits: {
+                maxUsers: 999999,
+                maxStorageGb: 999999,
+                hasAdvancedReports: true,
+                hasApiAccess: true,
+                hasPrioritySupport: true
+            }
+        }
+    ];
+}
+
+/**
+ * Upgrade de plano
+ */
+export async function upgradePlan(companyId: string, newPlanId: PlanId): Promise<{ success: boolean; error?: string }> {
+    try {
+        const plans = getAvailablePlans();
+        const newPlan = plans.find(p => p.id === newPlanId);
+
+        if (!newPlan) {
+            return { success: false, error: 'Plano não encontrado' };
+        }
+
+        // Calcular nova data de renovação (30 dias)
+        const currentPeriodEnd = new Date();
+        currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
+
+        const { error } = await supabase
+            .from('company_info')
+            .update({
+                plan_id: newPlanId,
+                subscription_status: 'active',
+                max_users: newPlan.limits.maxUsers,
+                max_storage_gb: newPlan.limits.maxStorageGb,
+                current_period_end: currentPeriodEnd.toISOString()
+            })
+            .eq('id', companyId);
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Erro ao fazer upgrade' };
+    }
+}
+
+/**
+ * Downgrade de plano
+ */
+export async function downgradePlan(companyId: string, newPlanId: PlanId): Promise<{ success: boolean; error?: string }> {
+    try {
+        const plans = getAvailablePlans();
+        const newPlan = plans.find(p => p.id === newPlanId);
+
+        if (!newPlan) {
+            return { success: false, error: 'Plano não encontrado' };
+        }
+
+        const { error } = await supabase
+            .from('company_info')
+            .update({
+                plan_id: newPlanId,
+                max_users: newPlan.limits.maxUsers,
+                max_storage_gb: newPlan.limits.maxStorageGb
+            })
+            .eq('id', companyId);
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Erro ao fazer downgrade' };
+    }
+}
+
+/**
+ * Verifica limites do plano
+ */
+export async function checkPlanLimits(companyId: string): Promise<{
+    currentUsers: number;
+    maxUsers: number;
+    currentStorage: number;
+    maxStorage: number;
+    withinLimits: boolean;
+}> {
+    try {
+        // Buscar informações da empresa
+        const { data: company } = await supabase
+            .from('company_info')
+            .select('max_users, max_storage_gb')
+            .eq('id', companyId)
+            .single();
+
+        // Contar usuários ativos
+        const { count: userCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('company_id', companyId);
+
+        const currentUsers = userCount || 0;
+        const maxUsers = company?.max_users || 5;
+        const maxStorage = company?.max_storage_gb || 5;
+
+        // Para storage, seria necessário calcular o tamanho real dos arquivos
+        // Por enquanto, retornamos um valor estimado
+        const currentStorage = 0; // Implementar lógica de cálculo real
+
+        return {
+            currentUsers,
+            maxUsers,
+            currentStorage,
+            maxStorage,
+            withinLimits: currentUsers <= maxUsers && currentStorage <= maxStorage
+        };
+    } catch (error) {
+        console.error('Error checking plan limits:', error);
+        return {
+            currentUsers: 0,
+            maxUsers: 5,
+            currentStorage: 0,
+            maxStorage: 5,
+            withinLimits: true
+        };
+    }
+}

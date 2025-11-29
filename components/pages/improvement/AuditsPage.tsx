@@ -240,7 +240,9 @@ export const AuditsPage: React.FC = () => {
             <div className="mb-8 flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <ClipboardCheck className="w-7 h-7 text-[#025159]" />
+                        <div className="p-3 bg-sky-100 dark:bg-sky-900/30 rounded-lg">
+                            <ClipboardCheck className="w-6 h-6 text-sky-600 dark:text-sky-400" />
+                        </div>
                         <h1 className="text-2xl font-bold text-[#025159]">Gestão de Auditorias</h1>
                     </div>
                     <p className="text-gray-600 text-sm">Planeje, execute e gerencie auditorias internas e externas (ISO 9001: 9.2).</p>

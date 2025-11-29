@@ -429,20 +429,20 @@ export const CorrectiveActionsPage: React.FC = () => {
     const allTasksCompleted = tasks.length > 0 && tasks.every(t => t.completed);
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             <PageHeader
                 icon={TrendingUp}
                 title="Ações Corretivas e Melhoria"
                 subtitle="ISO 9001: 10.1 - Não Conformidade e Ação Corretiva"
                 iconColor="orange"
                 action={
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <button
                             onClick={() => setIsFilterModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium relative"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium relative"
                         >
                             <Filter className="w-4 h-4" />
-                            Filtrar
+                            <span className="sm:inline">Filtrar</span>
                             {hasActiveFilters() && (
                                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
                                     {[filters.status, filters.origin, filters.responsible_id, filters.overdue].filter(Boolean).length}
@@ -451,24 +451,24 @@ export const CorrectiveActionsPage: React.FC = () => {
                         </button>
                         <button
                             onClick={handleExport}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                            className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                         >
                             <Download className="w-4 h-4" />
                             Exportar
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
                         >
                             <Plus className="w-5 h-5" />
-                            Abrir RNC
+                            <span>Abrir RNC</span>
                         </button>
                     </div>
                 }
             />
 
             {/* KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div className="flex items-center justify-between">
                         <div>
@@ -513,107 +513,109 @@ export const CorrectiveActionsPage: React.FC = () => {
                 />
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Origem</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsável</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prazo</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {getFilteredActions().map(action => {
-                                const overdue = action.status !== 'closed' && isOverdue(action.deadline);
-                                return (
-                                    <tr key={action.id} className={overdue ? 'bg-red-50' : 'hover:bg-gray-50'}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="font-semibold text-gray-900">{action.code}</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {getOriginBadge(action.origin)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-gray-900 line-clamp-2" title={action.description}>
-                                                {action.description}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-sm text-gray-700">{action.responsible_name}</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`text-sm ${overdue ? 'text-red-600 font-semibold' : 'text-gray-700'}`}>
-                                                {new Date(action.deadline).toLocaleDateString('pt-BR')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {getStatusBadge(action.status)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap relative">
-                                            <button
-                                                onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
-                                                className="text-gray-400 hover:text-gray-600 p-1"
-                                            >
-                                                <MoreVertical className="w-5 h-5" />
-                                            </button>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[640px]">
+                            <thead className="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Origem</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsável</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prazo</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {getFilteredActions().map(action => {
+                                    const overdue = action.status !== 'closed' && isOverdue(action.deadline);
+                                    return (
+                                        <tr key={action.id} className={overdue ? 'bg-red-50' : 'hover:bg-gray-50'}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="font-semibold text-gray-900">{action.code}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {getOriginBadge(action.origin)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-sm text-gray-900 line-clamp-2" title={action.description}>
+                                                    {action.description}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm text-gray-700">{action.responsible_name}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`text-sm ${overdue ? 'text-red-600 font-semibold' : 'text-gray-700'}`}>
+                                                    {new Date(action.deadline).toLocaleDateString('pt-BR')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {getStatusBadge(action.status)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap relative">
+                                                <button
+                                                    onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
+                                                    className="text-gray-400 hover:text-gray-600 p-1"
+                                                >
+                                                    <MoreVertical className="w-5 h-5" />
+                                                </button>
 
-                                            {openMenuId === action.id && (
-                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                                                    <div className="py-1">
-                                                        <button
-                                                            onClick={() => {
-                                                                handleOpenModal(action);
-                                                                setOpenMenuId(null);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                            Editar
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                handleOpenModal(action);
-                                                                setCurrentStep(4);
-                                                                setOpenMenuId(null);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                            Visualizar Detalhes
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                handleDuplicateAction(action);
-                                                                setOpenMenuId(null);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                        >
-                                                            <Copy className="w-4 h-4" />
-                                                            Duplicar
-                                                        </button>
-                                                        <hr className="my-1" />
-                                                        <button
-                                                            onClick={() => {
-                                                                handleDeleteAction(action.id);
-                                                                setOpenMenuId(null);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                            Excluir
-                                                        </button>
+                                                {openMenuId === action.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                                        <div className="py-1">
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleOpenModal(action);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                                Editar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleOpenModal(action);
+                                                                    setCurrentStep(4);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                                Visualizar Detalhes
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleDuplicateAction(action);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                                            >
+                                                                <Copy className="w-4 h-4" />
+                                                                Duplicar
+                                                            </button>
+                                                            <hr className="my-1" />
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleDeleteAction(action.id);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                                Excluir
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -629,7 +631,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                     {/* Step 1: Problema */}
                     {currentStep === 1 && (
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Código *</label>
                                     <input
@@ -679,7 +681,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Responsável *</label>
                                     <select
@@ -769,7 +771,7 @@ Ou use Diagrama de Ishikawa (6M):
 
                                 <div className="border-t pt-4">
                                     <p className="text-sm font-medium text-gray-700 mb-3">+ Adicionar Tarefa</p>
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <input
                                             type="text"
                                             value={newTask.description}

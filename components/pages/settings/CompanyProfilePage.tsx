@@ -9,17 +9,38 @@ import {
     CheckCircle,
     ShieldCheck,
     CreditCard,
-    Calendar
+    Calendar,
+    Crown,
+    X,
+    Check,
+    Users,
+    HardDrive,
+    Zap,
+    TrendingUp
 } from 'lucide-react';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import { PageHeader } from '../../common/PageHeader';
+import { getAvailablePlans, upgradePlan, downgradePlan, checkPlanLimits } from '../../../lib/utils/supabase';
+import type { Plan, PlanId } from '../../../types';
 
 export const CompanyProfilePage: React.FC = () => {
     const { company, refreshCompany } = useAuthContext();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Subscription state
+    const [showPlansModal, setShowPlansModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [planLimits, setPlanLimits] = useState({
+        currentUsers: 0,
+        maxUsers: 5,
+        currentStorage: 0,
+        maxStorage: 5,
+        withinLimits: true
+    });
 
     const [formData, setFormData] = useState({
         name: '',
@@ -42,8 +63,54 @@ export const CompanyProfilePage: React.FC = () => {
                 address: company.address || '',
                 logo_url: company.logo_url || ''
             });
+
+            // Load plan limits
+            loadPlanLimits();
         }
     }, [company]);
+
+    const loadPlanLimits = async () => {
+        if (!company?.id) return;
+        const limits = await checkPlanLimits(company.id);
+        setPlanLimits(limits);
+    };
+
+    const handlePlanSelection = (plan: Plan) => {
+        setSelectedPlan(plan);
+        setShowPlansModal(false);
+        setShowConfirmModal(true);
+    };
+
+    const handlePlanChange = async () => {
+        if (!selectedPlan || !company?.id) return;
+
+        try {
+            setSaving(true);
+            const currentPlan = getAvailablePlans().find(p => p.id === (company.plan_id || 'start'));
+
+            const planOrder: Record<PlanId, number> = { 'start': 0, 'pro': 1, 'enterprise': 2 };
+            const isUpgrade = planOrder[selectedPlan.id] > planOrder[currentPlan?.id || 'start'];
+
+            const result = isUpgrade
+                ? await upgradePlan(company.id, selectedPlan.id)
+                : await downgradePlan(company.id, selectedPlan.id);
+
+            if (result.success) {
+                await refreshCompany();
+                await loadPlanLimits();
+                alert(`✅ Plano alterado para ${selectedPlan.name} com sucesso!`);
+            } else {
+                alert(`❌ Erro ao alterar plano: ${result.error}`);
+            }
+        } catch (error: any) {
+            console.error('Error changing plan:', error);
+            alert('❌ Erro ao processar mudança de plano');
+        } finally {
+            setSaving(false);
+            setShowConfirmModal(false);
+            setSelectedPlan(null);
+        }
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -274,30 +341,89 @@ export const CompanyProfilePage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Card 3: Assinatura (Full Width) */}
+
+                    {/* Card 3: Assinatura Melhorada (Full Width) */}
                     <div className="md:col-span-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-100 p-6">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white rounded-full shadow-sm">
-                                    <CreditCard className="w-6 h-6 text-blue-600" />
+                        <div className="flex flex-col md:flex-row items-start justify-between gap-6">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="p-3 bg-white rounded-full shadow-sm">
+                                        <Crown className="w-6 h-6 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            Plano {getAvailablePlans().find(p => p.id === (company?.plan_id || 'start'))?.name || 'Start'}
+                                        </h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(company?.subscription_status || 'active') === 'active'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                {(company?.subscription_status || 'active') === 'active' ? '✓ ATIVO' : '⚠ VENCIDO'}
+                                            </span>
+                                            {company?.current_period_end && (
+                                                <span className="text-sm text-gray-500 flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    Renova em {new Date(company.current_period_end).toLocaleDateString('pt-BR')}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Plano Atual: {company?.plan?.toUpperCase() || 'START'}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${company?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {company?.status === 'active' ? 'ATIVO' : 'INATIVO'}
-                                        </span>
-                                        <span className="text-sm text-gray-500 flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            Membro desde {company?.created_at ? new Date(company.created_at).toLocaleDateString('pt-BR') : '-'}
-                                        </span>
+
+                                {/* Usage Indicators */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Users */}
+                                    <div className="bg-white p-3 rounded-lg">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <Users className="w-4 h-4" />
+                                                <span>Usuários</span>
+                                            </div>
+                                            <span className="text-sm font-medium">
+                                                {planLimits.currentUsers}/{planLimits.maxUsers}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className={`h-2 rounded-full ${planLimits.currentUsers >= planLimits.maxUsers
+                                                    ? 'bg-red-500'
+                                                    : planLimits.currentUsers > planLimits.maxUsers * 0.8
+                                                        ? 'bg-yellow-500'
+                                                        : 'bg-green-500'
+                                                    }`}
+                                                style={{ width: `${Math.min((planLimits.currentUsers / planLimits.maxUsers) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Storage */}
+                                    <div className="bg-white p-3 rounded-lg">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <HardDrive className="w-4 h-4" />
+                                                <span>Armazenamento</span>
+                                            </div>
+                                            <span className="text-sm font-medium">
+                                                {planLimits.currentStorage.toFixed(1)}/{planLimits.maxStorage} GB
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className="bg-blue-500 h-2 rounded-full"
+                                                style={{ width: `${Math.min((planLimits.currentStorage / planLimits.maxStorage) * 100, 100)}%` }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <button className="px-4 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium shadow-sm">
-                                Gerenciar Assinatura
+                            <button
+                                onClick={() => setShowPlansModal(true)}
+                                className="px-4 py-2 bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium shadow-sm flex items-center gap-2"
+                            >
+                                <TrendingUp className="w-4 h-4" />
+                                Gerenciar Plano
                             </button>
                         </div>
                     </div>
@@ -324,6 +450,182 @@ export const CompanyProfilePage: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Plans Comparison Modal */}
+            {showPlansModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">Comparar Planos</h2>
+                                <p className="text-sm text-gray-500">Escolha o plano ideal para sua organização</p>
+                            </div>
+                            <button onClick={() => setShowPlansModal(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {getAvailablePlans().map((plan) => {
+                                    const isCurrentPlan = plan.id === (company?.plan_id || 'start');
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            className={`relative rounded-xl border-2 p-6 transition-all ${isCurrentPlan
+                                                ? 'border-blue-500 bg-blue-50/50'
+                                                : plan.popular
+                                                    ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            {plan.popular && !isCurrentPlan && (
+                                                <div className="absolute -top-3 right-4 z-10">
+                                                    <span className="bg-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                                        ⭐ MAIS POPULAR
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {isCurrentPlan && (
+                                                <div className="absolute -top-3 right-4">
+                                                    <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                                        <Check className="w-3 h-3" /> PLANO ATUAL
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <div className="text-center mb-6">
+                                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                                                <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+                                                <div className="mb-4">
+                                                    {plan.price === 0 && plan.id !== 'start' ? (
+                                                        <div>
+                                                            <div className="text-3xl font-bold text-gray-900">Sob Consulta</div>
+                                                            <div className="text-sm text-gray-500">Contate nossa equipe</div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <div className="flex items-baseline justify-center">
+                                                                <span className="text-4xl font-bold text-gray-900">
+                                                                    R$ {plan.price}
+                                                                </span>
+                                                                <span className="text-gray-600 ml-2">/mês</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <ul className="space-y-3 mb-6">
+                                                {plan.features.map((feature, idx) => (
+                                                    <li key={idx} className="flex items-start gap-2 text-sm">
+                                                        <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                                        <span className="text-gray-700">{feature}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            <div className="space-y-2 text-xs text-gray-600 mb-6">
+                                                <div className="flex justify-between">
+                                                    <span>Usuários:</span>
+                                                    <span className="font-medium">{plan.limits.maxUsers === 999999 ? 'Ilimitado' : plan.limits.maxUsers}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Armazenamento:</span>
+                                                    <span className="font-medium">{plan.limits.maxStorageGb === 999999 ? 'Ilimitado' : `${plan.limits.maxStorageGb} GB`}</span>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => !isCurrentPlan && handlePlanSelection(plan)}
+                                                disabled={isCurrentPlan}
+                                                style={
+                                                    isCurrentPlan ? {} :
+                                                        plan.popular ? { backgroundColor: '#9333ea' } :
+                                                            plan.id === 'enterprise' ? { backgroundColor: '#6366f1' } :
+                                                                { backgroundColor: '#3b82f6' }
+                                                }
+                                                className={
+                                                    isCurrentPlan
+                                                        ? 'w-full py-3 rounded-lg font-medium transition-all bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                        : 'w-full py-3 rounded-lg font-medium transition-all text-white hover:opacity-90 shadow-md hover:shadow-lg'
+                                                }
+                                            >
+                                                {isCurrentPlan ? 'Plano Atual' : plan.id === 'enterprise' ? 'Contatar Vendas' : 'Selecionar Plano'}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && selectedPlan && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Zap className="w-8 h-8 text-blue-600" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirmar Mudança de Plano</h3>
+                            <p className="text-gray-600">
+                                Você está prestes a alterar para o plano <span className="font-bold text-blue-600">{selectedPlan.name}</span>
+                            </p>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Novo limite de usuários:</span>
+                                    <span className="font-medium">{selectedPlan.limits.maxUsers === 999999 ? 'Ilimitado' : selectedPlan.limits.maxUsers}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Novo armazenamento:</span>
+                                    <span className="font-medium">{selectedPlan.limits.maxStorageGb === 999999 ? 'Ilimitado' : `${selectedPlan.limits.maxStorageGb} GB`}</span>
+                                </div>
+                                {selectedPlan.price > 0 && (
+                                    <div className="flex justify-between pt-2 border-t border-gray-200">
+                                        <span className="text-gray-600 font-medium">Valor mensal:</span>
+                                        <span className="font-bold text-lg text-blue-600">R$ {selectedPlan.price}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowConfirmModal(false);
+                                    setSelectedPlan(null);
+                                }}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handlePlanChange}
+                                disabled={saving}
+                                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+                            >
+                                {saving ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="w-5 h-5" />
+                                        Confirmar
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -24,7 +24,7 @@ export const SuperAdminPage: React.FC = () => {
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-    const [editForm, setEditForm] = useState({ name: '', cnpj: '', plan: '', status: '' });
+    const [editForm, setEditForm] = useState({ name: '', cnpj: '', email: '', plan: '', status: '' });
     const [editLoading, setEditLoading] = useState(false);
 
     // Menu State
@@ -86,28 +86,48 @@ export const SuperAdminPage: React.FC = () => {
     const fetchCompanies = async () => {
         try {
             setError(null);
-            // Try RPC first
-            const { data, error } = await supabase.rpc('get_all_companies');
 
-            if (error) {
-                console.error('RPC Error:', error);
-                // Fallback to direct select
-                const { data: directData, error: directError } = await supabase
-                    .from('company_info')
-                    .select('*')
-                    .order('created_at', { ascending: false }); // Fix: Order by newest
+            // Step 1: Fetch all companies
+            const { data: companiesData, error: companiesError } = await supabase
+                .from('company_info')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-                if (directError) {
-                    throw new Error(`RPC Error: ${error.message} | Direct Error: ${directError.message}`);
+            if (companiesError) throw companiesError;
+
+            if (companiesData) {
+                // Step 2: Get all unique owner_ids
+                const ownerIds = [...new Set(companiesData.map(c => c.owner_id).filter(Boolean))];
+
+                // Step 3: Fetch profiles for these owners
+                let profilesMap: Record<string, any> = {};
+
+                if (ownerIds.length > 0) {
+                    const { data: profilesData, error: profilesError } = await supabase
+                        .from('profiles')
+                        .select('id, full_name, email')
+                        .in('id', ownerIds);
+
+                    if (!profilesError && profilesData) {
+                        profilesMap = profilesData.reduce((acc, profile) => {
+                            acc[profile.id] = profile;
+                            return acc;
+                        }, {} as Record<string, any>);
+                    }
                 }
 
-                if (directData) {
-                    setCompanies(directData);
-                    updateStats(directData);
-                }
-            } else if (data) {
-                setCompanies(data);
-                updateStats(data);
+                // Step 4: Merge data
+                const mappedData = companiesData.map((company: any) => {
+                    const owner = company.owner_id ? profilesMap[company.owner_id] : null;
+                    return {
+                        ...company,
+                        owner_name: owner?.full_name || (company.email ? 'Contato da Empresa' : 'Sem dono vinculado'),
+                        owner_email: owner?.email || company.email || '-'
+                    };
+                });
+
+                setCompanies(mappedData);
+                updateStats(mappedData);
             }
         } catch (error: any) {
             console.error('Error fetching companies:', error);
@@ -122,6 +142,18 @@ export const SuperAdminPage: React.FC = () => {
         setStats({ total, revenue, active });
     };
 
+    const getPlanBadgeStyle = (plan: string | undefined) => {
+        const p = (plan || 'start').toLowerCase();
+        switch (p) {
+            case 'pro':
+                return 'bg-purple-50 text-purple-700 border-purple-200';
+            case 'enterprise':
+                return 'bg-slate-800 text-white border-slate-700';
+            default: // start
+                return 'bg-blue-50 text-blue-700 border-blue-200';
+        }
+    };
+
     // --- Actions ---
 
     const handleEdit = (company: Company) => {
@@ -129,6 +161,7 @@ export const SuperAdminPage: React.FC = () => {
         setEditForm({
             name: company.name,
             cnpj: company.cnpj || '',
+            email: company.email || '',
             plan: company.plan || 'start',
             status: company.status || 'active'
         });
@@ -145,6 +178,7 @@ export const SuperAdminPage: React.FC = () => {
                 .update({
                     name: editForm.name,
                     cnpj: editForm.cnpj,
+                    email: editForm.email,
                     plan: editForm.plan,
                     status: editForm.status,
                     monthly_revenue: editForm.plan === 'enterprise' ? 999 : (editForm.plan === 'pro' ? 299 : 99)
@@ -364,9 +398,17 @@ export const SuperAdminPage: React.FC = () => {
                                 <tr key={company.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
-                                                {company.name.substring(0, 2).toUpperCase()}
-                                            </div>
+                                            {company.logo_url ? (
+                                                <img
+                                                    src={company.logo_url}
+                                                    alt={company.name}
+                                                    className="w-10 h-10 rounded-full object-contain bg-white border border-gray-100"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
+                                                    {company.name.substring(0, 2).toUpperCase()}
+                                                </div>
+                                            )}
                                             <div>
                                                 <p className="font-medium text-gray-900">{company.name}</p>
                                                 <p className="text-xs text-gray-500">{company.cnpj || 'Sem CNPJ'}</p>
@@ -388,7 +430,7 @@ export const SuperAdminPage: React.FC = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="capitalize text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                                        <span className={`capitalize text-sm px-2 py-1 rounded border ${getPlanBadgeStyle(company.plan)}`}>
                                             {company.plan || 'Start'}
                                         </span>
                                     </td>
@@ -611,6 +653,16 @@ export const SuperAdminPage: React.FC = () => {
                                     value={editForm.cnpj}
                                     onChange={e => setEditForm({ ...editForm, cnpj: e.target.value })}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail da Empresa</label>
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    placeholder="contato@empresa.com"
                                 />
                             </div>
                             <div>

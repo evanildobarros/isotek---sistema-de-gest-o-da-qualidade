@@ -341,7 +341,9 @@ export const CompetenciesPage: React.FC = () => {
             {/* Header */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-2">
-                    <GraduationCap className="w-7 h-7 text-[#025159]" />
+                    <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <GraduationCap className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    </div>
                     <h1 className="text-2xl font-bold text-[#025159]">Competências e Treinamentos</h1>
                 </div>
                 <p className="text-gray-500 text-sm">
@@ -385,10 +387,10 @@ export const CompetenciesPage: React.FC = () => {
                                             </div>
                                             <div
                                                 className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white ${status === 'expired'
-                                                        ? 'bg-red-500'
-                                                        : status === 'warning'
-                                                            ? 'bg-yellow-500'
-                                                            : 'bg-green-500'
+                                                    ? 'bg-red-500'
+                                                    : status === 'warning'
+                                                        ? 'bg-yellow-500'
+                                                        : 'bg-green-500'
                                                     }`}
                                             />
                                         </div>

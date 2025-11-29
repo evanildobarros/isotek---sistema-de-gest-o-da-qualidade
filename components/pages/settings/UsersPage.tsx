@@ -134,7 +134,9 @@ export const UsersPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <UserIcon className="w-7 h-7 text-[#025159]" />
+                        <div className="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
+                            <UserIcon className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                        </div>
                         <h1 className="text-2xl font-bold text-[#025159]">Gestão de Usuários</h1>
                     </div>
                     <p className="text-gray-600 text-sm">Gerencie os acessos e permissões dos colaboradores.</p>

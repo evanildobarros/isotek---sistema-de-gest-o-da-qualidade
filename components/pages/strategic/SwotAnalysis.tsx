@@ -7,7 +7,9 @@ export const SwotAnalysis: React.FC = () => {
         <div className="space-y-6">
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-2">
-                    <Layers className="w-7 h-7 text-[#025159]" />
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <Layers className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
                     <h1 className="text-2xl font-bold text-[#025159]">Análise SWOT (Matriz FOFA)</h1>
                 </div>
                 <p className="text-gray-500 text-sm">

@@ -6,7 +6,7 @@ interface PageHeaderProps {
     title: string;
     subtitle: string;
     action?: React.ReactNode;
-    iconColor?: 'blue' | 'indigo' | 'sky' | 'cyan' | 'orange' | 'amber' | 'yellow' | 'purple' | 'violet' | 'fuchsia';
+    iconColor?: 'blue' | 'indigo' | 'sky' | 'cyan' | 'teal' | 'emerald' | 'green' | 'orange' | 'amber' | 'yellow' | 'red' | 'purple' | 'violet' | 'fuchsia';
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -21,9 +21,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
         sky: 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400',
         cyan: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400',
+        teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
+        emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+        green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
         orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
         amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
         yellow: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
+        red: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
         purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
         violet: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
         fuchsia: 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400'

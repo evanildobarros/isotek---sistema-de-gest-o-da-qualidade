@@ -44,25 +44,8 @@ export enum IsoSection {
   UNITS = 'Minhas Unidades',
   COMPANY_PROFILE = 'Perfil da Empresa',
   USER_PROFILE = 'Meu Perfil',
-
-  // Legacy mappings (to avoid breaking existing code temporarily)
-  DASHBOARD = 'Painel de Controle',
-  CONTEXT_SWOT = 'Contexto (SWOT)',
-  CONTEXT_OPPORTUNITIES = 'Oportunidades',
-  CONTEXT_SYSTEM_INFRASTRUCTURE = 'Sistema (Infraestrutura)',
-  PLANNING_SWOT = 'Contexto (SWOT)',
-  PLANNING_OPPORTUNITIES = 'Oportunidades',
-  ADMINISTRATIVE_MANAGEMENT = 'Gestão Administrativa',
-  EMPLOYEES = 'Colaboradores',
-  TRAININGS = 'Treinamentos',
-  SYSTEM_RESOURCES = 'Sistema (Recursos)',
-  USERS = 'Usuários',
-  OPERATION_CONTROL = 'Operação e Controle',
-  REPORTS = 'Relatórios',
-  KPIS = 'Indicadores (KPIs)',
-  AUDITS = 'Auditorias',
-  QUALITY_MANAGEMENT = 'Gestão da Qualidade'
 }
+
 
 export interface NavigationItem {
   label: string;
@@ -146,6 +129,29 @@ export interface Stakeholder {
   created_at?: string;
 }
 
+// Subscription types
+export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'trialing';
+export type PlanId = 'start' | 'pro' | 'enterprise';
+
+export interface PlanLimits {
+  maxUsers: number;
+  maxStorageGb: number;
+  hasAdvancedReports: boolean;
+  hasApiAccess: boolean;
+  hasPrioritySupport: boolean;
+}
+
+export interface Plan {
+  id: PlanId;
+  name: string;
+  price: number;
+  billingPeriod: 'monthly' | 'annual';
+  description: string;
+  features: string[];
+  limits: PlanLimits;
+  popular?: boolean;
+}
+
 export interface Company {
   id: string;
   name: string;
@@ -153,7 +159,7 @@ export interface Company {
   slogan?: string;
   owner_id?: string;
   created_at?: string;
-  // New fields for Super Admin
+  // Super Admin fields
   status?: 'active' | 'blocked' | 'inactive';
   plan?: 'start' | 'pro' | 'enterprise';
   cnpj?: string;
@@ -163,6 +169,12 @@ export interface Company {
   email?: string;
   phone?: string;
   address?: string;
+  // Subscription fields
+  subscription_status?: SubscriptionStatus;
+  plan_id?: PlanId;
+  current_period_end?: string;
+  max_users?: number;
+  max_storage_gb?: number;
 }
 
 export interface Employee {

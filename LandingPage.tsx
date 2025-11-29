@@ -40,39 +40,45 @@ export const LandingPage: React.FC = () => {
 
             {/* NAVBAR */}
             <header
-                className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'
+                className={`fixed w-full z-50 transition-all duration-300 ${isScrolled
+                    ? 'bg-white/95 backdrop-blur-sm shadow-md py-3'
+                    : 'bg-transparent py-5'
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        {/* Logo */}
+                    <div className="flex justify-between items-center h-14">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollToSection('inicio')}>
-                            <img src={logo} alt="Isotek Logo" className="h-10 w-auto" />
+                            <img
+                                src={logo}
+                                alt="Isotek Logo"
+                                className={`h-8 w-auto transition-all duration-300 ${!isScrolled ? 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.8)]' : ''
+                                    }`}
+                            />
                         </div>
 
                         {/* Desktop Nav */}
                         <nav className="hidden md:flex items-center gap-8">
                             <button
                                 onClick={() => scrollToSection('inicio')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#A67458]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
                             >
                                 Início
                             </button>
                             <button
                                 onClick={() => scrollToSection('sobre')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#A67458]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
                             >
                                 Sobre Nós
                             </button>
                             <button
                                 onClick={() => scrollToSection('funcionalidades')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#A67458]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
                             >
                                 Funcionalidades
                             </button>
                             <button
                                 onClick={() => scrollToSection('contato')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#A67458]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
                             >
                                 Contato
                             </button>
@@ -80,7 +86,7 @@ export const LandingPage: React.FC = () => {
                                 onClick={handleLoginClick}
                                 className={`px-6 py-2 border-2 text-sm font-bold rounded-lg transition-all ${isScrolled
                                     ? 'border-[#025159] text-[#025159] hover:bg-[#C4EEF2]'
-                                    : 'border-white text-white hover:bg-white hover:text-[#A67458]'
+                                    : 'border-white text-white hover:bg-white hover:text-[#7AB8BF]'
                                     }`}
                             >
                                 Entrar
@@ -101,10 +107,10 @@ export const LandingPage: React.FC = () => {
                 {isMenuOpen && (
                     <div className="md:hidden bg-white border-b border-[#7AB8BF] animate-fade-in absolute w-full shadow-lg">
                         <div className="px-4 pt-2 pb-6 space-y-2">
-                            <button onClick={() => scrollToSection('inicio')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF] rounded-md">Início</button>
-                            <button onClick={() => scrollToSection('sobre')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF] rounded-md">Sobre Nós</button>
-                            <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF] rounded-md">Funcionalidades</button>
-                            <button onClick={() => scrollToSection('contato')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF] rounded-md">Contato</button>
+                            <button onClick={() => scrollToSection('inicio')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF]/20 rounded-md">Início</button>
+                            <button onClick={() => scrollToSection('sobre')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF]/20 rounded-md">Sobre Nós</button>
+                            <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF]/20 rounded-md">Funcionalidades</button>
+                            <button onClick={() => scrollToSection('contato')} className="block w-full text-left px-3 py-2 text-base font-medium text-[#025159] hover:bg-[#7AB8BF]/20 rounded-md">Contato</button>
                             <button
                                 onClick={handleLoginClick}
                                 className="w-full mt-4 px-5 py-3 border-2 border-[#025159] text-[#025159] text-base font-bold rounded-lg hover:bg-[#C4EEF2] transition-all"
@@ -117,7 +123,17 @@ export const LandingPage: React.FC = () => {
             </header>
 
             {/* A. HERO SECTION */}
-            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 bg-[#7AB8BF] relative overflow-hidden min-h-screen flex items-center">
+            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 relative overflow-hidden min-h-screen flex items-center">
+                {/* Background Image */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{
+                        backgroundImage: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80)'
+                    }}
+                ></div>
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#025159]/90 via-[#3F858C]/85 to-[#025159]/90"></div>
+
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Text Content */}
@@ -131,7 +147,7 @@ export const LandingPage: React.FC = () => {
                             </p>
                             <a
                                 href="#"
-                                className="px-8 py-4 bg-[#025159] text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#025159] transition-all shadow-lg flex items-center gap-2 inline-flex"
+                                className="px-8 py-4 bg-[#A67458] text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#A67458] transition-all shadow-lg flex items-center gap-2 inline-flex"
                             >
                                 Solicitar Demonstração
                                 <CheckCircle2 size={20} />
@@ -140,7 +156,7 @@ export const LandingPage: React.FC = () => {
 
                         {/* Image */}
                         <div className="relative">
-                            <div className="absolute inset-0 bg-[#025159] rounded-2xl transform rotate-3 opacity-20"></div>
+                            <div className="absolute inset-0 bg-[#A67458] rounded-2xl transform rotate-3 opacity-20"></div>
                             <img
                                 src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=800&q=80"
                                 alt="Business Strategy"
@@ -201,7 +217,7 @@ export const LandingPage: React.FC = () => {
                     <div className="grid md:grid-cols-3 gap-12">
                         {/* Step 1 */}
                         <div className="relative p-8 pt-16 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border-b-4 border-[#A67458]">
-                            <div className="absolute top-4 right-4 text-8xl font-black text-[#C4EEF2] opacity-50 select-none leading-none">
+                            <div className="absolute top-4 right-4 text-8xl font-black text-[#A67458]/25 select-none leading-none">
                                 01
                             </div>
                             <h3 className="text-2xl font-bold text-[#025159] mb-4 relative z-10">Diagnóstico</h3>
@@ -212,7 +228,7 @@ export const LandingPage: React.FC = () => {
 
                         {/* Step 2 */}
                         <div className="relative p-8 pt-16 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border-b-4 border-[#A67458]">
-                            <div className="absolute top-4 right-4 text-8xl font-black text-[#C4EEF2] opacity-50 select-none leading-none">
+                            <div className="absolute top-4 right-4 text-8xl font-black text-[#A67458]/25 select-none leading-none">
                                 02
                             </div>
                             <h3 className="text-2xl font-bold text-[#025159] mb-4 relative z-10">Implementação</h3>
@@ -223,7 +239,7 @@ export const LandingPage: React.FC = () => {
 
                         {/* Step 3 */}
                         <div className="relative p-8 pt-16 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border-b-4 border-[#A67458]">
-                            <div className="absolute top-4 right-4 text-8xl font-black text-[#C4EEF2] opacity-50 select-none leading-none">
+                            <div className="absolute top-4 right-4 text-8xl font-black text-[#A67458]/25 select-none leading-none">
                                 03
                             </div>
                             <h3 className="text-2xl font-bold text-[#025159] mb-4 relative z-10">Certificação</h3>
@@ -278,11 +294,11 @@ export const LandingPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Right Side (Copper) */}
+                {/* Right Side (Terracotta) */}
                 <div className="w-full md:w-1/2 bg-[#A67458] text-white p-12 lg:p-20 relative overflow-hidden">
                     <div className="max-w-md mx-auto md:mx-0 relative z-10">
                         <h3 className="text-2xl font-bold mb-2">Receba dicas de Gestão</h3>
-                        <p className="text-white/80 mb-8">
+                        <p className="text-white/90 mb-8">
                             Junte-se a mais de 5.000 gestores que recebem nossos conteúdos.
                         </p>
 
@@ -292,7 +308,7 @@ export const LandingPage: React.FC = () => {
                                 placeholder="Seu melhor e-mail"
                                 className="flex-1 px-4 py-3 rounded-lg text-[#025159] focus:outline-none focus:ring-2 focus:ring-[#025159]"
                             />
-                            <button className="px-6 py-3 bg-[#025159] text-white font-bold rounded-lg hover:bg-[#6d3e23] transition-colors">
+                            <button className="px-6 py-3 bg-[#025159] text-white font-bold rounded-lg hover:bg-[#3F858C] transition-colors">
                                 Assinar
                             </button>
                         </div>

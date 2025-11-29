@@ -266,9 +266,14 @@ export const SuppliersPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6 md:mb-8">
                 <div>
-                    <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-1">
-                        Gestão de Fornecedores e Compras
-                    </h1>
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                            <Truck className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <h1 className="text-xl md:text-3xl font-bold text-gray-900">
+                            Gestão de Fornecedores e Compras
+                        </h1>
+                    </div>
                     <p className="text-gray-500 text-sm">
                         ISO 9001: 8.4 - Controle de Processos Externos
                     </p>

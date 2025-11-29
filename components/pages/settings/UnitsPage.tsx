@@ -164,7 +164,9 @@ export const UnitsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <header className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <Building2 className="w-7 h-7 text-[#025159]" />
+          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+            <Building2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          </div>
           <h1 className="text-2xl font-bold text-[#025159]">Minhas Unidades</h1>
         </div>
         <p className="text-gray-500 text-sm">
