@@ -19,8 +19,9 @@ import {
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Supplier, SupplierEvaluation } from '../../../types';
+import { PlanGuard } from '../../auth/PlanGuard';
 
-export const SuppliersPage: React.FC = () => {
+const SuppliersPageContent: React.FC = () => {
     const { user, company } = useAuthContext();
     const [activeTab, setActiveTab] = useState<'directory' | 'evaluations'>('directory');
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -798,5 +799,18 @@ export const SuppliersPage: React.FC = () => {
                 </div>
             )}
         </div>
+    );
+};
+
+export const SuppliersPage: React.FC = () => {
+    return (
+        <PlanGuard
+            requiredFeature="suppliers"
+            featureName="Gestão de Fornecedores"
+            requiredPlan="pro"
+            description="Gerencie seu cadastro de fornecedores, realize avaliações de desempenho (IQF) e mantenha o controle de qualidade da sua cadeia de suprimentos."
+        >
+            <SuppliersPageContent />
+        </PlanGuard>
     );
 };

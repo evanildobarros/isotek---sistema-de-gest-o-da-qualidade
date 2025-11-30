@@ -3,8 +3,9 @@ import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, AlertTr
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Audit } from '../../../types';
+import { PlanGuard } from '../../auth/PlanGuard';
 
-export const AuditsPage: React.FC = () => {
+const AuditsPageContent: React.FC = () => {
     const { user, company } = useAuthContext();
     const [audits, setAudits] = useState<Audit[]>([]);
     const [loading, setLoading] = useState(true);
@@ -518,5 +519,18 @@ export const AuditsPage: React.FC = () => {
                 </div>
             )}
         </div>
+    );
+};
+
+export const AuditsPage: React.FC = () => {
+    return (
+        <PlanGuard
+            requiredFeature="audits"
+            featureName="Auditorias Internas"
+            requiredPlan="pro"
+            description="Gerencie auditorias internas, externas e de processo com rastreamento completo de status e progresso."
+        >
+            <AuditsPageContent />
+        </PlanGuard>
     );
 };

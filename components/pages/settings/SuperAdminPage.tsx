@@ -83,46 +83,47 @@ export const SuperAdminPage: React.FC = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
+    // Helper function to get avatar color based on company name
+    const getAvatarColor = (name: string) => {
+        const colors = [
+            'bg-blue-500',
+            'bg-purple-500',
+            'bg-pink-500',
+            'bg-indigo-500',
+            'bg-cyan-500',
+            'bg-teal-500',
+            'bg-emerald-500',
+            'bg-amber-500',
+            'bg-orange-500',
+            'bg-rose-500'
+        ];
+        const index = name.charCodeAt(0) % colors.length;
+        return colors[index];
+    };
+
     const fetchCompanies = async () => {
         try {
             setError(null);
 
-            // Step 1: Fetch all companies
+            // Fetch companies with JOIN to profiles for owner data
             const { data: companiesData, error: companiesError } = await supabase
                 .from('company_info')
-                .select('*')
+                .select('*, owner:profiles!owner_id(full_name)')
                 .order('created_at', { ascending: false });
 
             if (companiesError) throw companiesError;
 
+
             if (companiesData) {
-                // Step 2: Get all unique owner_ids
-                const ownerIds = [...new Set(companiesData.map(c => c.owner_id).filter(Boolean))];
-
-                // Step 3: Fetch profiles for these owners
-                let profilesMap: Record<string, any> = {};
-
-                if (ownerIds.length > 0) {
-                    const { data: profilesData, error: profilesError } = await supabase
-                        .from('profiles')
-                        .select('id, full_name, email')
-                        .in('id', ownerIds);
-
-                    if (!profilesError && profilesData) {
-                        profilesMap = profilesData.reduce((acc, profile) => {
-                            acc[profile.id] = profile;
-                            return acc;
-                        }, {} as Record<string, any>);
-                    }
-                }
-
-                // Step 4: Merge data
+                // Map the data to include owner information
                 const mappedData = companiesData.map((company: any) => {
-                    const owner = company.owner_id ? profilesMap[company.owner_id] : null;
+                    const ownerName = company.owner?.full_name || 'Sem dono vinculado';
+
                     return {
                         ...company,
-                        owner_name: owner?.full_name || (company.email ? 'Contato da Empresa' : 'Sem dono vinculado'),
-                        owner_email: owner?.email || company.email || '-'
+                        owner_name: ownerName,
+                        owner_email: company.email || '-',
+                        avatar_color: getAvatarColor(company.name)
                     };
                 });
 
@@ -402,10 +403,10 @@ export const SuperAdminPage: React.FC = () => {
                                                 <img
                                                     src={company.logo_url}
                                                     alt={company.name}
-                                                    className="w-10 h-10 rounded-full object-contain bg-white border border-gray-100"
+                                                    className="w-10 h-10 rounded-full object-contain bg-white border border-gray-100 shadow-sm"
                                                 />
                                             ) : (
-                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
+                                                <div className={`w-10 h-10 rounded-full ${getAvatarColor(company.name)} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
                                                     {company.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                             )}

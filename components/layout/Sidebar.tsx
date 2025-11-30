@@ -26,9 +26,11 @@ import {
   TrendingUp,
   CheckCircle2,
   HelpingHand,
-  LayoutDashboard
+  LayoutDashboard,
+  Lock
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../../types';
+import { usePlanLimits } from '../../hooks/usePlanLimits';
 
 // --- Interfaces ---
 
@@ -316,6 +318,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { canAccessModule, planName } = usePlanLimits();
 
   // Load and sync avatar
   useEffect(() => {
@@ -371,6 +374,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
     // Special highlighting for "Gestão de Documentos (GED)" as requested
     const isGed = item.section === IsoSection.DOCUMENTS;
 
+    // Check if module is restricted by plan
+    const moduleKey = item.path?.split('/').pop() || '';
+    const isRestricted = !canAccessModule(moduleKey);
+
+    // Special modules that require Pro plan
+    const isAuditModule = item.section === IsoSection.INTERNAL_AUDITS;
+    const isSupplierModule = item.section === IsoSection.SUPPLIER_MANAGEMENT;
+    const needsUpgrade = isAuditModule || isSupplierModule;
+
+    const handleClick = () => {
+      if (isRestricted && needsUpgrade) {
+        // Redirect to company profile for upgrade
+        navigate('/app/settings/company-profile');
+        return;
+      }
+      if (item.path) {
+        navigate(item.path);
+      }
+    };
+
     if (hasChildren) {
       return (
         <div key={item.label} className="mb-1">
@@ -398,19 +421,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
     return (
       <button
         key={item.label}
-        onClick={() => item.path && navigate(item.path)}
-        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-          ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
-          : isGed ? 'text-gray-700 font-semibold hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
+        onClick={handleClick}
+        title={isRestricted && needsUpgrade ? `Disponível no plano PRO` : undefined}
+        className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
+            ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
+            : isGed
+              ? 'text-gray-700 font-semibold hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+              : isRestricted && needsUpgrade
+                ? 'text-gray-400 hover:bg-purple-50 dark:text-gray-600 dark:hover:bg-purple-900/10 opacity-60 cursor-pointer'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
           }`}
       >
-        {item.icon && (
-          <item.icon
-            size={18}
-            className={isActive ? 'text-[#025159]' : isGed ? 'text-[#025159]' : 'text-gray-400'}
-          />
+        <div className="flex items-center gap-3">
+          {item.icon && (
+            <item.icon
+              size={18}
+              className={
+                isActive
+                  ? 'text-[#025159]'
+                  : isGed
+                    ? 'text-[#025159]'
+                    : isRestricted && needsUpgrade
+                      ? 'text-gray-400'
+                      : 'text-gray-400'
+              }
+            />
+          )}
+          <span>{item.label}</span>
+        </div>
+        {isRestricted && needsUpgrade && (
+          <Lock size={14} className="text-purple-500" />
         )}
-        {item.label}
       </button>
     );
   };

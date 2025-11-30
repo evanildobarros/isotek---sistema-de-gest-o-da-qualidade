@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
-import { Search, UserPlus, Edit2, Trash2, X, Save, Loader2, User as UserIcon } from 'lucide-react';
+import { Search, UserPlus, Edit2, Trash2, X, Save, Loader2, User as UserIcon, Crown } from 'lucide-react';
+import { usePlanLimits } from '../../../hooks/usePlanLimits';
 
 // Types
 type UserRole = 'admin' | 'gestor' | 'auditor' | 'colaborador';
@@ -15,6 +17,8 @@ interface UserProfile {
 }
 
 export const UsersPage: React.FC = () => {
+    const navigate = useNavigate();
+    const { canAddUser, usage, planName } = usePlanLimits();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -141,10 +145,49 @@ export const UsersPage: React.FC = () => {
                     </div>
                     <p className="text-gray-600 text-sm">Gerencie os acessos e permissões dos colaboradores.</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors font-medium shadow-sm">
-                    <UserPlus size={18} />
-                    <span>Convidar Usuário</span>
+                <button
+                    onClick={() => canAddUser ? alert('Função em desenvolvimento') : navigate('/app/settings/company-profile')}
+                    disabled={!canAddUser}
+                    title={!canAddUser ? 'Limite de usuários atingido. Faça upgrade!' : 'Convidar novo usuário'}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium shadow-sm ${canAddUser
+                            ? 'bg-[#025159] text-white hover:bg-[#025159]/90'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }`}
+                >
+                    {canAddUser ? <UserPlus size={18} /> : <Crown size={18} />}
+                    <span>{canAddUser ? 'Convidar Usuário' : 'Limite Atingido - Upgrade'}</span>
                 </button>
+            </div>
+
+            {/* Usage Bar */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-700">Uso de Usuários</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Plano {planName}</p>
+                    </div>
+                    <div className="text-right">
+                        <span className="text-2xl font-bold text-gray-900">{users.length}</span>
+                        <span className="text-sm text-gray-500"> / {usage.usersLimit}</span>
+                    </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                        className={`h-3 rounded-full transition-all duration-300 ${users.length >= usage.usersLimit
+                                ? 'bg-red-500'
+                                : users.length > usage.usersLimit * 0.8
+                                    ? 'bg-yellow-500'
+                                    : 'bg-green-500'
+                            }`}
+                        style={{ width: `${Math.min((users.length / usage.usersLimit) * 100, 100)}%` }}
+                    />
+                </div>
+                {users.length >= usage.usersLimit && (
+                    <div className="mt-3 flex items-center gap-2 text-sm text-red-600">
+                        <Crown size={14} />
+                        <span>Você atingiu o limite do seu plano. <button onClick={() => navigate('/app/settings/company-profile')} className="underline font-medium">Fazer upgrade</button></span>
+                    </div>
+                )}
             </div>
 
             {/* Toolbar */}
