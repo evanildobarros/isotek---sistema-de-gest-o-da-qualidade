@@ -1,23 +1,88 @@
-import React, { useState } from 'react';
-import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book, Menu } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book, Menu, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { UserDropdown } from './UserDropdown';
 import { IsoSection } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { supabase } from '../../lib/supabase';
 
 interface HeaderProps {
   activeSection: IsoSection;
   onMenuClick?: () => void;
 }
 
+interface SearchResult {
+  id: string;
+  title: string;
+  code: string;
+  status: string;
+}
+
 export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      alert(`Funcionalidade de busca em desenvolvimento. Termo pesquisado: "${searchQuery}"`);
+  // Debounced search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        setIsSearching(true);
+        try {
+          const { data, error } = await supabase
+            .from('documents')
+            .select('id, title, code, status')
+            .or(`title.ilike.%${searchQuery}%,code.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+            .limit(10);
+
+          if (!error && data) {
+            setSearchResults(data);
+            setShowSearchResults(true);
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+        setShowSearchResults(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  // Click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleResultClick = (result: SearchResult) => {
+    setShowSearchResults(false);
+    setSearchQuery('');
+    navigate('/documentos', { state: { highlightId: result.id } });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'vigente': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'rascunho': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'obsoleto': return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+      default: return 'bg-gray-100 text-gray-600';
     }
   };
 
@@ -41,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
       {/* Actions */}
       <div className="flex items-center gap-2 md:gap-4">
         {/* Search */}
-        <div className="relative hidden md:block">
+        <div className="relative hidden md:block" ref={searchRef}>
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={16} className="text-gray-400" />
           </div>
@@ -49,10 +114,50 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearch}
             placeholder="Pesquisar documentos..."
             className="pl-10 pr-4 py-2 w-64 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500"
           />
+
+          {/* Search Results Dropdown */}
+          {showSearchResults && (
+            <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 animate-fade-in max-h-96 overflow-y-auto">
+              {isSearching ? (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#025159] mx-auto"></div>
+                </div>
+              ) : searchResults.length > 0 ? (
+                <>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                    {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
+                  </div>
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => handleResultClick(result)}
+                      className="w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors flex items-start gap-3 text-left"
+                    >
+                      <FileText size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800 dark:text-gray-200 font-medium truncate">
+                          {result.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{result.code}</p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getStatusColor(result.status)}`}>
+                            {result.status}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                  Nenhum documento encontrado
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Theme Toggle */}
