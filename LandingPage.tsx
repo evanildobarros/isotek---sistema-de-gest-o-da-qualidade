@@ -123,43 +123,34 @@ export const LandingPage: React.FC = () => {
             </header>
 
             {/* A. HERO SECTION */}
-            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 bg-[#0B1121] relative overflow-hidden min-h-screen flex items-center">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div className="grid lg:grid-cols-2 gap-12 items-center">
-                        {/* Text Content */}
-                        <div className="text-white">
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6">
-                                Isotek: O Futuro do <br />
-                                seu SGQ Começa <br />
-                                Aqui.
-                            </h1>
-                            <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-lg">
-                                Transforme a gestão da qualidade da sua empresa com uma plataforma inteligente, integrada e pronta para escalar. Simplifique processos, garanta conformidade e tome decisões estratégicas com dados em tempo real.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <button
-                                    onClick={handleLoginClick}
-                                    className="px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg text-center"
-                                >
-                                    Comece Agora
-                                </button>
-                                <a
-                                    href="#contato"
-                                    className="px-8 py-4 border-2 border-white text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#0B1121] transition-all text-center"
-                                >
-                                    Fale com Vendas
-                                </a>
-                            </div>
-                        </div>
+            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 relative overflow-hidden min-h-screen flex items-center bg-cover bg-center" style={{ backgroundImage: "url('/assets/hero-background.jpg')" }}>
+                {/* Dark Overlay for better text readability */}
+                <div className="absolute inset-0 bg-[#0B1121]/70 z-0"></div>
 
-                        {/* Image */}
-                        <div className="relative">
-                            <div className="absolute -inset-4 bg-blue-600/20 rounded-2xl blur-xl"></div>
-                            <img
-                                src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1000&q=80"
-                                alt="Modern Meeting Room"
-                                className="relative rounded-2xl shadow-2xl w-full object-cover h-[400px] md:h-[500px] border border-gray-800"
-                            />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+                    {/* Text Content */}
+                    <div className="text-white">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+                            Isotek: O Futuro do <br />
+                            seu SGQ Começa <br />
+                            Aqui.
+                        </h1>
+                        <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl">
+                            Transforme a gestão da qualidade da sua empresa com uma plataforma inteligente, integrada e pronta para escalar. Simplifique processos, garanta conformidade e tome decisões estratégicas com dados em tempo real.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <button
+                                onClick={handleLoginClick}
+                                className="px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg text-center"
+                            >
+                                Comece Agora
+                            </button>
+                            <a
+                                href="#contato"
+                                className="px-8 py-4 border-2 border-white text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#0B1121] transition-all text-center"
+                            >
+                                Fale com Vendas
+                            </a>
                         </div>
                     </div>
                 </div>
