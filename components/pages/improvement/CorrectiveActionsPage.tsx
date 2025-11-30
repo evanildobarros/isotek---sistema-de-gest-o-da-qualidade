@@ -500,7 +500,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Table (Desktop) / Cards (Mobile) */}
             {loading ? (
                 <div className="text-center py-12">
                     <p className="text-gray-500">Carregando ações...</p>
@@ -512,111 +512,209 @@ export const CorrectiveActionsPage: React.FC = () => {
                     description="Comece abrindo uma RNC para registrar problemas e melhorias"
                 />
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[640px]">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Origem</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsável</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prazo</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {getFilteredActions().map(action => {
-                                    const overdue = action.status !== 'closed' && isOverdue(action.deadline);
-                                    return (
-                                        <tr key={action.id} className={overdue ? 'bg-red-50' : 'hover:bg-gray-50'}>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="font-semibold text-gray-900">{action.code}</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getOriginBadge(action.origin)}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-sm text-gray-900 line-clamp-2" title={action.description}>
-                                                    {action.description}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm text-gray-700">{action.responsible_name}</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`text-sm ${overdue ? 'text-red-600 font-semibold' : 'text-gray-700'}`}>
-                                                    {new Date(action.deadline).toLocaleDateString('pt-BR')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getStatusBadge(action.status)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap relative">
-                                                <button
-                                                    onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
-                                                    className="text-gray-400 hover:text-gray-600 p-1"
-                                                >
-                                                    <MoreVertical className="w-5 h-5" />
-                                                </button>
+                <>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Origem</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsável</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prazo</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {getFilteredActions().map(action => {
+                                        const overdue = action.status !== 'closed' && isOverdue(action.deadline);
+                                        return (
+                                            <tr key={action.id} className={overdue ? 'bg-red-50' : 'hover:bg-gray-50'}>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="font-semibold text-gray-900">{action.code}</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {getOriginBadge(action.origin)}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-sm text-gray-900 line-clamp-2" title={action.description}>
+                                                        {action.description}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="text-sm text-gray-700">{action.responsible_name}</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`text-sm ${overdue ? 'text-red-600 font-semibold' : 'text-gray-700'}`}>
+                                                        {new Date(action.deadline).toLocaleDateString('pt-BR')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {getStatusBadge(action.status)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap relative">
+                                                    <button
+                                                        onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
+                                                        className="text-gray-400 hover:text-gray-600 p-1"
+                                                    >
+                                                        <MoreVertical className="w-5 h-5" />
+                                                    </button>
 
-                                                {openMenuId === action.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                                                        <div className="py-1">
-                                                            <button
-                                                                onClick={() => {
-                                                                    handleOpenModal(action);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                                Editar
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    handleOpenModal(action);
-                                                                    setCurrentStep(4);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                                Visualizar Detalhes
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    handleDuplicateAction(action);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                            >
-                                                                <Copy className="w-4 h-4" />
-                                                                Duplicar
-                                                            </button>
-                                                            <hr className="my-1" />
-                                                            <button
-                                                                onClick={() => {
-                                                                    handleDeleteAction(action.id);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                                Excluir
-                                                            </button>
+                                                    {openMenuId === action.id && (
+                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                                            <div className="py-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleOpenModal(action);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                    Editar
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleOpenModal(action);
+                                                                        setCurrentStep(4);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                    Visualizar Detalhes
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleDuplicateAction(action);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                                                >
+                                                                    <Copy className="w-4 h-4" />
+                                                                    Duplicar
+                                                                </button>
+                                                                <hr className="my-1" />
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleDeleteAction(action.id);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                    Excluir
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3">
+                        {getFilteredActions().map(action => {
+                            const overdue = action.status !== 'closed' && isOverdue(action.deadline);
+                            return (
+                                <div 
+                                    key={action.id} 
+                                    className={`bg-white rounded-xl shadow-sm border ${overdue ? 'border-red-300 bg-red-50' : 'border-gray-200'} p-4`}
+                                >
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-bold text-gray-900">{action.code}</span>
+                                                {getOriginBadge(action.origin)}
+                                            </div>
+                                            <p className="text-sm text-gray-700 line-clamp-2 mb-2">{action.description}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
+                                            className="text-gray-400 hover:text-gray-600 p-1 ml-2"
+                                        >
+                                            <MoreVertical className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    {/* Details */}
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Status:</span>
+                                            {getStatusBadge(action.status)}
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Responsável:</span>
+                                            <span className="text-gray-900 font-medium">{action.responsible_name}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Prazo:</span>
+                                            <span className={`font-medium ${overdue ? 'text-red-600' : 'text-gray-900'}`}>
+                                                {new Date(action.deadline).toLocaleDateString('pt-BR')}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Menu */}
+                                    {openMenuId === action.id && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    handleOpenModal(action);
+                                                    setOpenMenuId(null);
+                                                }}
+                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                                Editar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    handleOpenModal(action);
+                                                    setCurrentStep(4);
+                                                    setOpenMenuId(null);
+                                                }}
+                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                Ver
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    handleDuplicateAction(action);
+                                                    setOpenMenuId(null);
+                                                }}
+                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                <Copy className="w-4 h-4" />
+                                                Duplicar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    handleDeleteAction(action.id);
+                                                    setOpenMenuId(null);
+                                                }}
+                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Excluir
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </>
             )}
 
             {/* Modal Wizard */}
