@@ -51,7 +51,7 @@ export const LandingPage: React.FC = () => {
                             <img
                                 src={logo}
                                 alt="Isotek Logo"
-                                className={`h-8 w-auto transition-all duration-300 ${!isScrolled ? 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.8)]' : ''
+                                className={`h-8 w-auto transition-all duration-300 ${!isScrolled ? 'brightness-0 invert' : ''
                                     }`}
                             />
                         </div>
@@ -60,25 +60,25 @@ export const LandingPage: React.FC = () => {
                         <nav className="hidden md:flex items-center gap-8">
                             <button
                                 onClick={() => scrollToSection('inicio')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-blue-50 hover:text-blue-300'}`}
                             >
                                 Início
                             </button>
                             <button
                                 onClick={() => scrollToSection('sobre')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-blue-50 hover:text-blue-300'}`}
                             >
                                 Sobre Nós
                             </button>
                             <button
                                 onClick={() => scrollToSection('funcionalidades')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-blue-50 hover:text-blue-300'}`}
                             >
                                 Funcionalidades
                             </button>
                             <button
                                 onClick={() => scrollToSection('contato')}
-                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-white hover:text-[#C4EEF2]'}`}
+                                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-[#025159] hover:text-[#7AB8BF]' : 'text-blue-50 hover:text-blue-300'}`}
                             >
                                 Contato
                             </button>
@@ -86,7 +86,7 @@ export const LandingPage: React.FC = () => {
                                 onClick={handleLoginClick}
                                 className={`px-6 py-2 border-2 text-sm font-bold rounded-lg transition-all ${isScrolled
                                     ? 'border-[#025159] text-[#025159] hover:bg-[#C4EEF2]'
-                                    : 'border-white text-white hover:bg-white hover:text-[#7AB8BF]'
+                                    : 'border-blue-50 text-blue-50 hover:bg-blue-50 hover:text-[#0B1121]'
                                     }`}
                             >
                                 Entrar
@@ -95,7 +95,7 @@ export const LandingPage: React.FC = () => {
 
                         {/* Mobile Menu Button */}
                         <button
-                            className={`md:hidden p-2 ${isScrolled ? 'text-[#025159]' : 'text-white'}`}
+                            className={`md:hidden p-2 ${isScrolled ? 'text-[#025159]' : 'text-blue-50'}`}
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                         >
                             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -123,44 +123,42 @@ export const LandingPage: React.FC = () => {
             </header>
 
             {/* A. HERO SECTION */}
-            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 relative overflow-hidden min-h-screen flex items-center">
-                {/* Background Image */}
-                <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{
-                        backgroundImage: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80)'
-                    }}
-                ></div>
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#025159]/90 via-[#3F858C]/85 to-[#025159]/90"></div>
-
+            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 bg-[#0B1121] relative overflow-hidden min-h-screen flex items-center">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Text Content */}
                         <div className="text-white">
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6">
-                                Gestão da Qualidade <br />
-                                ISO 9001 Simplificada.
+                                Isotek: O Futuro do <br />
+                                seu SGQ Começa <br />
+                                Aqui.
                             </h1>
-                            <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-lg">
-                                Descubra os segredos da certificação sem burocracia.
+                            <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-lg">
+                                Transforme a gestão da qualidade da sua empresa com uma plataforma inteligente, integrada e pronta para escalar. Simplifique processos, garanta conformidade e tome decisões estratégicas com dados em tempo real.
                             </p>
-                            <a
-                                href="#"
-                                className="px-8 py-4 bg-[#A67458] text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#A67458] transition-all shadow-lg flex items-center gap-2 inline-flex"
-                            >
-                                Solicitar Demonstração
-                                <CheckCircle2 size={20} />
-                            </a>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button
+                                    onClick={handleLoginClick}
+                                    className="px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg text-center"
+                                >
+                                    Comece Agora
+                                </button>
+                                <a
+                                    href="#contato"
+                                    className="px-8 py-4 border-2 border-white text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#0B1121] transition-all text-center"
+                                >
+                                    Fale com Vendas
+                                </a>
+                            </div>
                         </div>
 
                         {/* Image */}
                         <div className="relative">
-                            <div className="absolute inset-0 bg-[#A67458] rounded-2xl transform rotate-3 opacity-20"></div>
+                            <div className="absolute -inset-4 bg-blue-600/20 rounded-2xl blur-xl"></div>
                             <img
-                                src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=800&q=80"
-                                alt="Business Strategy"
-                                className="relative rounded-2xl shadow-2xl w-full object-cover h-[400px] md:h-[500px]"
+                                src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1000&q=80"
+                                alt="Modern Meeting Room"
+                                className="relative rounded-2xl shadow-2xl w-full object-cover h-[400px] md:h-[500px] border border-gray-800"
                             />
                         </div>
                     </div>

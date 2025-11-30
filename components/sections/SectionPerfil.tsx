@@ -10,6 +10,10 @@ interface ProfileData {
     role: string | null;
     is_active: boolean;
     created_at: string;
+    preferences?: {
+        email_notifications: boolean;
+        two_factor_enabled: boolean;
+    };
 }
 
 export const SectionPerfil: React.FC = () => {
@@ -37,6 +41,11 @@ export const SectionPerfil: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+    const [preferences, setPreferences] = useState({
+        email_notifications: true,
+        two_factor_enabled: false
+    });
+
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
     // Fetch profile data on mount
@@ -59,6 +68,10 @@ export const SectionPerfil: React.FC = () => {
                 setProfileData(data as ProfileData);
                 setFullName(data.full_name || '');
                 setDepartment(data.department || '');
+
+                if (data.preferences) {
+                    setPreferences(data.preferences);
+                }
 
                 // Set Super Admin flag
                 // @ts-ignore - is_super_admin might not be in the type definition yet
@@ -275,6 +288,26 @@ export const SectionPerfil: React.FC = () => {
         }
     };
 
+    const handleTogglePreference = async (key: 'email_notifications' | 'two_factor_enabled') => {
+        if (!user) return;
+
+        const newPreferences = { ...preferences, [key]: !preferences[key] };
+        setPreferences(newPreferences); // Optimistic update
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ preferences: newPreferences })
+                .eq('id', user.id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error updating preferences:', error);
+            setPreferences(preferences); // Revert on error
+            alert('Erro ao atualizar configuração. Tente novamente.');
+        }
+    };
+
     const renderAvatar = (size: 'small' | 'large' = 'large') => {
         const sizeClasses = size === 'large' ? 'w-24 h-24 text-3xl' : 'w-16 h-16 text-2xl';
 
@@ -456,8 +489,13 @@ export const SectionPerfil: React.FC = () => {
                             <p className="text-sm text-gray-500">Receber atualizações importantes</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" className="sr-only peer" defaultChecked />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-isotek-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-isotek-600"></div>
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={preferences.email_notifications}
+                                onChange={() => handleTogglePreference('email_notifications')}
+                            />
+                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-600/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
                         </label>
                     </div>
 
@@ -467,8 +505,13 @@ export const SectionPerfil: React.FC = () => {
                             <p className="text-sm text-gray-500">Segurança adicional para sua conta</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" className="sr-only peer" />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-isotek-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-isotek-600"></div>
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={preferences.two_factor_enabled}
+                                onChange={() => handleTogglePreference('two_factor_enabled')}
+                            />
+                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-600/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
                         </label>
                     </div>
                 </div>
