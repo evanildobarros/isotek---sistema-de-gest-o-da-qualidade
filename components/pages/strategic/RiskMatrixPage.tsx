@@ -346,18 +346,20 @@ export const RiskMatrixPage: React.FC = () => {
                                                     </div>
                                                 )}
 
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
                                                 {/* Origin Badge */}
-                                                <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border w-fit ${isSwot
+                                                <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border w-fit mb-1 ${isSwot
                                                     ? 'bg-purple-50 text-purple-700 border-purple-100'
                                                     : 'bg-gray-50 text-gray-600 border-gray-200'
                                                     }`}>
                                                     <LinkIcon size={10} />
-                                                    <span className="truncate max-w-[100px]" title={risk.origin}>{risk.origin}</span>
+                                                    <span title={risk.origin}>{risk.origin}</span>
                                                 </div>
+                                                <p className="text-sm text-gray-900 font-medium line-clamp-2">{risk.description}</p>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="text-sm text-gray-900 font-medium line-clamp-2">{risk.description}</p>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm font-bold">

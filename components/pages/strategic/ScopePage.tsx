@@ -364,28 +364,28 @@ export const ScopePage: React.FC = () => {
 
                                         {/* Fluxo Visual */}
                                         <div className="flex-1 bg-gray-50 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 border border-gray-100">
-                                            <div className="flex-1 text-center w-full">
+                                            <div className="flex-1 text-center md:text-left w-full">
                                                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Entradas</span>
                                                 <p className="text-sm font-medium text-gray-700">{process.inputs}</p>
                                             </div>
 
                                             <div className="flex flex-col items-center justify-center px-4">
-                                                <div className="h-8 w-0.5 md:h-0.5 md:w-16 bg-blue-200 relative">
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:right-0 md:translate-x-1/2 md:-translate-y-1/2 text-blue-400">
+                                                <div className="h-8 w-0.5 md:h-0.5 md:w-16 bg-gray-300 my-2 md:my-0 relative">
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:right-0 md:translate-x-1/2 md:-translate-y-1/2 text-gray-400">
                                                         <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
                                                     </div>
                                                 </div>
                                                 <span className="text-[10px] font-bold text-blue-600 uppercase mt-2 md:mt-1 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Processo</span>
                                             </div>
 
-                                            <div className="flex-1 text-center w-full">
+                                            <div className="flex-1 text-center md:text-left w-full">
                                                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Saídas</span>
                                                 <p className="text-sm font-medium text-gray-700">{process.outputs}</p>
                                             </div>
                                         </div>
 
                                         {/* Ações */}
-                                        <div className="flex items-center justify-end gap-2 w-full md:w-auto pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-gray-100">
+                                        <div className="flex items-center justify-end gap-2 w-full md:w-auto pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-gray-100 mt-4 md:mt-0">
                                             <button
                                                 onClick={() => handleOpenModal(process)}
                                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
