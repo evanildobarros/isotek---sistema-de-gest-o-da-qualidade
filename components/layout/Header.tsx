@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
           const { data, error } = await supabase
             .from('documents')
             .select('id, title, code, status')
-            .or(`title.ilike.%${searchQuery}%,code.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+            .or(`title.ilike.%${searchQuery}%,code.ilike.%${searchQuery}%`)
             .limit(10);
 
           if (!error && data) {
