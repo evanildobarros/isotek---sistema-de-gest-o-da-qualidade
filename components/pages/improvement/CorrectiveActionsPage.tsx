@@ -34,6 +34,7 @@ export const CorrectiveActionsPage: React.FC = () => {
     const [selectedAction, setSelectedAction] = useState<CorrectiveAction | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
     // Filter states
     const [filters, setFilters] = useState({
@@ -557,60 +558,19 @@ export const CorrectiveActionsPage: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap relative">
                                                     <button
-                                                        onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
-                                                        className="text-gray-400 hover:text-gray-600 p-1"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            setMenuPosition({
+                                                                top: rect.bottom + window.scrollY,
+                                                                left: rect.left + window.scrollX - 180 // Adjust for menu width
+                                                            });
+                                                            setOpenMenuId(openMenuId === action.id ? null : action.id);
+                                                        }}
+                                                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
                                                     >
                                                         <MoreVertical className="w-5 h-5" />
                                                     </button>
-
-                                                    {openMenuId === action.id && (
-                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                                                            <div className="py-1">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        handleOpenModal(action);
-                                                                        setOpenMenuId(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                                >
-                                                                    <Edit className="w-4 h-4" />
-                                                                    Editar
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        handleOpenModal(action);
-                                                                        setCurrentStep(4);
-                                                                        setOpenMenuId(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                                >
-                                                                    <Eye className="w-4 h-4" />
-                                                                    Visualizar Detalhes
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        handleDuplicateAction(action);
-                                                                        setOpenMenuId(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                                                >
-                                                                    <Copy className="w-4 h-4" />
-                                                                    Duplicar
-                                                                </button>
-                                                                <hr className="my-1" />
-                                                                <button
-                                                                    onClick={() => {
-                                                                        handleDeleteAction(action.id);
-                                                                        setOpenMenuId(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                    Excluir
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -620,100 +580,170 @@ export const CorrectiveActionsPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Mobile Card View */}
-                    <div className="md:hidden space-y-3">
-                        {getFilteredActions().map(action => {
-                            const overdue = action.status !== 'closed' && isOverdue(action.deadline);
-                            return (
-                                <div 
-                                    key={action.id} 
-                                    className={`bg-white rounded-xl shadow-sm border ${overdue ? 'border-red-300 bg-red-50' : 'border-gray-200'} p-4`}
-                                >
-                                    {/* Header */}
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-bold text-gray-900">{action.code}</span>
-                                                {getOriginBadge(action.origin)}
-                                            </div>
-                                            <p className="text-sm text-gray-700 line-clamp-2 mb-2">{action.description}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
-                                            className="text-gray-400 hover:text-gray-600 p-1 ml-2"
-                                        >
-                                            <MoreVertical className="w-5 h-5" />
-                                        </button>
-                                    </div>
-
-                                    {/* Details */}
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-500">Status:</span>
-                                            {getStatusBadge(action.status)}
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-500">Responsável:</span>
-                                            <span className="text-gray-900 font-medium">{action.responsible_name}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-500">Prazo:</span>
-                                            <span className={`font-medium ${overdue ? 'text-red-600' : 'text-gray-900'}`}>
-                                                {new Date(action.deadline).toLocaleDateString('pt-BR')}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Action Menu */}
-                                    {openMenuId === action.id && (
-                                        <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    handleOpenModal(action);
-                                                    setOpenMenuId(null);
-                                                }}
-                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                                Editar
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    handleOpenModal(action);
-                                                    setCurrentStep(4);
-                                                    setOpenMenuId(null);
-                                                }}
-                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                Ver
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    handleDuplicateAction(action);
-                                                    setOpenMenuId(null);
-                                                }}
-                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                                            >
-                                                <Copy className="w-4 h-4" />
-                                                Duplicar
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    handleDeleteAction(action.id);
-                                                    setOpenMenuId(null);
-                                                }}
-                                                className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Excluir
-                                            </button>
-                                        </div>
-                                    )}
+                    {/* Fixed Position Menu Portal */}
+                    {openMenuId && menuPosition && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setOpenMenuId(null)}
+                            />
+                            <div
+                                className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 w-48 animate-in fade-in zoom-in-95 duration-100"
+                                style={{
+                                    top: `${menuPosition.top}px`,
+                                    left: `${menuPosition.left}px`
+                                }}
+                            >
+                                <div className="py-1">
+                                    <button
+                                        onClick={() => {
+                                            const action = actions.find(a => a.id === openMenuId);
+                                            if (action) handleOpenModal(action);
+                                            setOpenMenuId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Edit className="w-4 h-4 text-gray-500" />
+                                        Editar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const action = actions.find(a => a.id === openMenuId);
+                                            if (action) {
+                                                handleOpenModal(action);
+                                                setCurrentStep(4);
+                                            }
+                                            setOpenMenuId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Eye className="w-4 h-4 text-gray-500" />
+                                        Visualizar Detalhes
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const action = actions.find(a => a.id === openMenuId);
+                                            if (action) handleDuplicateAction(action);
+                                            setOpenMenuId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Copy className="w-4 h-4 text-gray-500" />
+                                        Duplicar
+                                    </button>
+                                    <hr className="my-1 border-gray-100" />
+                                    <button
+                                        onClick={() => {
+                                            handleDeleteAction(openMenuId);
+                                            setOpenMenuId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Excluir
+                                    </button>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        </>
+                    )}
+
+
+                    {/* Mobile Card View */}
+                    < div className="md:hidden space-y-3" >
+                        {
+                            getFilteredActions().map(action => {
+                                const overdue = action.status !== 'closed' && isOverdue(action.deadline);
+                                return (
+                                    <div
+                                        key={action.id}
+                                        className={`bg-white rounded-xl shadow-sm border ${overdue ? 'border-red-300 bg-red-50' : 'border-gray-200'} p-4`}
+                                    >
+                                        {/* Header */}
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-bold text-gray-900">{action.code}</span>
+                                                    {getOriginBadge(action.origin)}
+                                                </div>
+                                                <p className="text-sm text-gray-700 line-clamp-2 mb-2">{action.description}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => setOpenMenuId(openMenuId === action.id ? null : action.id)}
+                                                className="text-gray-400 hover:text-gray-600 p-1 ml-2"
+                                            >
+                                                <MoreVertical className="w-5 h-5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Details */}
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-500">Status:</span>
+                                                {getStatusBadge(action.status)}
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-500">Responsável:</span>
+                                                <span className="text-gray-900 font-medium">{action.responsible_name}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-500">Prazo:</span>
+                                                <span className={`font-medium ${overdue ? 'text-red-600' : 'text-gray-900'}`}>
+                                                    {new Date(action.deadline).toLocaleDateString('pt-BR')}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Menu */}
+                                        {openMenuId === action.id && (
+                                            <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        handleOpenModal(action);
+                                                        setOpenMenuId(null);
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        handleOpenModal(action);
+                                                        setCurrentStep(4);
+                                                        setOpenMenuId(null);
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    Ver
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        handleDuplicateAction(action);
+                                                        setOpenMenuId(null);
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                                >
+                                                    <Copy className="w-4 h-4" />
+                                                    Duplicar
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        handleDeleteAction(action.id);
+                                                        setOpenMenuId(null);
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    Excluir
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        }
+                    </div >
                 </>
             )}
 
@@ -1060,6 +1090,6 @@ Ou use Diagrama de Ishikawa (6M):
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 };
