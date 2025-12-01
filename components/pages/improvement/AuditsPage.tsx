@@ -238,7 +238,8 @@ const AuditsPageContent: React.FC = () => {
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
             {/* Header */}
-            <div className="mb-8 flex justify-between items-start">
+            {/* Header */}
+            <div className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-3 bg-sky-100 dark:bg-sky-900/30 rounded-lg">
@@ -250,7 +251,7 @@ const AuditsPageContent: React.FC = () => {
                 </div>
                 <button
                     onClick={handleCreate}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white font-semibold rounded-lg hover:bg-[#025159]/90 transition-colors shadow-md hover:shadow-lg"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#025159] text-white font-semibold rounded-lg hover:bg-[#025159]/90 transition-colors shadow-md hover:shadow-lg"
                 >
                     <Plus size={20} />
                     Nova Auditoria
@@ -306,8 +307,8 @@ const AuditsPageContent: React.FC = () => {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            {/* Table (Desktop) */}
+            <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     {loading ? (
                         <div className="text-center py-12">
@@ -407,6 +408,97 @@ const AuditsPageContent: React.FC = () => {
                         </table>
                     )}
                 </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+                {loading ? (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500">Carregando auditorias...</p>
+                    </div>
+                ) : audits.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-lg shadow-sm p-6">
+                        <ClipboardCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma auditoria cadastrada</h3>
+                        <p className="text-gray-500">Clique em "Nova Auditoria" para começar.</p>
+                    </div>
+                ) : (
+                    audits.map((audit) => (
+                        <div key={audit.id} className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                            {/* Header: Type & Status */}
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 font-medium">
+                                    {audit.type}
+                                </span>
+                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${getStatusStyle(audit.status)}`}>
+                                    {getStatusIcon(audit.status)}
+                                    {audit.status}
+                                </span>
+                            </div>
+
+                            {/* Body: Scope, Auditor, Date */}
+                            <div className="mb-4">
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">{audit.scope}</h3>
+                                <div className="flex flex-col gap-1 text-sm text-gray-600">
+                                    <div className="flex items-center gap-2">
+                                        <User size={14} className="text-gray-400" />
+                                        <span>{audit.auditor}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar size={14} className="text-gray-400" />
+                                        <span>{new Date(audit.date).toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Progress */}
+                            <div className="mb-4">
+                                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Progresso</span>
+                                    <span>{audit.progress}%</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2">
+                                    <div
+                                        className={`h-2 rounded-full transition-all ${audit.progress === 100
+                                            ? 'bg-green-500'
+                                            : audit.progress > 0
+                                                ? 'bg-yellow-500'
+                                                : 'bg-blue-500'
+                                            }`}
+                                        style={{ width: `${audit.progress}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Footer: Actions */}
+                            <div className="flex justify-end gap-3 pt-3 mt-3 border-t border-gray-200">
+                                {(audit.status === 'Agendada' || audit.status === 'Em Andamento') && (
+                                    <button
+                                        onClick={() => handlePlay(audit)}
+                                        className="p-2 text-[#BF7B54] hover:text-[#8C512E] hover:bg-orange-50 rounded-lg transition-colors bg-orange-50/50"
+                                        title={audit.status === 'Agendada' ? 'Iniciar' : 'Continuar'}
+                                    >
+                                        <PlayCircle size={20} />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => handleEdit(audit)}
+                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-gray-50"
+                                    title="Editar"
+                                >
+                                    <Pencil size={20} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(audit.id)}
+                                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors bg-red-50/50"
+                                    title="Excluir"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Modal de Edição */}

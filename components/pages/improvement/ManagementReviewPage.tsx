@@ -228,7 +228,7 @@ export const ManagementReviewPage: React.FC = () => {
                 <div className="grid grid-cols-1 gap-4">
                     {reviews.map(review => (
                         <div key={review.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="flex items-start justify-between">
+                            <div className="flex flex-col md:flex-row md:items-start gap-4">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-3">
                                         <Calendar className="w-5 h-5 text-gray-400" />
@@ -264,24 +264,24 @@ export const ManagementReviewPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex flex-row gap-2 w-full md:w-auto mt-4 md:mt-0 overflow-x-auto">
                                     <button
                                         onClick={() => handleOpenModal(review)}
-                                        className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                                        className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
                                     >
                                         <Edit className="w-4 h-4" />
                                         Editar
                                     </button>
                                     <button
                                         onClick={() => handleViewAta(review)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
                                     >
                                         <FileText className="w-4 h-4" />
                                         Visualizar Ata
                                     </button>
                                     <button
                                         onClick={handlePrint}
-                                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
                                     >
                                         <Printer className="w-4 h-4" />
                                         Imprimir

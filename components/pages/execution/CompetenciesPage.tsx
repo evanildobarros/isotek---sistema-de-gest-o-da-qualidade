@@ -352,9 +352,9 @@ export const CompetenciesPage: React.FC = () => {
             </div>
 
             {/* Two-Column Layout */}
-            <div className="grid grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left Column: Employee List */}
-                <div className="col-span-4">
+                <div className="col-span-1 lg:col-span-4">
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <div className="p-4 border-b border-gray-100 bg-gray-50">
                             <div className="flex items-center justify-between mb-3">
@@ -377,7 +377,15 @@ export const CompetenciesPage: React.FC = () => {
                                 return (
                                     <button
                                         key={employee.id}
-                                        onClick={() => setSelectedEmployee(employee)}
+                                        onClick={() => {
+                                            setSelectedEmployee(employee);
+                                            // Smooth scroll to details on mobile
+                                            if (window.innerWidth < 1024) {
+                                                setTimeout(() => {
+                                                    document.getElementById('employee-details')?.scrollIntoView({ behavior: 'smooth' });
+                                                }, 100);
+                                            }
+                                        }}
                                         className={`w-full p-4 flex items-center gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left ${isSelected ? 'bg-blue-50 border-l-4 border-l-[#025159]' : ''
                                             }`}
                                     >
@@ -413,12 +421,12 @@ export const CompetenciesPage: React.FC = () => {
                 </div>
 
                 {/* Right Column: Employee Details & Trainings */}
-                <div className="col-span-8">
+                <div className="col-span-1 lg:col-span-8" id="employee-details">
                     {selectedEmployee ? (
                         <div className="space-y-6">
                             {/* Employee Header */}
                             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                <div className="flex items-start justify-between">
+                                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-full bg-[#025159]/10 flex items-center justify-center font-bold text-[#025159] text-xl">
                                             {getInitials(selectedEmployee.name)}
@@ -481,7 +489,7 @@ export const CompetenciesPage: React.FC = () => {
                                             {trainings.map(training => (
                                                 <div
                                                     key={training.id}
-                                                    className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow"
+                                                    className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow"
                                                 >
                                                     <div className="flex-1">
                                                         <h4 className="font-semibold text-gray-900 mb-1">
