@@ -9,6 +9,7 @@ interface ProfileData {
     department: string | null;
     role: string | null;
     is_active: boolean;
+    is_super_admin?: boolean;
     created_at: string;
     preferences?: {
         email_notifications: boolean;
@@ -364,7 +365,9 @@ export const SectionPerfil: React.FC = () => {
                         <h3 className="text-2xl font-bold text-gray-900">
                             {profileData?.full_name || user?.email || 'Usuário'}
                         </h3>
-                        <p className="text-gray-500 mt-1">{formatRole(profileData?.role || null)}</p>
+                        <p className="text-gray-500 mt-1">
+                            {isSuperAdmin ? 'Super Admin' : formatRole(profileData?.role || null)}
+                        </p>
                         <div className="flex gap-2 mt-3">
                             <button
                                 onClick={() => setIsPhotoModalOpen(true)}
@@ -445,7 +448,9 @@ export const SectionPerfil: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">Nível de Acesso</p>
-                            <p className="font-semibold text-gray-900">{formatRole(profileData?.role || null)}</p>
+                            <p className="font-semibold text-gray-900">
+                                {isSuperAdmin ? 'Super Admin' : formatRole(profileData?.role || null)}
+                            </p>
                         </div>
                     </div>
                 </div>

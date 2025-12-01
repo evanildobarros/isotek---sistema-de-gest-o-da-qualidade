@@ -5,6 +5,29 @@
 -- SOLUÇÃO: Row Level Security (RLS) na tabela profiles
 -- ========================================
 
+-- 0. CRIAR FUNÇÕES AUXILIARES (SECURITY DEFINER)
+-- Necessário para evitar RECURSÃO INFINITA nas políticas
+CREATE OR REPLACE FUNCTION public.is_super_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (SELECT is_super_admin FROM public.profiles WHERE id = auth.uid()),
+    false
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_user_company_id()
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT company_id FROM public.profiles WHERE id = auth.uid();
+$$;
+
 -- 1. Habilitar RLS na tabela profiles (se ainda não estiver)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -25,11 +48,11 @@ CREATE POLICY "Profiles visible only to same company members"
 ON public.profiles
 FOR SELECT
 USING (
-    -- Super Admins can see ALL profiles
-    (SELECT is_super_admin FROM public.profiles WHERE id = auth.uid()) = true
+    -- Super Admins can see ALL profiles (using safe function)
+    public.is_super_admin() = true
     OR
-    -- Regular users can only see profiles from their own company
-    company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+    -- Regular users can only see profiles from their own company (using safe function)
+    company_id = public.get_user_company_id()
 );
 
 -- 4. CRIAR política de ATUALIZAÇÃO (UPDATE)
@@ -71,12 +94,3 @@ SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_che
 FROM pg_policies
 WHERE schemaname = 'public' AND tablename = 'profiles';
 -- Resultado esperado: 4 políticas (SELECT, UPDATE, INSERT, DELETE)
-
--- ========================================
--- IMPORTANTE: TESTE MANUAL
--- ========================================
--- 1. Faça login como usuário da Empresa A
--- 2. Vá para a tela de Usuários
--- 3. Verifique que só aparecem usuários da Empresa A
--- 4. Repita com usuário da Empresa B
--- 5. Confirme que não há vazamento de dados

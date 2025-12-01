@@ -8,7 +8,7 @@ export const UserDropdown: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
-    const [profile, setProfile] = useState<{ full_name: string | null; role: string | null; avatar_url: string | null } | null>(null);
+    const [profile, setProfile] = useState<{ full_name: string | null; role: string | null; avatar_url: string | null; is_super_admin?: boolean } | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Fetch profile from Supabase
@@ -18,7 +18,7 @@ export const UserDropdown: React.FC = () => {
         const fetchProfile = async () => {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('full_name, role, avatar_url')
+                .select('full_name, role, avatar_url, is_super_admin')
                 .eq('id', user.id)
                 .single();
 
@@ -79,7 +79,9 @@ export const UserDropdown: React.FC = () => {
                 {/* User Info */}
                 <div className="hidden md:block text-left">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{profile?.full_name || user?.email || 'Usuário'}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{profile?.role || 'Colaborador'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {profile?.is_super_admin ? 'Super Admin' : (profile?.role || 'Colaborador')}
+                    </p>
                 </div>
 
                 {/* Chevron Icon */}
