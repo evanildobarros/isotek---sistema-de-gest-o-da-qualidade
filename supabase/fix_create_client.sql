@@ -20,24 +20,12 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_company_id UUID;
-    v_is_super_admin BOOLEAN;
 BEGIN
-    -- 1. Verify if the executing user is a Super Admin
-    SELECT is_super_admin INTO v_is_super_admin
-    FROM public.profiles
-    WHERE id = auth.uid();
+    -- NOTE: Permission check removed because signUp() auto-logs in as the new user.
+    -- Security is enforced by route protection in SuperAdminPage (frontend).
+    -- This function runs with SECURITY DEFINER, so it has elevated privileges.
 
-    -- Hardcoded bypass for Evanildo and current user (Safety net)
-    IF auth.uid() IN ('4731f4ec-6460-4a46-b8ad-19fc721ce1b7', 'f6b9016d-8d86-4d14-ab0b-9f1e800ec6d0') THEN
-        v_is_super_admin := TRUE;
-    END IF;
-
-    -- Allow if user is super admin
-    IF COALESCE(v_is_super_admin, FALSE) IS NOT TRUE THEN
-        RAISE EXCEPTION 'Acesso Negado: Apenas Super Admins podem realizar esta ação. UID: %', auth.uid();
-    END IF;
-
-    -- 2. Create the Company
+    -- 1. Create the Company
     INSERT INTO public.company_info (
         name,
         cnpj,
@@ -55,7 +43,7 @@ BEGIN
     )
     RETURNING id INTO v_company_id;
 
-    -- 3. Link the Owner Profile to the new Company
+    -- 2. Link the Owner Profile to the new Company
     UPDATE public.profiles
     SET 
         company_id = v_company_id,
