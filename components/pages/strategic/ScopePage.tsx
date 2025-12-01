@@ -199,7 +199,7 @@ export const ScopePage: React.FC = () => {
     };
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-12">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 md:space-y-12">
             {/* Loading State */}
             {loading && (
                 <div className="flex items-center justify-center py-12">
@@ -345,11 +345,11 @@ export const ScopePage: React.FC = () => {
 
                         <div className="grid gap-6">
                             {processes.map((process) => (
-                                <div key={process.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6 group">
+                                <div key={process.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-4 md:p-6 group">
                                     <div className="flex flex-col md:flex-row md:items-center gap-6">
 
                                         {/* Header do Processo */}
-                                        <div className="min-w-[200px]">
+                                        <div className="w-full md:w-auto md:min-w-[200px]">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                                                     <Layers className="w-5 h-5" />
@@ -363,29 +363,29 @@ export const ScopePage: React.FC = () => {
                                         </div>
 
                                         {/* Fluxo Visual */}
-                                        <div className="flex-1 bg-gray-50 rounded-xl p-4 flex items-center justify-between gap-4 border border-gray-100">
-                                            <div className="flex-1 text-center">
+                                        <div className="flex-1 bg-gray-50 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 border border-gray-100">
+                                            <div className="flex-1 text-center w-full">
                                                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Entradas</span>
                                                 <p className="text-sm font-medium text-gray-700">{process.inputs}</p>
                                             </div>
 
                                             <div className="flex flex-col items-center justify-center px-4">
-                                                <div className="h-0.5 w-16 bg-blue-200 relative">
-                                                    <div className="absolute right-0 -top-1.5 text-blue-400">
-                                                        <ArrowRight className="w-4 h-4" />
+                                                <div className="h-8 w-0.5 md:h-0.5 md:w-16 bg-blue-200 relative">
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:right-0 md:translate-x-1/2 md:-translate-y-1/2 text-blue-400">
+                                                        <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
                                                     </div>
                                                 </div>
-                                                <span className="text-[10px] font-bold text-blue-600 uppercase mt-1 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Processo</span>
+                                                <span className="text-[10px] font-bold text-blue-600 uppercase mt-2 md:mt-1 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Processo</span>
                                             </div>
 
-                                            <div className="flex-1 text-center">
+                                            <div className="flex-1 text-center w-full">
                                                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Saídas</span>
                                                 <p className="text-sm font-medium text-gray-700">{process.outputs}</p>
                                             </div>
                                         </div>
 
                                         {/* Ações */}
-                                        <div className="flex items-center gap-2 pl-4 border-l border-gray-100">
+                                        <div className="flex items-center justify-end gap-2 w-full md:w-auto pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-gray-100">
                                             <button
                                                 onClick={() => handleOpenModal(process)}
                                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

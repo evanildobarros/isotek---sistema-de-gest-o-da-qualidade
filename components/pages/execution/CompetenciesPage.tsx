@@ -14,7 +14,8 @@ import {
     CheckCircle2,
     AlertTriangle,
     Clock,
-    ExternalLink
+    ExternalLink,
+    Search
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -30,6 +31,7 @@ export const CompetenciesPage: React.FC = () => {
     const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [uploadingCertificate, setUploadingCertificate] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [employeeForm, setEmployeeForm] = useState({
         name: '',
@@ -357,58 +359,92 @@ export const CompetenciesPage: React.FC = () => {
                 <div className="col-span-1 lg:col-span-4">
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <div className="p-4 border-b border-gray-100 bg-gray-50">
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
                                 <h2 className="font-bold text-gray-900">Colaboradores</h2>
                                 <button
                                     onClick={() => handleOpenEmployeeModal()}
-                                    className="p-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm"
+                                    className="w-full md:w-auto p-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm flex items-center justify-center gap-2"
                                     title="Adicionar Colaborador"
                                 >
                                     <Plus className="w-4 h-4" />
+                                    <span className="md:hidden">Novo Colaborador</span>
                                 </button>
+                            </div>
+
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar colaborador..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:border-[#025159] focus:ring-2 focus:ring-[#025159]/20 outline-none text-sm"
+                                />
                             </div>
                         </div>
 
-                        <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
-                            {employees.map(employee => {
-                                const status = getEmployeeTrainingStatus(employee.id);
-                                const isSelected = selectedEmployee?.id === employee.id;
+                        <div className="flex flex-col gap-3 max-h-[300px] md:max-h-[calc(100vh-250px)] overflow-y-auto p-4 pr-2">
+                            {employees
+                                .filter(emp => emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.job_title.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(employee => {
+                                    const status = getEmployeeTrainingStatus(employee.id);
+                                    const isSelected = selectedEmployee?.id === employee.id;
 
-                                return (
-                                    <button
-                                        key={employee.id}
-                                        onClick={() => {
-                                            setSelectedEmployee(employee);
-                                            // Smooth scroll to details on mobile
-                                            if (window.innerWidth < 1024) {
-                                                setTimeout(() => {
-                                                    document.getElementById('employee-details')?.scrollIntoView({ behavior: 'smooth' });
-                                                }, 100);
-                                            }
-                                        }}
-                                        className={`w-full p-4 flex items-center gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left ${isSelected ? 'bg-blue-50 border-l-4 border-l-[#025159]' : ''
-                                            }`}
-                                    >
-                                        <div className="relative">
-                                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
-                                                {getInitials(employee.name)}
+                                    return (
+                                        <button
+                                            key={employee.id}
+                                            onClick={() => {
+                                                setSelectedEmployee(employee);
+                                                // Smooth scroll to details on mobile
+                                                if (window.innerWidth < 1024) {
+                                                    setTimeout(() => {
+                                                        document.getElementById('employee-details')?.scrollIntoView({ behavior: 'smooth' });
+                                                    }, 100);
+                                                }
+                                            }}
+                                            className={`w-full p-4 rounded-lg border transition-all cursor-pointer flex flex-col gap-3 text-left hover:bg-gray-50 ${isSelected ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white border-gray-100'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0">
+                                                        {getInitials(employee.name)}
+                                                    </div>
+                                                    <div
+                                                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${status === 'expired'
+                                                            ? 'bg-red-500'
+                                                            : status === 'warning'
+                                                                ? 'bg-yellow-500'
+                                                                : 'bg-green-500'
+                                                            }`}
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-gray-900 truncate text-sm">{employee.name}</h3>
+                                                    <p className="text-xs text-gray-500 truncate">{employee.job_title}</p>
+                                                </div>
                                             </div>
-                                            <div
-                                                className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white ${status === 'expired'
-                                                    ? 'bg-red-500'
-                                                    : status === 'warning'
-                                                        ? 'bg-yellow-500'
-                                                        : 'bg-green-500'
-                                                    }`}
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-gray-900 truncate">{employee.name}</h3>
-                                            <p className="text-xs text-gray-500 truncate">{employee.job_title}</p>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {status === 'expired' && (
+                                                    <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-medium rounded-full">
+                                                        Treinamento Vencido
+                                                    </span>
+                                                )}
+                                                {status === 'warning' && (
+                                                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-medium rounded-full">
+                                                        A Vencer
+                                                    </span>
+                                                )}
+                                                {status === 'ok' && (
+                                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-medium rounded-full">
+                                                        Em Dia
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
 
                             {employees.length === 0 && !loading && (
                                 <div className="text-center py-12">
@@ -428,12 +464,12 @@ export const CompetenciesPage: React.FC = () => {
                             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                                 <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full bg-[#025159]/10 flex items-center justify-center font-bold text-[#025159] text-xl">
+                                        <div className="w-16 h-16 rounded-full bg-[#025159]/10 flex items-center justify-center font-bold text-[#025159] text-xl shrink-0">
                                             {getInitials(selectedEmployee.name)}
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-bold text-gray-900">{selectedEmployee.name}</h2>
-                                            <div className="flex items-center gap-3 mt-1">
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1">
                                                 <div className="flex items-center gap-1.5 text-sm text-gray-600">
                                                     <Briefcase className="w-4 h-4" />
                                                     {selectedEmployee.job_title}
