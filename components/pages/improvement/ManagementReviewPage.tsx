@@ -493,7 +493,7 @@ RECURSOS NECESSÁRIOS:
                 size="xl"
             >
                 {selectedReview && (
-                    <div className="p-8 bg-white" style={{ fontFamily: 'serif' }}>
+                    <div className="p-8 bg-white print-area" style={{ fontFamily: 'serif' }}>
                         {/* Cabeçalho da Ata */}
                         <div className="text-center mb-8 pb-6 border-b-2 border-gray-300">
                             <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -574,7 +574,7 @@ RECURSOS NECESSÁRIOS:
                         </div>
 
                         {/* Botão Imprimir */}
-                        <div className="mt-6 text-center print:hidden">
+                        <div className="mt-6 text-center print:hidden sticky bottom-0 bg-white py-4 border-t -mx-8 -mb-8 px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                             <button
                                 onClick={handlePrint}
                                 className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"

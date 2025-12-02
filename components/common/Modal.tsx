@@ -31,9 +31,9 @@ export const Modal: React.FC<ModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className={`bg-white rounded-2xl shadow-xl w-full ${sizeClasses[size]} overflow-hidden animate-in fade-in zoom-in duration-200`}>
+            <div className={`bg-white rounded-2xl shadow-xl w-full ${sizeClasses[size]} overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col print:overflow-visible print:max-h-none print:h-auto print:shadow-none`}>
                 {showHeader && (
-                    <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0 print:hidden">
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">{title}</h2>
                             {subtitle && <p className="text-sm text-gray-600 mt-0.5">{subtitle}</p>}
@@ -47,11 +47,11 @@ export const Modal: React.FC<ModalProps> = ({
                         </button>
                     </div>
                 )}
-                <div className={showHeader ? '' : 'relative'}>
+                <div className={`${showHeader ? '' : 'relative'} overflow-y-auto flex-1 print:overflow-visible print:h-auto`}>
                     {!showHeader && (
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 print:hidden"
                             aria-label="Fechar"
                         >
                             <X className="w-5 h-5" />
