@@ -200,11 +200,11 @@ export const UnitsPage: React.FC = () => {
           {filteredUnits.map((unit) => (
             <div
               key={unit.id}
-              className="flex items-center justify-between rounded-lg bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+              className="flex flex-col md:flex-row md:items-center justify-between rounded-lg bg-white p-5 shadow-sm hover:shadow-md transition-shadow gap-4"
             >
-              <div className="flex items-center space-x-4">
+              <div className="flex items-start space-x-4 w-full">
                 <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-full ${unit.is_headquarters
+                  className={`flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-full ${unit.is_headquarters
                     ? 'bg-amber-100 text-amber-600'
                     : 'bg-blue-100 text-blue-600'
                     }`}
@@ -212,23 +212,23 @@ export const UnitsPage: React.FC = () => {
                   <Building2 size={24} />
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900 text-lg">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="font-semibold text-gray-900 text-lg truncate">
                       {unit.name}
                     </span>
                     {unit.is_headquarters && (
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
                         Matriz
                       </span>
                     )}
                     {unit.code && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono whitespace-nowrap">
                         {unit.code}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 break-words">
                     {unit.address}
                     {unit.city && `, ${unit.city}`}
                     {unit.state && ` - ${unit.state}`}
@@ -243,7 +243,7 @@ export const UnitsPage: React.FC = () => {
 
               <button
                 onClick={() => handleEdit(unit)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full md:w-auto rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Editar
               </button>
