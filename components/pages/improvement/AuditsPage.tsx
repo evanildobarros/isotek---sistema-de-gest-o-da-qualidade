@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, AlertTriangle, Plus, ClipboardCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Audit } from '../../../types';
@@ -34,7 +35,7 @@ const AuditsPageContent: React.FC = () => {
             setAudits(data || []);
         } catch (error) {
             console.error('Erro ao carregar auditorias:', error);
-            alert('Erro ao carregar auditorias');
+            toast.error('Erro ao carregar auditorias');
         } finally {
             setLoading(false);
         }
@@ -85,10 +86,10 @@ const AuditsPageContent: React.FC = () => {
             if (error) throw error;
 
             setAudits(audits.filter(a => a.id !== id));
-            alert('Auditoria excluída com sucesso!');
+            toast.success('Auditoria excluída com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir auditoria:', error);
-            alert('Erro ao excluir auditoria');
+            toast.error('Erro ao excluir auditoria');
         }
     };
 
@@ -100,9 +101,9 @@ const AuditsPageContent: React.FC = () => {
 
     const handlePlay = (audit: Audit) => {
         if (audit.status === 'Agendada') {
-            alert(`Iniciando auditoria: ${audit.scope}`);
+            toast.info(`Iniciando auditoria: ${audit.scope}`);
         } else if (audit.status === 'Em Andamento') {
-            alert(`Continuando auditoria: ${audit.scope}`);
+            toast.info(`Continuando auditoria: ${audit.scope}`);
         }
     };
 
@@ -131,22 +132,23 @@ const AuditsPageContent: React.FC = () => {
     const saveEdit = async () => {
         if (!selectedAudit || !company) {
             console.error('Missing data:', { selectedAudit, company });
-            alert('Erro: Dados incompletos. Empresa: ' + (company ? 'OK' : 'FALTA'));
+            console.error('Missing data:', { selectedAudit, company });
+            toast.error('Erro: Dados incompletos. Empresa: ' + (company ? 'OK' : 'FALTA'));
             return;
         }
 
         // Validação de campos obrigatórios
         if (!selectedAudit.scope || !selectedAudit.auditor || !selectedAudit.date) {
-            alert('Por favor, preencha todos os campos obrigatórios (Escopo, Auditor e Data)');
+            toast.error('Por favor, preencha todos os campos obrigatórios (Escopo, Auditor e Data)');
             return;
         }
 
         try {
-            console.log('Tentando salvar auditoria:', {
+            /* console.log('Tentando salvar auditoria:', {
                 isCreating,
                 company_id: company.id,
                 data: selectedAudit
-            });
+            }); */
 
             if (isCreating) {
                 // Insert new audit
@@ -171,7 +173,7 @@ const AuditsPageContent: React.FC = () => {
                 }
 
                 console.log('Auditoria criada com sucesso:', data);
-                alert('Auditoria criada com sucesso!');
+                toast.success('Auditoria criada com sucesso!');
             } else {
                 // Update existing audit
                 const { data, error } = await supabase
@@ -194,7 +196,7 @@ const AuditsPageContent: React.FC = () => {
                 }
 
                 console.log('Auditoria atualizada com sucesso:', data);
-                alert('Auditoria atualizada com sucesso!');
+                toast.success('Auditoria atualizada com sucesso!');
             }
 
             closeModal();
@@ -230,7 +232,7 @@ const AuditsPageContent: React.FC = () => {
             }
 
             console.error('Mensagem de erro para usuário:', errorMessage);
-            alert(errorMessage);
+            toast.error(errorMessage);
         }
     };
 

@@ -12,7 +12,8 @@ import {
     X,
     Calendar,
     User,
-    FileText
+    FileText,
+    Printer
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -27,7 +28,9 @@ export const NonConformityPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isDispositionModalOpen, setIsDispositionModalOpen] = useState(false);
+    const [viewReportModal, setViewReportModal] = useState(false);
     const [selectedNC, setSelectedNC] = useState<NonConformityProduct | null>(null);
+    const [selectedNCForReport, setSelectedNCForReport] = useState<NonConformityProduct | null>(null);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
 
@@ -202,6 +205,15 @@ export const NonConformityPage: React.FC = () => {
         setPhotoFile(null);
     };
 
+    const handlePrintReport = (nc: NonConformityProduct) => {
+        setSelectedNCForReport(nc);
+        setViewReportModal(true);
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
+
     const getOriginIcon = (origin: string) => {
         switch (origin) {
             case 'Produção':
@@ -334,6 +346,13 @@ export const NonConformityPage: React.FC = () => {
                                         title="Excluir"
                                     >
                                         <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handlePrintReport(nc)}
+                                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                                        title="Imprimir Relatório"
+                                    >
+                                        <Printer className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -573,6 +592,117 @@ export const NonConformityPage: React.FC = () => {
                         </button>
                     </div>
                 </form>
+            </Modal>
+            {/* Modal: Relatório de RNC */}
+            <Modal
+                isOpen={viewReportModal}
+                onClose={() => setViewReportModal(false)}
+                title="Relatório de Não Conformidade"
+                size="xl"
+            >
+                {selectedNCForReport && (
+                    <div className="p-8 bg-white" style={{ fontFamily: 'serif' }}>
+                        {/* Cabeçalho */}
+                        <div className="flex justify-between items-center border-b-2 border-gray-300 pb-6 mb-6">
+                            <div className="flex items-center gap-4">
+                                {company?.logo_url ? (
+                                    <img src={company.logo_url} alt="Logo" className="h-16 w-auto object-contain" />
+                                ) : (
+                                    <div className="h-16 w-16 bg-gray-100 flex items-center justify-center rounded text-gray-400 text-xs">
+                                        Sem Logo
+                                    </div>
+                                )}
+                                <div>
+                                    <h1 className="text-xl font-bold text-gray-900 uppercase">{company?.name || 'Empresa'}</h1>
+                                    <p className="text-sm text-gray-600">Relatório de Não Conformidade (RNC)</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-gray-900">RNC #{selectedNCForReport.code || selectedNCForReport.id.slice(0, 6)}</p>
+                                <p className="text-sm text-gray-600">{new Date(selectedNCForReport.date_occurred).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+
+                        {/* Detalhes */}
+                        <div className="mb-6">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">1. Detalhes da Ocorrência</h3>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Origem</p>
+                                    <p className="text-sm font-medium">{selectedNCForReport.origin}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Severidade</p>
+                                    <p className="text-sm font-medium">{selectedNCForReport.severity}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Quantidade Afetada</p>
+                                    <p className="text-sm font-medium">{selectedNCForReport.quantity_affected || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Status Atual</p>
+                                    <p className="text-sm font-medium uppercase">{selectedNCForReport.status}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase">Descrição do Problema</p>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded border border-gray-100 mt-1">
+                                    {selectedNCForReport.description}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Disposição */}
+                        <div className="mb-8">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">2. Tratamento / Disposição</h3>
+                            {selectedNCForReport.status === 'resolved' ? (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase">Ação Tomada</p>
+                                            <p className="text-sm font-medium">{selectedNCForReport.disposition}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase">Autorizado Por</p>
+                                            <p className="text-sm font-medium">{selectedNCForReport.authorized_by || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase">Justificativa</p>
+                                        <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded border border-gray-100 mt-1">
+                                            {selectedNCForReport.disposition_justification}
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-sm text-gray-500 italic">Ainda não foi aplicada uma disposição final.</p>
+                            )}
+                        </div>
+
+                        {/* Assinaturas */}
+                        <div className="grid grid-cols-2 gap-12 mt-16 pt-8">
+                            <div className="text-center border-t border-gray-400 pt-2">
+                                <p className="text-sm font-medium text-gray-900">Responsável pela Emissão</p>
+                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
+                            </div>
+                            <div className="text-center border-t border-gray-400 pt-2">
+                                <p className="text-sm font-medium text-gray-900">Aprovação da Qualidade</p>
+                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
+                            </div>
+                        </div>
+
+                        {/* Botão Imprimir */}
+                        <div className="mt-8 text-center print:hidden">
+                            <button
+                                onClick={handlePrint}
+                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto shadow-sm"
+                            >
+                                <Printer className="w-5 h-5" />
+                                Imprimir Relatório
+                            </button>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );

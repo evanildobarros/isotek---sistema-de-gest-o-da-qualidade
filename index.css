@@ -45,3 +45,30 @@
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
+
+@media print {
+  /* Ocultar elementos de UI */
+  aside, header, button, .no-print {
+    display: none !important;
+  }
+
+  /* Resetar layout para papel */
+  body, #root, main, .p-8 {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Garantir que cores de fundo (badges) apareçam */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Classe para forçar quebra de página se necessário */
+  .page-break {
+    page-break-before: always;
+  }
+}

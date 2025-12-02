@@ -79,16 +79,16 @@ export const SectionDashboard: React.FC = () => {
 
       // Parallel Fetching
       const [
+        metricsRes,
         surveysRes,
         ncProductsRes,
-        auditsRes,
         actionsRes,
         nextAuditsRes
       ] = await Promise.all([
+        supabase.rpc('get_dashboard_metrics', { p_company_id: companyId }),
         supabase.from('customer_satisfaction_surveys').select('*').eq('company_id', companyId),
-        supabase.from('non_conformities_products').select('*').eq('company_id', companyId),
-        supabase.from('audits').select('*').eq('company_id', companyId),
-        supabase.from('corrective_actions').select('*').eq('company_id', companyId),
+        supabase.from('non_conformities_products').select('created_at, origin').eq('company_id', companyId),
+        supabase.from('corrective_actions').select('id, code, status, deadline').eq('company_id', companyId),
         supabase.from('audits')
           .select('*')
           .eq('company_id', companyId)
@@ -97,6 +97,14 @@ export const SectionDashboard: React.FC = () => {
           .order('date', { ascending: true })
           .limit(5)
       ]);
+
+      const metricsData = metricsRes.data?.[0] || {
+        total_ncs: 0,
+        audits_completed: 0,
+        audits_pending: 0,
+        actions_open: 0,
+        actions_closed: 0
+      };
 
       // 1. NPS Calculation
       const surveys = surveysRes.data || [];
@@ -111,7 +119,7 @@ export const SectionDashboard: React.FC = () => {
 
       // 2. NC Data
       const ncProducts = ncProductsRes.data || [];
-      const totalNc = ncProducts.length;
+      const totalNc = metricsData.total_ncs;
 
       // Sparkline data (last 7 NCs simply for visual trend)
       const ncTrendData = ncProducts
@@ -120,14 +128,13 @@ export const SectionDashboard: React.FC = () => {
         .map((nc, index) => ({ index, value: 1 })); // Simplified for sparkline presence
 
       // 3. Audits
-      const audits = auditsRes.data || [];
-      const auditsCompleted = audits.filter(a => a.status === 'Concluída').length;
-      const auditsPending = audits.filter(a => a.status !== 'Concluída').length;
+      const auditsCompleted = metricsData.audits_completed;
+      const auditsPending = metricsData.audits_pending;
 
       // 4. Actions (SAC)
       const actions = actionsRes.data || [];
-      const actionsOpen = actions.filter(a => a.status !== 'closed').length;
-      const actionsClosed = actions.filter(a => a.status === 'closed').length;
+      const actionsOpen = metricsData.actions_open;
+      const actionsClosed = metricsData.actions_closed;
 
       // 5. NC Trend (Last 6 Months)
       const last6Months = [];

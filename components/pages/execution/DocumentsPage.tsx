@@ -193,7 +193,7 @@ export const DocumentsPage: React.FC = () => {
                     .eq('code', uploadCode);
 
                 if (existingDocs && existingDocs.length > 0) {
-                    console.log(`✅ Nova versão detectada para código ${uploadCode}. Existem ${existingDocs.length} versão(ões) anterior(es).`);
+                    // console.log(`✅ Nova versão detectada para código ${uploadCode}. Existem ${existingDocs.length} versão(ões) anterior(es).`);
                 }
             }
 
@@ -305,7 +305,7 @@ export const DocumentsPage: React.FC = () => {
 
             // 2. Se o documento tem código, obsoletear versões antigas do mesmo código
             if (docToApprove.code) {
-                console.log(`🔄 Obsoletando versões antigas do código ${docToApprove.code}...`);
+                // console.log(`🔄 Obsoletando versões antigas do código ${docToApprove.code}...`);
 
                 const { error: obsoleteError } = await supabase
                     .from('documents')
@@ -319,7 +319,7 @@ export const DocumentsPage: React.FC = () => {
                     throw new Error('Erro ao obsoletear versões antigas: ' + obsoleteError.message);
                 }
 
-                console.log('✅ Versões antigas obsoletadas com sucesso');
+                // console.log('✅ Versões antigas obsoletadas com sucesso');
             }
 
             // 3. Aprovar o documento atual
