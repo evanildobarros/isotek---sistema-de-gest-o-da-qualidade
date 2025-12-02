@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Users, Save, Plus, Trash2, Edit2, CheckCircle, FileText, Loader2, History, Eye, Clock } from 'lucide-react';
+import { Shield, Users, Save, Plus, Trash2, Edit2, CheckCircle, FileText, Loader2, History, Eye, Clock, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
@@ -551,7 +551,7 @@ export const LeadershipPage: React.FC = () => {
                                 onClick={() => setIsVersionHistoryOpen(false)}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                             >
-                                <Edit2 size={20} className="text-gray-500" />
+                                <X size={20} className="text-gray-500" />
                             </button>
                         </div>
 
