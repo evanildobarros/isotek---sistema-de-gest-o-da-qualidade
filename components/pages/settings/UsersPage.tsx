@@ -20,7 +20,7 @@ export const UsersPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     fullName: '',
@@ -39,7 +39,7 @@ export const UsersPage: React.FC = () => {
       // In a real scenario with RLS, we might just query profiles
       // But since auth.users is not accessible directly from client without specific setup,
       // we usually rely on a public profiles table.
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -64,10 +64,10 @@ export const UsersPage: React.FC = () => {
       // without auto-login, or we use the invite API if configured)
       // For this demo, we'll assume we're calling an RPC or just inserting into profiles if using a custom flow
       // But standard way is supabase.auth.signUp or admin.inviteUserByEmail (backend only)
-      
+
       // Let's try a simplified approach: We'll use a hypothetical RPC or just alert for now 
       // since we can't easily create other users from client side without being logged out.
-      
+
       // Ideally: call an Edge Function or RPC that uses service_role key
       const { data, error } = await supabase.rpc('invite_user_to_company', {
         p_email: formData.email,
@@ -91,14 +91,14 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-6">
-      <PageHeader 
+      <PageHeader
         icon={Users}
         title="Gerenciamento de Usuários"
         subtitle="Gerencie os membros da sua equipe e suas permissões de acesso."
@@ -131,68 +131,122 @@ export const UsersPage: React.FC = () => {
           <p className="text-gray-500">Carregando usuários...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuário</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Função</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Entrada</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((userProfile) => (
-                    <tr key={userProfile.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                            {userProfile.full_name?.charAt(0).toUpperCase() || userProfile.email?.charAt(0).toUpperCase()}
+        <>
+          {/* Desktop Table View - Hidden on mobile */}
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuário</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Função</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Entrada</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((userProfile) => (
+                      <tr key={userProfile.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                              {userProfile.full_name?.charAt(0).toUpperCase() || userProfile.email?.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{userProfile.full_name || 'Sem nome'}</p>
+                              <p className="text-xs text-gray-500">{userProfile.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{userProfile.full_name || 'Sem nome'}</p>
-                            <p className="text-xs text-gray-500">{userProfile.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          userProfile.role === 'admin' || userProfile.role === 'owner' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(userProfile.created_at).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Ativo
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-gray-100 text-gray-800'
+                            }`}>
+                            {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(userProfile.created_at).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Ativo
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                        Nenhum usuário encontrado.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                      Nenhum usuário encontrado.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Card View - Hidden on desktop */}
+          <div className="md:hidden space-y-3">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((userProfile) => (
+                <div key={userProfile.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
+                        {userProfile.full_name?.charAt(0).toUpperCase() || userProfile.email?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 truncate">{userProfile.full_name || 'Sem nome'}</p>
+                        <p className="text-sm text-gray-500 truncate">{userProfile.email}</p>
+                      </div>
+                    </div>
+                    <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors flex-shrink-0 -mr-2">
+                      <Edit2 className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Função:</span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-gray-100 text-gray-800'
+                        }`}>
+                        {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Data de Entrada:</span>
+                      <span className="text-gray-900">{new Date(userProfile.created_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Status:</span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Ativo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500">
+                Nenhum usuário encontrado.
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Invite Modal */}
@@ -205,7 +259,7 @@ export const UsersPage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleInvite} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
@@ -213,29 +267,29 @@ export const UsersPage: React.FC = () => {
                   type="text"
                   required
                   value={formData.fullName}
-                  onChange={e => setFormData({...formData, fullName: e.target.value})}
+                  onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="Ex: Maria Silva"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
                 <input
                   type="email"
                   required
                   value={formData.email}
-                  onChange={e => setFormData({...formData, email: e.target.value})}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="maria@empresa.com"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Função</label>
                 <select
                   value={formData.role}
-                  onChange={e => setFormData({...formData, role: e.target.value})}
+                  onChange={e => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="user">Usuário (Acesso Padrão)</option>

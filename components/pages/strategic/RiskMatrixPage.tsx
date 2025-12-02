@@ -10,10 +10,15 @@ import {
     Link as LinkIcon,
     Download,
     X,
-    Loader2
+    Loader2,
+    Plus,
+    Check,
+    Calendar,
+    User
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { RiskTask } from '../../../types';
 
 type RiskType = 'risk' | 'opportunity';
 
@@ -59,6 +64,17 @@ export const RiskMatrixPage: React.FC = () => {
         type: 'all' as 'all' | 'risk' | 'opportunity',
         severity: 'all' as 'all' | 'low' | 'medium' | 'high' | 'critical'
     });
+
+    // Task management states
+    const [tasks, setTasks] = useState<RiskTask[]>([]);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [taskForm, setTaskForm] = useState({
+        description: '',
+        responsible_id: '',
+        deadline: ''
+    });
+    const [selectedTask, setSelectedTask] = useState<RiskTask | null>(null);
+    const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
         if (user) loadData();
@@ -178,7 +194,7 @@ export const RiskMatrixPage: React.FC = () => {
         );
     };
 
-    const openEditModal = (risk: RiskItem) => {
+    const openEditModal = async (risk: RiskItem) => {
         setEditingRisk(risk);
         setEditForm({
             probability: risk.probability,
@@ -186,6 +202,10 @@ export const RiskMatrixPage: React.FC = () => {
             action_plan: risk.action_plan || ''
         });
         setIsEditModalOpen(true);
+
+        // Load tasks and users for the modal
+        await fetchTasksForRisk(risk.id);
+        await fetchUsers();
     };
 
     const handleUpdateRisk = async (e: React.FormEvent) => {
@@ -229,6 +249,143 @@ export const RiskMatrixPage: React.FC = () => {
             alert('❌ Erro ao excluir: ' + error.message);
         }
     };
+
+    // Task Management Functions
+    const fetchTasksForRisk = async (riskId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('risk_tasks_with_responsible')
+                .select('*')
+                .eq('risk_id', riskId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setTasks(data || []);
+        } catch (error: any) {
+            console.error('Error fetching tasks:', error);
+        }
+    };
+
+    const fetchUsers = async () => {
+        if (!companyId) return;
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name')
+                .eq('company_id', companyId);
+
+            if (error) throw error;
+            setUsers(data || []);
+        } catch (error: any) {
+            console.error('Error fetching users:', error);
+        }
+    };
+
+    const handleCreateTask = async () => {
+        if (!editingRisk || !taskForm.description.trim()) {
+            alert('Preencha a descrição da tarefa');
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('risk_tasks')
+                .insert([{
+                    risk_id: editingRisk.id,
+                    description: taskForm.description,
+                    responsible_id: taskForm.responsible_id || null,
+                    deadline: taskForm.deadline || null,
+                    status: 'pending'
+                }]);
+
+            if (error) throw error;
+
+            setIsTaskModalOpen(false);
+            setTaskForm({ description: '', responsible_id: '', deadline: '' });
+            await fetchTasksForRisk(editingRisk.id);
+            alert('✅ Tarefa criada com sucesso!');
+        } catch (error: any) {
+            alert('❌ Erro ao criar tarefa: ' + error.message);
+        }
+    };
+
+    const handleUpdateTask = async () => {
+        if (!selectedTask || !taskForm.description.trim()) {
+            alert('Preencha a descrição da tarefa');
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('risk_tasks')
+                .update({
+                    description: taskForm.description,
+                    responsible_id: taskForm.responsible_id || null,
+                    deadline: taskForm.deadline || null
+                })
+                .eq('id', selectedTask.id);
+
+            if (error) throw error;
+
+            setIsTaskModalOpen(false);
+            setSelectedTask(null);
+            setTaskForm({ description: '', responsible_id: '', deadline: '' });
+            if (editingRisk) await fetchTasksForRisk(editingRisk.id);
+            alert('✅ Tarefa atualizada com sucesso!');
+        } catch (error: any) {
+            alert('❌ Erro ao atualizar tarefa: ' + error.message);
+        }
+    };
+
+    const handleToggleTaskStatus = async (taskId: string, currentStatus: string) => {
+        try {
+            const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+            const { error } = await supabase
+                .from('risk_tasks')
+                .update({ status: newStatus })
+                .eq('id', taskId);
+
+            if (error) throw error;
+
+            if (editingRisk) await fetchTasksForRisk(editingRisk.id);
+        } catch (error: any) {
+            alert('❌ Erro ao atualizar tarefa: ' + error.message);
+        }
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        if (!confirm('Deseja realmente excluir esta tarefa?')) return;
+
+        try {
+            const { error } = await supabase
+                .from('risk_tasks')
+                .delete()
+                .eq('id', taskId);
+
+            if (error) throw error;
+
+            if (editingRisk) await fetchTasksForRisk(editingRisk.id);
+            alert('✅ Tarefa excluída com sucesso!');
+        } catch (error: any) {
+            alert('❌ Erro ao excluir tarefa: ' + error.message);
+        }
+    };
+
+    const openTaskModal = (task?: RiskTask) => {
+        if (task) {
+            setSelectedTask(task);
+            setTaskForm({
+                description: task.description,
+                responsible_id: task.responsible_id || '',
+                deadline: task.deadline || ''
+            });
+        } else {
+            setSelectedTask(null);
+            setTaskForm({ description: '', responsible_id: '', deadline: '' });
+        }
+        setIsTaskModalOpen(true);
+    };
+
 
     const filteredRisks = risks.filter(risk => {
         // Search filter
@@ -553,17 +710,98 @@ export const RiskMatrixPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Plano de Ação
-                                </label>
-                                <textarea
-                                    value={editForm.action_plan}
-                                    onChange={e => setEditForm({ ...editForm, action_plan: e.target.value })}
-                                    className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] resize-none"
-                                    rows={4}
-                                    placeholder="Descreva as ações necessárias..."
-                                />
+                            {/* Task List Section */}
+                            <div className="border-t pt-4 mt-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Plano de Ação (Tarefas)
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => openTaskModal()}
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-[#025159] text-white text-sm rounded-lg hover:bg-[#3F858C] transition-colors"
+                                    >
+                                        <Plus size={16} />
+                                        Nova Tarefa
+                                    </button>
+                                </div>
+
+                                {tasks.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-400 text-sm bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                                        <p>Nenhuma tarefa adicionada.</p>
+                                        <p className="text-xs mt-1">Clique em "Nova Tarefa" para começar</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                        {tasks.map(task => (
+                                            <div
+                                                key={task.id}
+                                                className={`p-3 rounded-lg border transition-colors ${task.status === 'completed'
+                                                    ? 'bg-green-50 border-green-200'
+                                                    : 'bg-white border-gray-200'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleToggleTaskStatus(task.id, task.status)}
+                                                        className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
+                                                            ? 'bg-green-500 border-green-500'
+                                                            : 'border-gray-300 hover:border-green-500'
+                                                            }`}
+                                                    >
+                                                        {task.status === 'completed' && (
+                                                            <Check size={14} className="text-white" />
+                                                        )}
+                                                    </button>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className={`text-sm font-medium ${task.status === 'completed'
+                                                            ? 'line-through text-gray-500'
+                                                            : 'text-gray-900'
+                                                            }`}>
+                                                            {task.description}
+                                                        </p>
+
+                                                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                                                            {task.responsible_name && (
+                                                                <span className="flex items-center gap-1">
+                                                                    <User size={12} />
+                                                                    {task.responsible_name}
+                                                                </span>
+                                                            )}
+                                                            {task.deadline && (
+                                                                <span className="flex items-center gap-1">
+                                                                    <Calendar size={12} />
+                                                                    {new Date(task.deadline).toLocaleDateString('pt-BR')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openTaskModal(task)}
+                                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                            title="Editar"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteTask(task.id)}
+                                                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex gap-3 pt-4">
@@ -700,6 +938,94 @@ export const RiskMatrixPage: React.FC = () => {
                                     className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors"
                                 >
                                     Aplicar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Task Modal */}
+            {isTaskModalOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                {selectedTask ? 'Editar Tarefa' : 'Nova Tarefa'}
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setIsTaskModalOpen(false);
+                                    setSelectedTask(null);
+                                    setTaskForm({ description: '', responsible_id: '', deadline: '' });
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Descrição *
+                                </label>
+                                <textarea
+                                    value={taskForm.description}
+                                    onChange={e => setTaskForm({ ...taskForm, description: e.target.value })}
+                                    className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] resize-none"
+                                    rows={3}
+                                    placeholder="O que precisa ser feito..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Responsável
+                                </label>
+                                <select
+                                    value={taskForm.responsible_id}
+                                    onChange={e => setTaskForm({ ...taskForm, responsible_id: e.target.value })}
+                                    className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] bg-white"
+                                >
+                                    <option value="">Selecione...</option>
+                                    {users.map(user => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.full_name || 'Sem nome'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Prazo
+                                </label>
+                                <input
+                                    type="date"
+                                    value={taskForm.deadline}
+                                    onChange={e => setTaskForm({ ...taskForm, deadline: e.target.value })}
+                                    className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsTaskModalOpen(false);
+                                        setSelectedTask(null);
+                                        setTaskForm({ description: '', responsible_id: '', deadline: '' });
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={selectedTask ? handleUpdateTask : handleCreateTask}
+                                    className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors"
+                                >
+                                    {selectedTask ? 'Salvar' : 'Criar'}
                                 </button>
                             </div>
                         </div>

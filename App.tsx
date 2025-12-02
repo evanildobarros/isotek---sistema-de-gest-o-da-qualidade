@@ -24,7 +24,8 @@ import {
   StrategicDefinitionPage,
   LeadershipPage,
   RiskMatrixPage,
-  QualityObjectivesPage
+  QualityObjectivesPage,
+  ActionPlansPage
 } from './components/pages/strategic';
 
 // Page components - Execution
@@ -84,6 +85,7 @@ const App: React.FC = () => {
 
                 {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}
                 <Route path="matriz-riscos" element={<RiskMatrixPage />} />
+                <Route path="planos-de-acao" element={<ActionPlansPage />} />
                 <Route path="objetivos-qualidade" element={<QualityObjectivesPage />} />
 
                 {/* Grupo B: Execução (Do) */}

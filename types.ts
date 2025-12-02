@@ -404,3 +404,29 @@ export interface Audit {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface RiskTask {
+  id: string;
+  risk_id: string;
+  description: string;
+  responsible_id?: string;
+  deadline?: string;
+  status: 'pending' | 'completed';
+  created_at?: string;
+
+  // Joined fields
+  responsible_name?: string;
+}
+
+export interface PolicyVersion {
+  id: string;
+  company_id: string;
+  content: string;
+  version: string;
+  approval_date?: string;
+  created_by?: string;
+  created_at: string;
+
+  // Joined fields
+  created_by_name?: string;
+}

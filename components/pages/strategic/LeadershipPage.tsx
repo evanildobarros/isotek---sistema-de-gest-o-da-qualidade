@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Users, Save, Plus, Trash2, Edit2, CheckCircle, FileText, Loader2 } from 'lucide-react';
+import { Shield, Users, Save, Plus, Trash2, Edit2, CheckCircle, FileText, Loader2, History, Eye, Clock } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
+import { PolicyVersion } from '../../../types';
 
 interface JobRole {
     id: string;
@@ -45,6 +46,11 @@ export const LeadershipPage: React.FC = () => {
         responsibilities: '',
         authorities: ''
     });
+
+    // Version Control State
+    const [versions, setVersions] = useState<PolicyVersion[]>([]);
+    const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+    const [viewingVersion, setViewingVersion] = useState<PolicyVersion | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -94,6 +100,7 @@ export const LeadershipPage: React.FC = () => {
         if (!companyId) return;
         setSaving(true);
         try {
+            // Save to company_info
             const { error } = await supabase
                 .from('company_info')
                 .update({
@@ -104,6 +111,10 @@ export const LeadershipPage: React.FC = () => {
                 .eq('id', companyId);
 
             if (error) throw error;
+
+            // Save version to history
+            await saveVersion();
+
             alert('Política da Qualidade salva com sucesso!');
         } catch (error: any) {
             console.error('Error saving policy:', error);
@@ -111,6 +122,59 @@ export const LeadershipPage: React.FC = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const saveVersion = async () => {
+        if (!companyId || !policyData.content.trim()) return;
+
+        try {
+            const { error } = await supabase
+                .from('policy_versions')
+                .insert([{
+                    company_id: companyId,
+                    content: policyData.content,
+                    version: policyData.version || '1.0',
+                    approval_date: policyData.date || null,
+                    created_by: user?.id
+                }]);
+
+            if (error) throw error;
+        } catch (error: any) {
+            console.error('Error saving version:', error);
+        }
+    };
+
+    const loadVersionHistory = async () => {
+        if (!companyId) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('policy_versions_with_creator')
+                .select('*')
+                .eq('company_id', companyId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setVersions(data || []);
+        } catch (error: any) {
+            console.error('Error loading versions:', error);
+        }
+    };
+
+    const viewVersion = (version: PolicyVersion) => {
+        setViewingVersion(version);
+    };
+
+    const restoreVersion = async (version: PolicyVersion) => {
+        if (!confirm('Deseja restaurar esta versão da política?')) return;
+
+        setPolicyData({
+            content: version.content,
+            date: version.approval_date || '',
+            version: version.version
+        });
+        setViewingVersion(null);
+        alert('Versão restaurada! Clique em "Salvar Política" para confirmar.');
     };
 
     const handleSaveRole = async (e: React.FormEvent) => {
@@ -244,7 +308,19 @@ export const LeadershipPage: React.FC = () => {
                 <div className="space-y-6">
                     {/* 1. Preview (Visualização) - Top Full Width */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Visualização</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Visualização</h2>
+                            <button
+                                onClick={() => {
+                                    loadVersionHistory();
+                                    setIsVersionHistoryOpen(true);
+                                }}
+                                className="flex items-center gap-2 text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                            >
+                                <History size={16} />
+                                Histórico de Versões
+                            </button>
+                        </div>
                         <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border-l-4 border-[#025159] italic text-gray-700 dark:text-gray-300">
                             {policyData.content || "A política aparecerá aqui..."}
                         </div>
@@ -458,6 +534,143 @@ export const LeadershipPage: React.FC = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Version History Modal */}
+            {isVersionHistoryOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <History size={24} />
+                                Histórico de Versões da Política
+                            </h3>
+                            <button
+                                onClick={() => setIsVersionHistoryOpen(false)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                                <Edit2 size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        {versions.length === 0 ? (
+                            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                <History className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                                <p>Nenhuma versão salva ainda.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {versions.map((version, index) => (
+                                    <div
+                                        key={version.id}
+                                        className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-bold rounded">
+                                                        Versão {version.version}
+                                                    </span>
+                                                    {index === 0 && (
+                                                        <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-medium rounded">
+                                                            Atual
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
+                                                    {version.content.substring(0, 120)}...
+                                                </p>
+                                                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <Users size={12} />
+                                                        {version.created_by_name || 'Sistema'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock size={12} />
+                                                        {new Date(version.created_at).toLocaleString('pt-BR')}
+                                                    </span>
+                                                    {version.approval_date && (
+                                                        <span>Aprovada em: {new Date(version.approval_date).toLocaleDateString('pt-BR')}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 ml-4">
+                                                <button
+                                                    onClick={() => viewVersion(version)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                    title="Visualizar"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                                {index !== 0 && (
+                                                    <button
+                                                        onClick={() => restoreVersion(version)}
+                                                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                                        title="Restaurar"
+                                                    >
+                                                        <Save size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Version View Modal */}
+            {viewingVersion && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                    Versão {viewingVersion.version}
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Salva em {new Date(viewingVersion.created_at).toLocaleString('pt-BR')} por {viewingVersion.created_by_name || 'Sistema'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setViewingVersion(null)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                                <Edit2 size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border-l-4 border-[#025159] mb-4">
+                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                {viewingVersion.content}
+                            </p>
+                        </div>
+
+                        {viewingVersion.approval_date && (
+                            <div className="text-sm text-gray-500 mb-4">
+                                Data de aprovação: {new Date(viewingVersion.approval_date).toLocaleDateString('pt-BR')}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setViewingVersion(null)}
+                                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Fechar
+                            </button>
+                            <button
+                                onClick={() => restoreVersion(viewingVersion)}
+                                className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Save size={18} />
+                                Restaurar Esta Versão
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -83,7 +83,8 @@ export const SectionDashboard: React.FC = () => {
         surveysRes,
         ncProductsRes,
         actionsRes,
-        nextAuditsRes
+        nextAuditsRes,
+        riskTasksRes
       ] = await Promise.all([
         supabase.rpc('get_dashboard_metrics', { p_company_id: companyId }),
         supabase.from('customer_satisfaction_surveys').select('*').eq('company_id', companyId),
@@ -95,7 +96,12 @@ export const SectionDashboard: React.FC = () => {
           .eq('status', 'Agendada')
           .gte('date', new Date().toISOString().split('T')[0])
           .order('date', { ascending: true })
-          .limit(5)
+          .limit(5),
+        supabase.from('risk_tasks_with_responsible')
+          .select('id, description, deadline, responsible_name, status')
+          .eq('status', 'pending')
+          .order('deadline', { ascending: true, nullsFirst: false })
+          .limit(10)
       ]);
 
       const metricsData = metricsRes.data?.[0] || {
@@ -189,6 +195,20 @@ export const SectionDashboard: React.FC = () => {
           type: 'audit',
           status: 'warning',
           date: a.date
+        });
+      });
+
+      // Risk Tasks
+      const riskTasks = riskTasksRes.data || [];
+      riskTasks.forEach(task => {
+        const isOverdue = task.deadline && new Date(task.deadline) < today;
+        pendingTasks.push({
+          id: `risk-task-${task.id}`,
+          title: `Tarefa: ${task.description.substring(0, 50)}${task.description.length > 50 ? '...' : ''}`,
+          subtitle: task.responsible_name || 'Sem responsável',
+          type: 'risk-task',
+          status: isOverdue ? 'critical' : 'normal',
+          date: task.deadline || null
         });
       });
 
@@ -421,13 +441,18 @@ export const SectionDashboard: React.FC = () => {
             metrics.pendingTasks.map((task) => (
               <div key={task.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className={`w-2 h-2 rounded-full ${task.status === 'critical' ? 'bg-red-500' : 'bg-amber-400'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${task.status === 'critical' ? 'bg-red-500' : task.status === 'normal' ? 'bg-blue-400' : 'bg-amber-400'}`}></div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-900">{task.title}</h4>
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                      <Clock size={12} />
-                      {formatDate(task.date)}
-                    </p>
+                    {task.subtitle && (
+                      <p className="text-xs text-gray-400 mt-0.5">{task.subtitle}</p>
+                    )}
+                    {task.date && (
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        <Clock size={12} />
+                        {formatDate(task.date)}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors">

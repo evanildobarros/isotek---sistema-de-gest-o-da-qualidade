@@ -347,13 +347,6 @@ export const NonConformityPage: React.FC = () => {
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
-                                    <button
-                                        onClick={() => handlePrintReport(nc)}
-                                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-                                        title="Imprimir Relatório"
-                                    >
-                                        <Printer className="w-4 h-4" />
-                                    </button>
                                 </div>
                             </div>
                         ))
@@ -601,7 +594,7 @@ export const NonConformityPage: React.FC = () => {
                 size="xl"
             >
                 {selectedNCForReport && (
-                    <div className="p-8 bg-white" style={{ fontFamily: 'serif' }}>
+                    <div className="print-area p-8 bg-white" style={{ fontFamily: 'serif' }}>
                         {/* Cabeçalho */}
                         <div className="flex justify-between items-center border-b-2 border-gray-300 pb-6 mb-6">
                             <div className="flex items-center gap-4">
@@ -692,7 +685,7 @@ export const NonConformityPage: React.FC = () => {
                         </div>
 
                         {/* Botão Imprimir */}
-                        <div className="mt-8 text-center print:hidden">
+                        <div className="mt-8 text-center no-print">
                             <button
                                 onClick={handlePrint}
                                 className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto shadow-sm"

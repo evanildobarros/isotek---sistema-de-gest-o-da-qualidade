@@ -47,21 +47,33 @@
 }
 
 @media print {
-  /* Ocultar elementos de UI */
-  aside, header, button, .no-print {
+  /* Esconde tudo que não é o relatório */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Exibe apenas a área de impressão */
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white;
+    color: black;
+  }
+
+  /* Esconde botões dentro do modal na hora de imprimir */
+  .no-print {
     display: none !important;
   }
 
-  /* Resetar layout para papel */
-  body, #root, main, .p-8 {
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* Garantir que cores de fundo (badges) apareçam */
+  /* Força cores de fundo (badges) */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

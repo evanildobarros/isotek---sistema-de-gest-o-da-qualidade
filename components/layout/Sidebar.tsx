@@ -124,6 +124,12 @@ const menuGroups: MenuGroup[] = [
             icon: ShieldCheck
           },
           {
+            label: 'Planos de Ação',
+            section: IsoSection.RISK_MATRIX, // Using same section or create new one
+            path: '/app/planos-de-acao',
+            icon: CheckCircle2
+          },
+          {
             label: 'Objetivos da Qualidade',
             section: IsoSection.QUALITY_OBJECTIVES,
             path: '/app/objetivos-qualidade',
@@ -424,12 +430,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
         onClick={handleClick}
         title={isRestricted && needsUpgrade ? `Disponível no plano PRO` : undefined}
         className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-            ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
-            : isGed
-              ? 'text-gray-700 font-semibold hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-              : isRestricted && needsUpgrade
-                ? 'text-gray-400 hover:bg-purple-50 dark:text-gray-600 dark:hover:bg-purple-900/10 opacity-60 cursor-pointer'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
+          ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
+          : isGed
+            ? 'text-gray-700 font-semibold hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+            : isRestricted && needsUpgrade
+              ? 'text-gray-400 hover:bg-purple-50 dark:text-gray-600 dark:hover:bg-purple-900/10 opacity-60 cursor-pointer'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
           }`}
       >
         <div className="flex items-center gap-3">
