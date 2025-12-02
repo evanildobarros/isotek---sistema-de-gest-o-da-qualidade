@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon, GitBranch, Send, XCircle } from 'lucide-react';
+import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon, GitBranch, Send, XCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
@@ -28,6 +28,7 @@ export const DocumentsPage: React.FC = () => {
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Upload modal states
     const [uploadTitle, setUploadTitle] = useState('');
@@ -46,12 +47,24 @@ export const DocumentsPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (statusFilter === 'all') {
-            setFilteredDocuments(documents);
-        } else {
-            setFilteredDocuments(documents.filter(doc => doc.status === statusFilter));
+        let filtered = documents;
+
+        // Filter by status
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(doc => doc.status === statusFilter);
         }
-    }, [statusFilter, documents]);
+
+        // Filter by search term
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(doc =>
+                doc.title.toLowerCase().includes(term) ||
+                (doc.code && doc.code.toLowerCase().includes(term))
+            );
+        }
+
+        setFilteredDocuments(filtered);
+    }, [statusFilter, searchTerm, documents]);
 
     const fetchDocuments = async () => {
         setLoading(true);
@@ -474,6 +487,20 @@ export const DocumentsPage: React.FC = () => {
                         Obsoletos
                     </button>
                 </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                    type="text"
+                    placeholder="Buscar por título ou código..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#025159] focus:border-[#025159] sm:text-sm transition duration-150 ease-in-out"
+                />
             </div>
 
             {/* Documents Grid */}
