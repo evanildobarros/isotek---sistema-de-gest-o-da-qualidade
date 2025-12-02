@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon, GitBranch, Send, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 
@@ -179,6 +180,10 @@ export const DocumentsPage: React.FC = () => {
             const { data: { publicUrl } } = supabase.storage
                 .from('documents')
                 .getPublicUrl(filePath);
+
+            if (!publicUrl) {
+                throw new Error('Erro ao gerar URL pública do arquivo');
+            }
 
             if (!company) {
                 throw new Error('Usuário não vinculado a uma empresa');
@@ -541,6 +546,7 @@ export const DocumentsPage: React.FC = () => {
                                         {canPreviewFile(doc.file_name) && (
                                             <button
                                                 onClick={() => {
+                                                    if (!doc.file_url) return toast.error('Arquivo não disponível');
                                                     setPreviewDocument(doc);
                                                     setIsPreviewModalOpen(true);
                                                 }}
@@ -599,15 +605,17 @@ export const DocumentsPage: React.FC = () => {
                                         )}
 
                                         {/* Sempre mostrar Download */}
-                                        <a
-                                            href={doc.file_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
-                                            title="Download"
-                                        >
-                                            <Download size={18} />
-                                        </a>
+                                        {doc.file_url && (
+                                            <a
+                                                href={doc.file_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
+                                                title="Download"
+                                            >
+                                                <Download size={18} />
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             </div>
