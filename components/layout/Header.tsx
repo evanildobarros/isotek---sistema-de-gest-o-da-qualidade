@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
   const handleResultClick = (result: SearchResult) => {
     setShowSearchResults(false);
     setSearchQuery('');
-    navigate('/documentos', { state: { highlightId: result.id } });
+    navigate('/app/documentos', { state: { highlightId: result.id, highlightCode: result.code } });
   };
 
   const getStatusColor = (status: string) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon, GitBranch, Send, XCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -21,6 +22,7 @@ interface Document {
 
 export const DocumentsPage: React.FC = () => {
     const { user, company } = useAuthContext();
+    const location = useLocation();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
@@ -45,6 +47,17 @@ export const DocumentsPage: React.FC = () => {
     useEffect(() => {
         fetchDocuments();
     }, []);
+
+    // Handle navigation from global search
+    useEffect(() => {
+        if (location.state?.highlightCode) {
+            setSearchTerm(location.state.highlightCode);
+        } else if (location.state?.highlightId) {
+            // Fallback if code is not available, though code is better for search
+            // We might need to find the doc to get its title/code if we only have ID
+            // But Header passes code now.
+        }
+    }, [location.state]);
 
     useEffect(() => {
         let filtered = documents;
