@@ -264,7 +264,7 @@ export const SectionDashboard: React.FC = () => {
         {/* Card 1: NPS */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-medium text-gray-500">NPS (Satisfação)</h3>
+            <h3 className="text-sm font-medium text-gray-500">Satisfação do Cliente (NPS)</h3>
             <span className="p-1.5 bg-green-50 rounded-lg text-green-600">
               <TrendingUp size={16} />
             </span>
