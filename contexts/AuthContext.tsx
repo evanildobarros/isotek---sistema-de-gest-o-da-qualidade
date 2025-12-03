@@ -8,6 +8,7 @@ interface AuthContextType {
     session: Session | null;
     user: User | null;
     company: Company | null;
+    isSuperAdmin: boolean;
     loading: boolean;
     loadingCompany: boolean;
     signOut: () => Promise<void>;
@@ -20,6 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [company, setCompany] = useState<Company | null>(null);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadingCompany, setLoadingCompany] = useState(true);
 
@@ -54,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 1. Get company_id from profile
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('company_id')
+                .select('company_id, is_super_admin')
                 .eq('id', user.id)
                 .single();
 
@@ -62,6 +64,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.error('Error fetching profile:', profileError);
                 setCompany(null);
                 return;
+            }
+
+            if (profile?.is_super_admin) {
+                setIsSuperAdmin(true);
+            } else {
+                setIsSuperAdmin(false);
             }
 
             if (!profile?.company_id) {
@@ -108,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(null);
         setUser(null);
         setCompany(null);
+        setIsSuperAdmin(false);
         setLoading(false);
         setLoadingCompany(false);
         // Redirect to login page
@@ -118,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         user,
         company,
+        isSuperAdmin,
         loading,
         loadingCompany,
         signOut,

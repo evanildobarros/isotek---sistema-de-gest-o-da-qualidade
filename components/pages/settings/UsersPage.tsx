@@ -16,7 +16,7 @@ interface UserProfile {
 }
 
 export const UsersPage: React.FC = () => {
-  const { user, company } = useAuthContext();
+  const { user, company, isSuperAdmin } = useAuthContext();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -42,11 +42,16 @@ export const UsersPage: React.FC = () => {
       // But since auth.users is not accessible directly from client without specific setup,
       // we usually rely on a public profiles table.
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id,email,full_name,role,created_at,last_sign_in_at,company_id,companies(name)')
-        .eq('company_id', company?.id)
         .order('created_at', { ascending: false });
+
+      if (!isSuperAdmin) {
+        query = query.eq('company_id', company?.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -208,8 +213,8 @@ export const UsersPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-gray-100 text-gray-800'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
                             }`}>
                             {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
                           </span>
@@ -262,8 +267,8 @@ export const UsersPage: React.FC = () => {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">Função:</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-gray-100 text-gray-800'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-gray-100 text-gray-800'
                         }`}>
                         {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
                       </span>
