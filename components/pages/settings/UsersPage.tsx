@@ -74,28 +74,60 @@ export const UsersPage: React.FC = () => {
     setInviteLoading(true);
 
     try {
-      // 1. Create user using Supabase Auth (this usually requires a backend function for admin creation 
-      // without auto-login, or we use the invite API if configured)
-      // For this demo, we'll assume we're calling an RPC or just inserting into profiles if using a custom flow
-      // But standard way is supabase.auth.signUp or admin.inviteUserByEmail (backend only)
+      // Primeiro tentamos chamar o RPC padrão (requer backend configurado).
+      // Se o RPC não existir, fazemos um fallback inserindo um registro em `profiles`.
+      try {
+        const { data, error } = await supabase.rpc('invite_user_to_company', {
+          p_email: formData.email,
+          p_full_name: formData.fullName,
+          p_role: formData.role,
+          p_company_id: company?.id
+        });
 
-      // Let's try a simplified approach: We'll use a hypothetical RPC or just alert for now 
-      // since we can't easily create other users from client side without being logged out.
+        if (error) throw error;
 
-      // Ideally: call an Edge Function or RPC that uses service_role key
-      const { data, error } = await supabase.rpc('invite_user_to_company', {
-        p_email: formData.email,
-        p_full_name: formData.fullName,
-        p_role: formData.role,
-        p_company_id: company?.id
-      });
+        alert('Usuário convidado com sucesso!');
+        setShowModal(false);
+        setFormData({ email: '', fullName: '', role: 'user' });
+        fetchUsers();
+      } catch (rpcError: any) {
+        console.warn('RPC invite failed, attempting fallback insert into profiles:', rpcError?.message || rpcError);
 
-      if (error) throw error;
+        // Fallback: tentar inserir na tabela `profiles` (caso o projeto permita).
+        // Primeiro tentamos incluir o campo `invited: true` (se existir). Se falhar por coluna desconhecida, tentamos sem ele.
+        try {
+          // tentativa com invited
+          const insertPayload: any = { email: formData.email, full_name: formData.fullName, role: formData.role, company_id: company?.id, invited: true };
+          let { data: insertData, error: insertError } = await supabase
+            .from('profiles')
+            .insert([insertPayload]);
 
-      alert('Usuário convidado com sucesso!');
-      setShowModal(false);
-      setFormData({ email: '', fullName: '', role: 'user' });
-      fetchUsers();
+          if (insertError) {
+            // Se o erro indicar coluna desconhecida (fallback), refazer sem `invited`
+            const msg = (insertError?.message || '').toString().toLowerCase();
+            if (msg.includes('column') && msg.includes('invited')) {
+              console.warn('Column `invited` not found in profiles, retrying insert without it.');
+              const { data: insertData2, error: insertError2 } = await supabase
+                .from('profiles')
+                .insert([{ email: formData.email, full_name: formData.fullName, role: formData.role, company_id: company?.id }]);
+
+              if (insertError2) throw insertError2;
+              insertData = insertData2;
+            } else {
+              throw insertError;
+            }
+          }
+
+          alert('Usuário registrado (fallback) em profiles. Se necessário, configure o envio de convite por backend.');
+          setShowModal(false);
+          setFormData({ email: '', fullName: '', role: 'user' });
+          fetchUsers();
+        } catch (insertErr: any) {
+          console.error('Fallback insert into profiles failed:', insertErr);
+          // Mantemos mensagem original para indicar que o RPC precisa ser configurado
+          alert('Erro ao convidar usuário (Nota: Esta função requer configuração de backend/RPC): ' + (rpcError?.message || insertErr?.message || 'Erro desconhecido'));
+        }
+      }
 
     } catch (error: any) {
       console.error('Error inviting user:', error);
