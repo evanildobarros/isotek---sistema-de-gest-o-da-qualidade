@@ -329,6 +329,13 @@ export const NonConformityPage: React.FC = () => {
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
                                     )}
+                                    <button
+                                        onClick={() => handlePrintReport(nc)}
+                                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                        title="Imprimir RNC"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                    </button>
                                     {nc.photo_url && (
                                         <a
                                             href={nc.photo_url}
