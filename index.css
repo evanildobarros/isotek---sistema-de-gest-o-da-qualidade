@@ -47,48 +47,139 @@
 }
 
 @media print {
-  /* Ocultar interface do sistema */
-  aside, header, button, .no-print {
-    display: none !important;
+  @page {
+    size: A4;
+    margin: 10mm;
   }
 
-  /* Ajustar área de conteúdo para papel */
-  body, #root, main, .p-8, .p-6 {
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
-    height: auto !important;
-    overflow: visible !important;
-    width: 100% !important;
-    position: static !important;
-  }
-
-  /* Garantir visibilidade de cores e gráficos */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    box-shadow: none !important;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.4;
+    color: #000;
+  }
+
+  /* Ocultar UI do aplicativo */
+  aside, header, button, .no-print, .modal-backdrop, nav, footer {
+    display: none !important;
   }
 
   /* Esconder scrollbars */
-  ::-webkit-scrollbar {
-    display: none;
+  ::-webkit-scrollbar, ::-webkit-scrollbar-track, ::-webkit-scrollbar-thumb {
+    display: none !important;
   }
 
-  /* Área de impressão com estilo preservado */
+  /* Container raiz e main */
+  #root, main {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Configurar área de impressão */
   .print-area {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    width: 100% !important;
+    width: 210mm !important; /* Largura A4 */
+    height: 297mm !important; /* Altura A4 */
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 10mm !important;
     background: white !important;
-    color: black !important;
+    color: #000 !important;
+    position: static !important;
     page-break-inside: avoid;
+    font-family: 'Times New Roman', Times, serif;
   }
 
-  /* Classe para forçar quebra de página se necessário */
+  /* Bordas e tabelas */
+  .border, .border-b, .border-t, .border-l, .border-r, table, tr, td, th {
+    border-color: #000 !important;
+    border-style: solid !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  td, th {
+    border: 1px solid #000;
+    padding: 6pt;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold;
+  }
+
+  /* Cores de fundo */
+  .bg-gray-50, .bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+
+  .bg-red-50 {
+    background-color: #fef2f2 !important;
+  }
+
+  .bg-yellow-50 {
+    background-color: #fefce8 !important;
+  }
+
+  .bg-green-50 {
+    background-color: #f0fdf4 !important;
+  }
+
+  /* Títulos e textos */
+  h1, h2, h3, h4, h5, h6 {
+    color: #000 !important;
+    font-weight: bold;
+    margin-top: 10pt;
+    margin-bottom: 5pt;
+  }
+
+  h1 {
+    font-size: 18pt;
+  }
+
+  h2 {
+    font-size: 14pt;
+  }
+
+  h3 {
+    font-size: 12pt;
+  }
+
+  /* Imagens e logos */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Links */
+  a {
+    color: #000;
+    text-decoration: none;
+  }
+
+  /* Quebra de página */
   .page-break {
     page-break-before: always;
+  }
+
+  /* Evitar quebras dentro de elementos */
+  .no-break {
+    page-break-inside: avoid;
   }
 }

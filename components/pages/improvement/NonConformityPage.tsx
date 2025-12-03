@@ -601,104 +601,125 @@ export const NonConformityPage: React.FC = () => {
                 size="xl"
             >
                 {selectedNCForReport && (
-                    <div className="print-area p-8 bg-white" style={{ fontFamily: 'serif' }}>
-                        {/* Cabeçalho */}
-                        <div className="flex justify-between items-center border-b-2 border-gray-300 pb-6 mb-6">
-                            <div className="flex items-center gap-4">
-                                {company?.logo_url ? (
-                                    <img src={company.logo_url} alt="Logo" className="h-16 w-auto object-contain" />
-                                ) : (
-                                    <div className="h-16 w-16 bg-gray-100 flex items-center justify-center rounded text-gray-400 text-xs">
-                                        Sem Logo
+                    <div className="print-area bg-white" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '11pt' }}>
+                        {/* Cabeçalho Profissional */}
+                        <div className="border-b-2 border-gray-900 pb-4 mb-6">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-3">
+                                    {company?.logo_url ? (
+                                        <img src={company.logo_url} alt="Logo" className="h-14 w-auto object-contain" />
+                                    ) : (
+                                        <div className="h-14 w-14 bg-gray-300 flex items-center justify-center rounded text-gray-600 text-xs font-bold">
+                                            LOGO
+                                        </div>
+                                    )}
+                                    <div>
+                                        <h1 className="text-base font-bold text-gray-900 uppercase">{company?.name || 'Empresa'}</h1>
+                                        <p className="text-xs text-gray-700">CNPJ: {company?.cnpj || '_______________'}</p>
                                     </div>
-                                )}
-                                <div>
-                                    <h1 className="text-xl font-bold text-gray-900 uppercase">{company?.name || 'Empresa'}</h1>
-                                    <p className="text-sm text-gray-600">Relatório de Não Conformidade (RNC)</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-900">RELATÓRIO DE NÃO CONFORMIDADE</p>
+                                    <p className="text-xs text-gray-700">ISO 9001:2015 - 8.7</p>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm font-bold text-gray-900">RNC #{selectedNCForReport.code || selectedNCForReport.id.slice(0, 6)}</p>
-                                <p className="text-sm text-gray-600">{new Date(selectedNCForReport.date_occurred).toLocaleDateString('pt-BR')}</p>
+                            <div className="text-center pt-2">
+                                <p className="text-sm font-bold text-gray-900">RNC Nº {selectedNCForReport.code || selectedNCForReport.id.slice(0, 6).toUpperCase()}</p>
                             </div>
                         </div>
 
-                        {/* Detalhes */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">1. Detalhes da Ocorrência</h3>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Origem</p>
-                                    <p className="text-sm font-medium">{selectedNCForReport.origin}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Severidade</p>
-                                    <p className="text-sm font-medium">{selectedNCForReport.severity}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Quantidade Afetada</p>
-                                    <p className="text-sm font-medium">{selectedNCForReport.quantity_affected || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Status Atual</p>
-                                    <p className="text-sm font-medium uppercase">{selectedNCForReport.status}</p>
-                                </div>
-                            </div>
+                        {/* Seção 1: Identificação */}
+                        <div className="mb-5">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase mb-2 pb-1 border-b border-gray-900">1. IDENTIFICAÇÃO DA OCORRÊNCIA</h3>
+                            <table className="w-full text-xs border-collapse border border-gray-900 mb-3">
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100 w-1/4">Data de Ocorrência:</td>
+                                        <td className="border border-gray-900 p-2">{new Date(selectedNCForReport.date_occurred).toLocaleDateString('pt-BR')}</td>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100 w-1/4">Origem:</td>
+                                        <td className="border border-gray-900 p-2">{selectedNCForReport.origin}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100">Severidade:</td>
+                                        <td className="border border-gray-900 p-2">{selectedNCForReport.severity}</td>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100">Quantidade Afetada:</td>
+                                        <td className="border border-gray-900 p-2">{selectedNCForReport.quantity_affected || '—'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100">Status:</td>
+                                        <td colSpan={3} className="border border-gray-900 p-2 uppercase">{selectedNCForReport.status}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div>
-                                <p className="text-xs text-gray-500 uppercase">Descrição do Problema</p>
-                                <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded border border-gray-100 mt-1">
+                                <p className="text-xs font-bold text-gray-900 mb-1">DESCRIÇÃO DO PROBLEMA:</p>
+                                <p className="text-xs text-gray-800 border border-gray-900 p-3 bg-white min-h-12">
                                     {selectedNCForReport.description}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Disposição */}
-                        <div className="mb-8">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">2. Tratamento / Disposição</h3>
+                        {/* Seção 2: Tratamento/Disposição */}
+                        <div className="mb-5">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase mb-2 pb-1 border-b border-gray-900">2. TRATAMENTO / DISPOSIÇÃO</h3>
                             {selectedNCForReport.status === 'resolved' ? (
-                                <>
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                        <div>
-                                            <p className="text-xs text-gray-500 uppercase">Ação Tomada</p>
-                                            <p className="text-sm font-medium">{selectedNCForReport.disposition}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 uppercase">Autorizado Por</p>
-                                            <p className="text-sm font-medium">{selectedNCForReport.authorized_by || 'N/A'}</p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 uppercase">Justificativa</p>
-                                        <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded border border-gray-100 mt-1">
-                                            {selectedNCForReport.disposition_justification}
-                                        </p>
-                                    </div>
-                                </>
+                                <table className="w-full text-xs border-collapse border border-gray-900">
+                                    <tbody>
+                                        <tr>
+                                            <td className="border border-gray-900 p-2 font-bold bg-gray-100 w-1/2">Ação Tomada (Disposição):</td>
+                                            <td className="border border-gray-900 p-2">{selectedNCForReport.disposition}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="border border-gray-900 p-2 font-bold bg-gray-100">Autorizado Por:</td>
+                                            <td className="border border-gray-900 p-2">{selectedNCForReport.authorized_by || '_______________'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colSpan={2} className="border border-gray-900 p-2">
+                                                <p className="text-xs font-bold mb-1">Justificativa / Observações:</p>
+                                                <p className="text-xs text-gray-800">{selectedNCForReport.disposition_justification || '—'}</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             ) : (
-                                <p className="text-sm text-gray-500 italic">Ainda não foi aplicada uma disposição final.</p>
+                                <p className="text-xs text-gray-600 italic border border-gray-900 p-3 bg-gray-50">
+                                    Ainda não foi aplicada uma disposição final.
+                                </p>
                             )}
                         </div>
 
-                        {/* Assinaturas */}
-                        <div className="grid grid-cols-2 gap-12 mt-16 pt-8">
-                            <div className="text-center border-t border-gray-400 pt-2">
-                                <p className="text-sm font-medium text-gray-900">Responsável pela Emissão</p>
-                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
-                            </div>
-                            <div className="text-center border-t border-gray-400 pt-2">
-                                <p className="text-sm font-medium text-gray-900">Aprovação da Qualidade</p>
-                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
-                            </div>
+                        {/* Seção 3: Assinaturas */}
+                        <div className="mt-8 pt-4">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase mb-6 pb-1 border-b border-gray-900">3. APROVAÇÕES E ASSINATURAS</h3>
+                            <table className="w-full text-xs border-collapse">
+                                <tbody>
+                                    <tr>
+                                        <td className="text-center p-4 border-t-2 border-gray-900 w-1/2">
+                                            <p className="text-xs font-bold text-gray-900 mt-1">Responsável pela Ocorrência</p>
+                                            <p className="text-xs text-gray-700">Data: ___/___/______</p>
+                                        </td>
+                                        <td className="text-center p-4 border-t-2 border-gray-900 w-1/2">
+                                            <p className="text-xs font-bold text-gray-900 mt-1">Aprovação da Qualidade</p>
+                                            <p className="text-xs text-gray-700">Data: ___/___/______</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Rodapé */}
+                        <div className="mt-8 text-center border-t-2 border-gray-300 pt-3">
+                            <p className="text-xs text-gray-600">Documento gerado eletronicamente em {new Date().toLocaleDateString('pt-BR')}</p>
                         </div>
 
                         {/* Botão Imprimir */}
-                        <div className="mt-8 text-center no-print">
+                        <div className="mt-6 text-center no-print">
                             <button
                                 onClick={handlePrint}
-                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto shadow-sm"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto shadow-sm font-medium"
                             >
                                 <Printer className="w-5 h-5" />
-                                Imprimir Relatório
+                                Imprimir Relatório (PDF)
                             </button>
                         </div>
                     </div>
