@@ -15,7 +15,8 @@ import {
     Eye,
     Filter,
     Download,
-    XCircle
+    XCircle,
+    Printer
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -31,7 +32,9 @@ export const CorrectiveActionsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [selectedAction, setSelectedAction] = useState<CorrectiveAction | null>(null);
+    const [selectedActionForReport, setSelectedActionForReport] = useState<CorrectiveAction | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
@@ -458,6 +461,13 @@ export const CorrectiveActionsPage: React.FC = () => {
                             Exportar
                         </button>
                         <button
+                            onClick={() => window.print()}
+                            className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        >
+                            <Printer className="w-4 h-4" />
+                            Imprimir
+                        </button>
+                        <button
                             onClick={() => handleOpenModal()}
                             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
                         >
@@ -630,6 +640,20 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     >
                                         <Copy className="w-4 h-4 text-gray-500" />
                                         Duplicar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const action = actions.find(a => a.id === openMenuId);
+                                            if (action) {
+                                                setSelectedActionForReport(action);
+                                                setIsReportModalOpen(true);
+                                            }
+                                            setOpenMenuId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Printer className="w-4 h-4 text-gray-500" />
+                                        Imprimir Relatório
                                     </button>
                                     <hr className="my-1 border-gray-100" />
                                     <button
@@ -1089,6 +1113,91 @@ Ou use Diagrama de Ishikawa (6M):
                         </button>
                     </div>
                 </div>
+            </Modal>
+
+            {/* Modal: Relatório de Ação Corretiva */}
+            <Modal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                title="Relatório de Ação Corretiva"
+                size="xl"
+            >
+                {selectedActionForReport && (
+                    <div className="print-area p-8 bg-white" style={{ fontFamily: 'serif' }}>
+                        {/* Cabeçalho */}
+                        <div className="flex justify-between items-center border-b-2 border-gray-300 pb-6 mb-6">
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <h1 className="text-xl font-bold text-gray-900 uppercase">Ação Corretiva</h1>
+                                    <p className="text-sm text-gray-600">Relatório de Gestão de Melhoria</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-gray-900">AC #{selectedActionForReport.code}</p>
+                                <p className="text-sm text-gray-600">{new Date(selectedActionForReport.created_at).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+
+                        {/* Descrição */}
+                        <div className="mb-6">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">1. Descrição da Ação</h3>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Origem</p>
+                                    <p className="text-sm font-medium">{selectedActionForReport.origin}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Status</p>
+                                    <p className="text-sm font-medium uppercase">{selectedActionForReport.status}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase">Descrição</p>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded border border-gray-100 mt-1">
+                                    {selectedActionForReport.description}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Responsável e Prazos */}
+                        <div className="mb-6">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">2. Responsabilidades e Prazos</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Responsável</p>
+                                    <p className="text-sm font-medium">{selectedActionForReport.responsible_name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Prazo</p>
+                                    <p className="text-sm font-medium">{new Date(selectedActionForReport.deadline).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Assinaturas */}
+                        <div className="grid grid-cols-2 gap-12 mt-16 pt-8">
+                            <div className="text-center border-t border-gray-400 pt-2">
+                                <p className="text-sm font-medium text-gray-900">Responsável pela Ação</p>
+                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
+                            </div>
+                            <div className="text-center border-t border-gray-400 pt-2">
+                                <p className="text-sm font-medium text-gray-900">Aprovação da Qualidade</p>
+                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
+                            </div>
+                        </div>
+
+                        {/* Botão Imprimir */}
+                        <div className="mt-8 text-center no-print">
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto shadow-sm"
+                            >
+                                <Printer className="w-5 h-5" />
+                                Imprimir Relatório
+                            </button>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div >
     );
