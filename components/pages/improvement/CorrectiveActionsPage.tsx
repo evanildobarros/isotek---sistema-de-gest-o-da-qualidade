@@ -19,6 +19,7 @@ import {
     Printer
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { getStatusLabel } from '../../../lib/utils/format';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { CorrectiveAction, CorrectiveActionTask } from '../../../types';
 import { Modal } from '../../common/Modal';
@@ -1123,7 +1124,7 @@ Ou use Diagrama de Ishikawa (6M):
                 size="xl"
             >
                 {selectedActionForReport && (
-                    <div className="print-area bg-white" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '11pt' }}>
+                    <div className="print-area bg-white" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '10pt' }}>
                         {/* Cabeçalho Profissional */}
                         <div className="flex items-center justify-between border-b-2 border-gray-900 pb-6 mb-8">
                             <div className="flex items-center gap-6">
@@ -1152,10 +1153,10 @@ Ou use Diagrama de Ishikawa (6M):
                                 
                                 {/* Títulos */}
                                 <div>
-                                    <h1 className="text-2xl font-bold text-gray-900 uppercase leading-none mb-1">
+                                    <h1 className="text-xl font-bold text-gray-900 uppercase leading-none mb-1">
                                         Ação Corretiva
                                     </h1>
-                                    <h2 className="text-lg text-gray-600 font-medium">
+                                    <h2 className="text-base text-gray-600 font-medium">
                                         {company?.name}
                                     </h2>
                                     <p className="text-xs text-gray-500 mt-1">Relatório de Gestão de Melhoria</p>
@@ -1184,7 +1185,7 @@ Ou use Diagrama de Ishikawa (6M):
                                     </tr>
                                     <tr>
                                         <td className="border border-gray-900 p-2 font-bold bg-gray-100">STATUS:</td>
-                                        <td className="border border-gray-900 p-2 uppercase">{selectedActionForReport.status}</td>
+                                        <td className="border border-gray-900 p-2 uppercase">{getStatusLabel(selectedActionForReport.status)}</td>
                                     </tr>
                                     <tr>
                                         <td colSpan={2} className="border border-gray-900 p-2">
