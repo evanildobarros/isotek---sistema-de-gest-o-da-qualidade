@@ -11,6 +11,8 @@ interface UserProfile {
   role: string;
   created_at: string;
   last_sign_in_at?: string;
+  company_id?: string;
+  company_name?: string;
 }
 
 export const UsersPage: React.FC = () => {
@@ -42,12 +44,24 @@ export const UsersPage: React.FC = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id,email,full_name,role,created_at,last_sign_in_at,company_id,companies(name)')
         .eq('company_id', company?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+
+      const usersWithCompany = (data || []).map((u: any) => ({
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name,
+        role: u.role,
+        created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at,
+        company_id: u.company_id,
+        company_name: (u.companies && u.companies.name) || company?.name || ''
+      }));
+
+      setUsers(usersWithCompany);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -142,7 +156,7 @@ export const UsersPage: React.FC = () => {
                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Função</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Entrada</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Empresa</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -177,9 +191,7 @@ export const UsersPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                          <div className="text-sm text-gray-900">{userProfile.company_name || company?.name || '-'}</div>
                         </td>
                       </tr>
                     ))
@@ -210,9 +222,8 @@ export const UsersPage: React.FC = () => {
                         <p className="text-sm text-gray-500 truncate">{userProfile.email}</p>
                       </div>
                     </div>
-                    <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors flex-shrink-0 -mr-2">
-                      <Edit2 className="w-5 h-5" />
-                    </button>
+                    {/* Empresa vinculada (substitui botão de edição) */}
+                    <div className="text-sm text-gray-900 flex-shrink-0 -mr-2">{userProfile.company_name || company?.name || '-'}</div>
                   </div>
 
                   <div className="space-y-2">
