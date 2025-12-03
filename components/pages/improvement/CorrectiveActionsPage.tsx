@@ -244,7 +244,7 @@ export const CorrectiveActionsPage: React.FC = () => {
             } else if (currentStep === 3) {
                 payload.status = 'implementation';
             } else if (currentStep === 4) {
-                payload.status = form.effectiveness_verified ? 'closed' : 'effectiveness_check';
+                payload.status = form.effectiveness_verified ? 'closed' : 'verificacao_de_eficacia';
             }
 
             if (selectedAction) {
