@@ -1123,77 +1123,118 @@ Ou use Diagrama de Ishikawa (6M):
                 size="xl"
             >
                 {selectedActionForReport && (
-                    <div className="print-area p-8 bg-white" style={{ fontFamily: 'serif' }}>
-                        {/* Cabeçalho */}
-                        <div className="flex justify-between items-center border-b-2 border-gray-300 pb-6 mb-6">
-                            <div className="flex items-center gap-4">
+                    <div className="print-area bg-white" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '11pt' }}>
+                        {/* Cabeçalho Profissional */}
+                        <div className="flex items-center justify-between border-b-2 border-gray-900 pb-6 mb-8">
+                            <div className="flex items-center gap-6">
+                                {/* Logo da Empresa */}
+                                {company?.logo_url ? (
+                                    <img 
+                                        src={company.logo_url} 
+                                        alt="Logo" 
+                                        className="h-20 w-auto object-contain" 
+                                    />
+                                ) : (
+                                    <div className="h-16 w-16 bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs border border-gray-300">
+                                        LOGO
+                                    </div>
+                                )}
+                                
+                                {/* Títulos */}
                                 <div>
-                                    <h1 className="text-xl font-bold text-gray-900 uppercase">Ação Corretiva</h1>
-                                    <p className="text-sm text-gray-600">Relatório de Gestão de Melhoria</p>
+                                    <h1 className="text-2xl font-bold text-gray-900 uppercase leading-none mb-1">
+                                        Ação Corretiva
+                                    </h1>
+                                    <h2 className="text-lg text-gray-600 font-medium">
+                                        {company?.name}
+                                    </h2>
+                                    <p className="text-xs text-gray-500 mt-1">Relatório de Gestão de Melhoria</p>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm font-bold text-gray-900">AC #{selectedActionForReport.code}</p>
-                                <p className="text-sm text-gray-600">{new Date(selectedActionForReport.created_at).toLocaleDateString('pt-BR')}</p>
-                            </div>
-                        </div>
 
-                        {/* Descrição */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">1. Descrição da Ação</h3>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Origem</p>
-                                    <p className="text-sm font-medium">{selectedActionForReport.origin}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Status</p>
-                                    <p className="text-sm font-medium uppercase">{selectedActionForReport.status}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Descrição</p>
-                                <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded border border-gray-100 mt-1">
-                                    {selectedActionForReport.description}
+                            {/* Meta Dados (Direita) */}
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-gray-900">
+                                    AC Nº {selectedActionForReport.code}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    {new Date(selectedActionForReport.created_at).toLocaleDateString('pt-BR')}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Responsável e Prazos */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2 border-b border-gray-200 pb-1">2. Responsabilidades e Prazos</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Responsável</p>
-                                    <p className="text-sm font-medium">{selectedActionForReport.responsible_name || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase">Prazo</p>
-                                    <p className="text-sm font-medium">{new Date(selectedActionForReport.deadline).toLocaleDateString('pt-BR')}</p>
-                                </div>
-                            </div>
+                        {/* Seção 1: Descrição */}
+                        <div className="mb-5">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase mb-2 pb-1 border-b border-gray-900">1. DESCRIÇÃO DA AÇÃO</h3>
+                            <table className="w-full text-xs border-collapse border border-gray-900 mb-3">
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100 w-1/2">ORIGEM:</td>
+                                        <td className="border border-gray-900 p-2">{selectedActionForReport.origin}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100">STATUS:</td>
+                                        <td className="border border-gray-900 p-2 uppercase">{selectedActionForReport.status}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={2} className="border border-gray-900 p-2">
+                                            <p className="text-xs font-bold text-gray-900 mb-1">DESCRIÇÃO:</p>
+                                            <p className="text-xs text-gray-800">{selectedActionForReport.description}</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        {/* Assinaturas */}
-                        <div className="grid grid-cols-2 gap-12 mt-16 pt-8">
-                            <div className="text-center border-t border-gray-400 pt-2">
-                                <p className="text-sm font-medium text-gray-900">Responsável pela Ação</p>
-                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
-                            </div>
-                            <div className="text-center border-t border-gray-400 pt-2">
-                                <p className="text-sm font-medium text-gray-900">Aprovação da Qualidade</p>
-                                <p className="text-xs text-gray-500">Data: ___/___/______</p>
-                            </div>
+                        {/* Seção 2: Responsabilidades */}
+                        <div className="mb-5">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase mb-2 pb-1 border-b border-gray-900">2. RESPONSABILIDADES E PRAZOS</h3>
+                            <table className="w-full text-xs border-collapse border border-gray-900">
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100 w-1/2">RESPONSÁVEL:</td>
+                                        <td className="border border-gray-900 p-2">{selectedActionForReport.responsible_name || '_______________'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-gray-900 p-2 font-bold bg-gray-100">PRAZO:</td>
+                                        <td className="border border-gray-900 p-2">{new Date(selectedActionForReport.deadline).toLocaleDateString('pt-BR')}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Seção 3: Assinaturas */}
+                        <div className="mt-8 pt-4">
+                            <h3 className="text-xs font-bold text-gray-900 uppercase mb-6 pb-1 border-b border-gray-900">3. APROVAÇÕES E ASSINATURAS</h3>
+                            <table className="w-full text-xs border-collapse">
+                                <tbody>
+                                    <tr>
+                                        <td className="text-center p-4 border-t-2 border-gray-900 w-1/2">
+                                            <p className="text-xs font-bold text-gray-900 mt-1">Responsável pela Ação</p>
+                                            <p className="text-xs text-gray-700">Data: ___/___/______</p>
+                                        </td>
+                                        <td className="text-center p-4 border-t-2 border-gray-900 w-1/2">
+                                            <p className="text-xs font-bold text-gray-900 mt-1">Aprovação da Qualidade</p>
+                                            <p className="text-xs text-gray-700">Data: ___/___/______</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Rodapé */}
+                        <div className="mt-8 text-center border-t-2 border-gray-300 pt-3">
+                            <p className="text-xs text-gray-600">Documento gerado eletronicamente em {new Date().toLocaleDateString('pt-BR')}</p>
                         </div>
 
                         {/* Botão Imprimir */}
-                        <div className="mt-8 text-center no-print">
+                        <div className="mt-6 text-center no-print">
                             <button
                                 onClick={() => window.print()}
-                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto shadow-sm"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto shadow-sm font-medium"
                             >
                                 <Printer className="w-5 h-5" />
-                                Imprimir Relatório
+                                Imprimir Relatório (PDF)
                             </button>
                         </div>
                     </div>
