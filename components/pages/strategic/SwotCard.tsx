@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, X, AlertCircle, Zap } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
+import { AlertCircle, Plus, Trash2, X, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
 
 interface SwotItem {
     id: string;
@@ -46,13 +46,13 @@ const typeConfig = {
         title: 'Oportunidades',
         dbValue: 'oportunidade',
         color: {
-            border: 'border-blue-300',
-            bg: 'bg-blue-50',
-            text: 'text-blue-800',
-            button: 'bg-blue-600 hover:bg-blue-700',
-            badgeHigh: 'bg-blue-700 text-white',
-            badgeMedium: 'bg-blue-500 text-white',
-            badgeLow: 'bg-blue-300 text-blue-800'
+            border: 'border-teal-300',
+            bg: 'bg-teal-50',
+            text: 'text-teal-800',
+            button: 'bg-[#025159] hover:bg-[#3F858C]',
+            badgeHigh: 'bg-[#025159] text-white',
+            badgeMedium: 'bg-[#3F858C] text-white',
+            badgeLow: 'bg-teal-300 text-teal-800'
         }
     },
     threat: {

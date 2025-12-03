@@ -1,28 +1,27 @@
-import React, { useEffect, useState } from 'react';
 import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
   AlertCircle,
+  ArrowRight,
   CheckCircle2,
   Clock,
-  LayoutDashboard,
-  ArrowRight,
-  MoreHorizontal
+  MoreHorizontal,
+  TrendingUp
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { supabase } from '../../lib/supabase';
 
 // Helper to format date
@@ -43,6 +42,7 @@ const COLORS = {
 };
 
 export const SectionDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     npsScore: 0,
@@ -429,7 +429,12 @@ export const SectionDashboard: React.FC = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-900">Tarefas Pendentes</h3>
-          <button className="text-sm text-[#025159] font-medium hover:underline">Ver todas</button>
+          <button 
+            onClick={() => navigate('/app/planos-de-acao')}
+            className="text-sm text-[#025159] font-medium hover:underline"
+          >
+            Ver todas
+          </button>
         </div>
         <div className="divide-y divide-gray-100">
           {metrics.pendingTasks.length === 0 ? (
@@ -455,7 +460,10 @@ export const SectionDashboard: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <button className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors">
+                <button 
+                  onClick={() => navigate('/app/planos-de-acao')}
+                  className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors"
+                >
                   <ArrowRight size={18} />
                 </button>
               </div>

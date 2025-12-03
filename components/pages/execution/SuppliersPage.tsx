@@ -281,7 +281,7 @@ const SuppliersPageContent: React.FC = () => {
                 </div>
                 <button
                     onClick={() => handleOpenSupplierModal()}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium w-full md:w-auto"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium w-full md:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     <span>Novo Fornecedor</span>
@@ -665,7 +665,7 @@ const SuppliersPageContent: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                                 >
                                     Salvar
                                 </button>
@@ -789,7 +789,7 @@ const SuppliersPageContent: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                                 >
                                     Salvar Avaliação
                                 </button>

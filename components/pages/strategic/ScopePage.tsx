@@ -269,7 +269,7 @@ export const ScopePage: React.FC = () => {
                                         </p>
                                         <button
                                             onClick={() => setIsEditingScope(true)}
-                                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm"
+                                            className="inline-flex items-center gap-2 bg-[#025159] hover:bg-[#3F858C] text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm"
                                         >
                                             <Plus className="w-4 h-4" />
                                             Definir Escopo
@@ -311,7 +311,7 @@ export const ScopePage: React.FC = () => {
                                         <button
                                             onClick={handleSaveScope}
                                             disabled={savingScope}
-                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex items-center gap-2 bg-[#025159] hover:bg-[#3F858C] text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Save className="w-4 h-4" />
                                             {savingScope ? 'Salvando...' : 'Salvar Escopo'}
@@ -518,7 +518,7 @@ export const ScopePage: React.FC = () => {
                                         </button>
                                         <button
                                             type="submit"
-                                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                            className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                                         >
                                             Salvar Processo
                                         </button>

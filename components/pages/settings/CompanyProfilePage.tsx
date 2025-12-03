@@ -221,7 +221,7 @@ export const CompanyProfilePage: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+                                    className="absolute bottom-0 right-0 p-2 bg-[#025159] text-white rounded-full shadow-lg hover:bg-[#3F858C] transition-colors"
                                     title="Alterar Logo"
                                 >
                                     <Upload className="w-4 h-4" />
@@ -434,7 +434,7 @@ export const CompanyProfilePage: React.FC = () => {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md font-medium disabled:opacity-70"
+                        className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-xl hover:bg-[#3F858C] transition-colors shadow-md font-medium disabled:opacity-70"
                     >
                         {saving ? (
                             <>
@@ -488,7 +488,7 @@ export const CompanyProfilePage: React.FC = () => {
                                             )}
                                             {isCurrentPlan && (
                                                 <div className="absolute -top-3 right-4">
-                                                    <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                                    <span className="bg-[#025159] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
                                                         <Check className="w-3 h-3" /> PLANO ATUAL
                                                     </span>
                                                 </div>
@@ -608,7 +608,7 @@ export const CompanyProfilePage: React.FC = () => {
                             <button
                                 onClick={handlePlanChange}
                                 disabled={saving}
-                                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+                                className="flex-1 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2"
                             >
                                 {saving ? (
                                     <>

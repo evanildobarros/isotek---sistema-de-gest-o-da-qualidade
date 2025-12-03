@@ -205,7 +205,7 @@ export const ManagementReviewPage: React.FC = () => {
                 action={
                     <button
                         onClick={handleOpenModal}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium"
                     >
                         <Plus className="w-5 h-5" />
                         Nova Ata
@@ -274,7 +274,7 @@ export const ManagementReviewPage: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => handleViewAta(review)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
+                                        className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors text-sm font-medium whitespace-nowrap"
                                     >
                                         <FileText className="w-4 h-4" />
                                         Visualizar Ata
@@ -476,7 +476,7 @@ RECURSOS NECESSÁRIOS:
 
                         <button
                             onClick={handleSaveStep}
-                            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="flex items-center gap-2 px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             {currentStep === 3 ? '✅ Concluir e Gerar Ata' : 'Próximo'}
                             {currentStep !== 3 && <ChevronRight className="w-4 h-4" />}
@@ -577,7 +577,7 @@ RECURSOS NECESSÁRIOS:
                         <div className="mt-6 text-center print:hidden sticky bottom-0 bg-white py-4 border-t -mx-8 -mb-8 px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                             <button
                                 onClick={handlePrint}
-                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto"
                             >
                                 <Printer className="w-5 h-5" />
                                 Imprimir Ata

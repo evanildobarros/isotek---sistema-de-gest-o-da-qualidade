@@ -323,7 +323,7 @@ export const NonConformityPage: React.FC = () => {
                                     {status !== 'resolved' && (
                                         <button
                                             onClick={() => handleMoveToNext(nc)}
-                                            className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#025159] text-white text-sm font-medium rounded-lg hover:bg-[#3F858C] transition-colors"
                                         >
                                             {status === 'open' ? 'Analisar' : 'Tratar'}
                                             <ArrowRight className="w-4 h-4" />
@@ -688,7 +688,7 @@ export const NonConformityPage: React.FC = () => {
                         <div className="mt-8 text-center no-print">
                             <button
                                 onClick={handlePrint}
-                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto shadow-sm"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors mx-auto shadow-sm"
                             >
                                 <Printer className="w-5 h-5" />
                                 Imprimir Relatório
