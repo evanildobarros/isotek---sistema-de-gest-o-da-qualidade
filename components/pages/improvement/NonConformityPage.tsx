@@ -607,7 +607,14 @@ export const NonConformityPage: React.FC = () => {
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
                                     {company?.logo_url ? (
-                                        <img src={company.logo_url} alt="Logo" className="h-14 w-auto object-contain" />
+                                        <img 
+                                            src={company.logo_url} 
+                                            alt="Logo Empresa" 
+                                            className="h-14 w-auto object-contain" 
+                                            style={{ display: 'block', maxWidth: '100px', height: 'auto' }}
+                                            crossOrigin="anonymous"
+                                            onError={(e) => { console.error('Erro ao carregar logo:', e); e.currentTarget.style.display = 'none'; }}
+                                        />
                                     ) : (
                                         <div className="h-14 w-14 bg-gray-300 flex items-center justify-center rounded text-gray-600 text-xs font-bold">
                                             LOGO

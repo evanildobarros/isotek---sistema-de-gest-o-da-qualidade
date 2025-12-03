@@ -1131,8 +1131,18 @@ Ou use Diagrama de Ishikawa (6M):
                                 {company?.logo_url ? (
                                     <img 
                                         src={company.logo_url} 
-                                        alt="Logo" 
+                                        alt="Logo Empresa" 
                                         className="h-20 w-auto object-contain" 
+                                        style={{ 
+                                            display: 'block',
+                                            maxWidth: '120px',
+                                            height: 'auto'
+                                        }}
+                                        crossOrigin="anonymous"
+                                        onError={(e) => {
+                                            console.error('Erro ao carregar logo:', e);
+                                            e.currentTarget.style.display = 'none';
+                                        }}
                                     />
                                 ) : (
                                     <div className="h-16 w-16 bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs border border-gray-300">

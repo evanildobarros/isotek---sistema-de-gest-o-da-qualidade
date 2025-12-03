@@ -70,6 +70,15 @@
     color: #000;
   }
 
+  /* Imagens e logos - garantir que apareçam na impressão */
+  img {
+    max-width: 100%;
+    height: auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    page-break-inside: avoid;
+  }
+
   /* Ocultar UI do aplicativo */
   aside, header, button, .no-print, .modal-backdrop, nav, footer {
     display: none !important;
