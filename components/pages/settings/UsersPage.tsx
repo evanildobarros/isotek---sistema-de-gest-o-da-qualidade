@@ -118,7 +118,7 @@ export const UsersPage: React.FC = () => {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium"
         >
           <Plus className="w-5 h-5" />
           Convidar Usuário
@@ -308,7 +308,7 @@ export const UsersPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={inviteLoading}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] font-medium disabled:opacity-70 flex items-center justify-center gap-2"
                 >
                   {inviteLoading ? 'Enviando...' : 'Enviar Convite'}
                 </button>

@@ -1,22 +1,21 @@
-import React, { useEffect, useState } from 'react';
 import {
-    Plus,
-    Zap,
+    AlertCircle,
     Calendar,
     CheckCircle,
-    Clock,
-    Search,
-    Package,
-    Edit,
     ChevronRight,
-    AlertCircle
+    Clock,
+    Edit,
+    Package,
+    Plus,
+    Search
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { supabase } from '../../../lib/supabase';
 import { ProductionOrder, SalesOrder } from '../../../types';
+import { EmptyState } from '../../common/EmptyState';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
-import { EmptyState } from '../../common/EmptyState';
 
 export const ProductionControlPage: React.FC = () => {
     const { company } = useAuthContext();
@@ -214,14 +213,14 @@ export const ProductionControlPage: React.FC = () => {
                 icon={Package}
                 title="Controle de Produção e Serviços"
                 subtitle="ISO 9001: 8.5 - Execução Controlada"
-                iconColor="blue"
+                iconColor="purple"
                 action={
                     <button
                         onClick={() => {
                             resetCreateForm();
                             setIsCreateModalOpen(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium"
                     >
                         <Plus className="w-5 h-5" />
                         Nova Ordem
@@ -230,7 +229,7 @@ export const ProductionControlPage: React.FC = () => {
             />
 
             {/* Tabs */}
-            <div className="flex gap-4 mb-6 border-b border-gray-200">
+            <div className="flex gap-4 mb-8 border-b border-gray-200">
                 <button
                     onClick={() => setActiveTab('open')}
                     className={`pb-3 px-1 font-medium transition-colors relative ${activeTab === 'open'
@@ -240,7 +239,7 @@ export const ProductionControlPage: React.FC = () => {
                 >
                     EM ABERTO
                     {activeTab === 'open' && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#025159]" />
                     )}
                 </button>
                 <button
@@ -252,12 +251,12 @@ export const ProductionControlPage: React.FC = () => {
                 >
                     HISTÓRICO
                     {activeTab === 'history' && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#025159]" />
                     )}
                 </button>
             </div>
 
-            {/* Orders List */}
+            {/* Orders Grid */}
             {loading ? (
                 <div className="text-center py-12">
                     <p className="text-gray-500">Carregando ordens...</p>
@@ -269,38 +268,34 @@ export const ProductionControlPage: React.FC = () => {
                     description={activeTab === 'open' ? 'Crie uma nova ordem de produção/serviço' : 'Ordens concluídas aparecerão aqui'}
                 />
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredOrders.map(order => (
                         <div
                             key={order.id}
                             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
                         >
                             {/* Header */}
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-2">
-                                    <Zap className="w-5 h-5 text-blue-600" />
-                                    <h3 className="text-lg font-bold text-gray-900">
-                                        OP #{order.code}
-                                    </h3>
-                                    {order.client_name && (
-                                        <span className="text-sm text-gray-600">
-                                            Cliente: {order.client_name}
-                                        </span>
-                                    )}
-                                </div>
-                                {getStatusBadge(order.status)}
+                            <div className="mb-4 pb-4 border-b border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                    OP #{order.code}
+                                </h3>
+                                {order.client_name && (
+                                    <p className="text-sm text-gray-600">
+                                        <strong>CLIENTE:</strong> {order.client_name}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Body */}
                             <div className="space-y-3 mb-4">
                                 <div>
                                     <p className="text-sm text-gray-500 mb-1">Produto/Serviço:</p>
-                                    <p className="text-sm text-gray-900">{order.product_service}</p>
+                                    <p className="text-sm text-gray-900 line-clamp-2">{order.product_service}</p>
                                 </div>
 
                                 {order.current_stage && (
                                     <div className="flex items-start gap-2 text-sm">
-                                        <ChevronRight className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
+                                        <ChevronRight className="w-4 h-4 mt-0.5 text-gray-400 shrink-0" />
                                         <span className="text-gray-700">
                                             <strong>Etapa Atual:</strong> {order.current_stage}
                                         </span>
@@ -308,45 +303,48 @@ export const ProductionControlPage: React.FC = () => {
                                 )}
 
                                 {order.batch_number && (
-                                    <div className="flex items-start gap-2 text-sm bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                        <ChevronRight className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
-                                        <span className="text-blue-900 font-medium">
+                                    <div className="flex items-start gap-2 text-sm">
+                                        <ChevronRight className="w-4 h-4 mt-0.5 text-gray-400 shrink-0" />
+                                        <span className="text-gray-700">
                                             <strong>Rastreabilidade:</strong> Lote #{order.batch_number}
                                         </span>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Actions */}
-                            <div className="flex gap-3">
-                                {order.status !== 'completed' && (
-                                    <button
-                                        onClick={() => handleOpenUpdate(order)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                        Registrar Execução
-                                    </button>
-                                )}
-                                {order.status !== 'completed' && (
-                                    <button
-                                        onClick={() => {
-                                            setSelectedOrder(order);
-                                            setUpdateForm({
-                                                status: order.status === 'scheduled' ? 'in_progress' :
-                                                    order.status === 'in_progress' ? 'quality_check' : 'completed',
-                                                current_stage: order.current_stage || '',
-                                                notes: order.notes || '',
-                                                batch_number: order.batch_number || ''
-                                            });
-                                            setIsUpdateModalOpen(true);
-                                        }}
-                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                                    >
-                                        Concluir
-                                    </button>
-                                )}
+                            {/* Status Badge */}
+                            <div className="mb-4">
+                                {getStatusBadge(order.status)}
                             </div>
+
+                            {/* Action Button */}
+                            {order.status !== 'completed' && (
+                                <button
+                                    onClick={() => handleOpenUpdate(order)}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium mb-3"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                    Registrar Execução
+                                </button>
+                            )}
+                            {order.status !== 'completed' && (
+                                <button
+                                    onClick={() => {
+                                        setSelectedOrder(order);
+                                        setUpdateForm({
+                                            status: order.status === 'scheduled' ? 'in_progress' :
+                                                order.status === 'in_progress' ? 'quality_check' : 'completed',
+                                            current_stage: order.current_stage || '',
+                                            notes: order.notes || '',
+                                            batch_number: order.batch_number || ''
+                                        });
+                                        setIsUpdateModalOpen(true);
+                                    }}
+                                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                >
+                                    Concluir
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -442,7 +440,7 @@ export const ProductionControlPage: React.FC = () => {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             Criar Ordem
                         </button>
@@ -515,7 +513,7 @@ export const ProductionControlPage: React.FC = () => {
                         </label>
                         {updateForm.status === 'completed' && (
                             <div className="flex items-start gap-2 mb-2 text-sm text-blue-700">
-                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                                 <p>
                                     <strong>ISO 8.5.2:</strong> Identificação de rastreabilidade é obrigatória para concluir a ordem
                                 </p>
@@ -541,7 +539,7 @@ export const ProductionControlPage: React.FC = () => {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             Salvar Registro
                         </button>

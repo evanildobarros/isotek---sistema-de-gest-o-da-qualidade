@@ -671,7 +671,7 @@ export const CompetenciesPage: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                                 >
                                     Salvar
                                 </button>
@@ -780,7 +780,7 @@ export const CompetenciesPage: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={uploadingCertificate}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {uploadingCertificate ? 'Fazendo upload...' : 'Salvar'}
                                 </button>

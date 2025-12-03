@@ -331,7 +331,7 @@ export const StakeholdersPage: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                                    className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                                 >
                                     Salvar
                                 </button>

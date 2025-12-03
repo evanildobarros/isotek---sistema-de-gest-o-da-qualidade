@@ -227,7 +227,7 @@ export const IndicatorsPage: React.FC = () => {
                     </h2>
                     <button
                         onClick={() => setIsSurveyModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium text-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium text-sm"
                     >
                         <Plus className="w-4 h-4" />
                         Registrar Pesquisa
@@ -439,7 +439,7 @@ export const IndicatorsPage: React.FC = () => {
                         </button>
                         <button
                             onClick={handleSaveMeasurement}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             Salvar Medição
                         </button>
@@ -509,7 +509,7 @@ export const IndicatorsPage: React.FC = () => {
                         </button>
                         <button
                             onClick={handleSaveSurvey}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             Salvar Pesquisa
                         </button>

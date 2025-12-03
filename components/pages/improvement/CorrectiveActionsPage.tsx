@@ -445,7 +445,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                             <Filter className="w-4 h-4" />
                             <span className="sm:inline">Filtrar</span>
                             {hasActiveFilters() && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#025159] text-white text-xs rounded-full flex items-center justify-center">
                                     {[filters.status, filters.origin, filters.responsible_id, filters.overdue].filter(Boolean).length}
                                 </span>
                             )}
@@ -926,7 +926,7 @@ Ou use Diagrama de Ishikawa (6M):
                                             />
                                             <button
                                                 onClick={handleAddTask}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                                                className="px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] text-sm font-medium"
                                             >
                                                 +
                                             </button>
@@ -999,7 +999,7 @@ Ou use Diagrama de Ishikawa (6M):
                         <button
                             onClick={handleSaveStep}
                             disabled={currentStep === 4 && !allTasksCompleted}
-                            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {currentStep === 4 ? 'Encerrar RNC' : 'Próximo'}
                             {currentStep !== 4 && <ChevronRight className="w-4 h-4" />}
@@ -1083,7 +1083,7 @@ Ou use Diagrama de Ishikawa (6M):
                         </button>
                         <button
                             onClick={() => setIsFilterModalOpen(false)}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             Aplicar Filtros
                         </button>

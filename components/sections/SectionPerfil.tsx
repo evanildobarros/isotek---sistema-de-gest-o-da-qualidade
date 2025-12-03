@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Building2, Calendar, Shield, X, Camera, Lock, Upload, Loader2 } from 'lucide-react';
+import { Building2, Calendar, Camera, Loader2, Lock, Mail, Phone, Shield, Upload, User, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -500,7 +500,13 @@ export const SectionPerfil: React.FC = () => {
                                 checked={preferences.email_notifications}
                                 onChange={() => handleTogglePreference('email_notifications')}
                             />
-                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-600/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
+                            <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                                preferences.email_notifications ? 'bg-[#025159]' : 'bg-gray-200'
+                            } shadow-md`}>
+                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                                    preferences.email_notifications ? 'left-7' : 'left-1'
+                                } shadow-sm`}></div>
+                            </div>
                         </label>
                     </div>
 
@@ -516,7 +522,13 @@ export const SectionPerfil: React.FC = () => {
                                 checked={preferences.two_factor_enabled}
                                 onChange={() => handleTogglePreference('two_factor_enabled')}
                             />
-                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-600/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
+                            <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                                preferences.two_factor_enabled ? 'bg-[#025159]' : 'bg-gray-200'
+                            } shadow-md`}>
+                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                                    preferences.two_factor_enabled ? 'left-7' : 'left-1'
+                                } shadow-sm`}></div>
+                            </div>
                         </label>
                     </div>
                 </div>

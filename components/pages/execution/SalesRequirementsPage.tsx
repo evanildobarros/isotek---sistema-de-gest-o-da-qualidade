@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
 import {
-    Plus,
-    FileText,
     Calendar,
     CheckCircle,
+    ChevronRight,
     Clock,
-    XCircle,
+    FileText,
     Package,
-    ChevronRight
+    Plus,
+    XCircle
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { supabase } from '../../../lib/supabase';
 import { SalesOrder } from '../../../types';
+import { EmptyState } from '../../common/EmptyState';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
-import { EmptyState } from '../../common/EmptyState';
 
 export const SalesRequirementsPage: React.FC = () => {
     const { user, company } = useAuthContext();
@@ -177,7 +177,7 @@ export const SalesRequirementsPage: React.FC = () => {
         if (value === undefined) return null;
         return (
             <div className="flex items-start gap-2 text-sm text-gray-700">
-                <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>
                     {label} <strong>{value ? 'Sim.' : 'Não.'}</strong>
                 </span>
@@ -198,7 +198,7 @@ export const SalesRequirementsPage: React.FC = () => {
                             resetCreateForm();
                             setIsCreateModalOpen(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium"
                     >
                         <Plus className="w-5 h-5" />
                         Novo Pedido
@@ -263,7 +263,7 @@ export const SalesRequirementsPage: React.FC = () => {
                             {order.status === 'pending_review' && (
                                 <button
                                     onClick={() => handleOpenReview(order)}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium"
                                 >
                                     <CheckCircle className="w-4 h-4" />
                                     Realizar Análise
@@ -348,7 +348,7 @@ export const SalesRequirementsPage: React.FC = () => {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                            className="px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
                         >
                             Registrar Pedido
                         </button>
