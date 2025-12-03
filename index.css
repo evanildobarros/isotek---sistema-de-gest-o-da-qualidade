@@ -47,38 +47,46 @@
 }
 
 @media print {
-  /* Esconde tudo que não é o relatório */
-  body * {
-    visibility: hidden;
-  }
-  
-  /* Exibe apenas a área de impressão */
-  .print-area, .print-area * {
-    visibility: visible;
-  }
-  
-  .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 20px;
-    background: white;
-    color: black;
-  }
-
-  /* Esconde botões dentro do modal na hora de imprimir */
-  .no-print {
+  /* Ocultar interface do sistema */
+  aside, header, button, .no-print {
     display: none !important;
   }
 
-  /* Força cores de fundo (badges) */
+  /* Ajustar área de conteúdo para papel */
+  body, #root, main, .p-8, .p-6 {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+    position: static !important;
+  }
+
+  /* Garantir visibilidade de cores e gráficos */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  
+
+  /* Esconder scrollbars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Área de impressão com estilo preservado */
+  .print-area {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    color: black !important;
+    page-break-inside: avoid;
+  }
+
   /* Classe para forçar quebra de página se necessário */
   .page-break {
     page-break-before: always;

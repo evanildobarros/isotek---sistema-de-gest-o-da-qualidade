@@ -59,7 +59,7 @@ const App: React.FC = () => {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-right" richColors closeButton />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
