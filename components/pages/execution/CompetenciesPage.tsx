@@ -17,6 +17,7 @@ import {
     ExternalLink,
     Search
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Employee, EmployeeTraining } from '../../../types';
@@ -181,7 +182,7 @@ export const CompetenciesPage: React.FC = () => {
             setIsEmployeeModalOpen(false);
         } catch (error) {
             console.error('Erro ao salvar colaborador:', error);
-            alert('Erro ao salvar colaborador');
+            toast.error('Erro ao salvar colaborador');
         }
     };
 
@@ -237,7 +238,7 @@ export const CompetenciesPage: React.FC = () => {
             return data.publicUrl;
         } catch (error) {
             console.error('Erro ao fazer upload do certificado:', error);
-            alert('Erro ao fazer upload do certificado');
+            toast.error('Erro ao fazer upload do certificado');
             return null;
         } finally {
             setUploadingCertificate(false);
@@ -276,7 +277,7 @@ export const CompetenciesPage: React.FC = () => {
             setIsTrainingModalOpen(false);
         } catch (error) {
             console.error('Erro ao salvar treinamento:', error);
-            alert('Erro ao salvar treinamento');
+            toast.error('Erro ao salvar treinamento');
         }
     };
 

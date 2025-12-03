@@ -98,7 +98,7 @@ export const DocumentsPage: React.FC = () => {
             setDocuments(data || []);
         } catch (error) {
             console.error('Error fetching documents:', error);
-            alert('Erro ao carregar documentos. Tente novamente.');
+            toast.error('Erro ao carregar documentos. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -150,12 +150,12 @@ export const DocumentsPage: React.FC = () => {
         ];
 
         if (!allowedTypes.includes(file.type)) {
-            alert('Tipo de arquivo não permitido. Use PDF, DOCX ou imagens (PNG/JPG).');
+            toast.error('Tipo de arquivo não permitido. Use PDF, DOCX ou imagens (PNG/JPG).');
             return;
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            alert('O arquivo deve ter no máximo 10MB');
+            toast.error('O arquivo deve ter no máximo 10MB');
             return;
         }
 
@@ -185,7 +185,7 @@ export const DocumentsPage: React.FC = () => {
 
     const handleUpload = async () => {
         if (!selectedFile || !uploadTitle || !user) {
-            alert('Preencha o título e selecione um arquivo');
+            toast.error('Preencha o título e selecione um arquivo');
             return;
         }
 
@@ -249,16 +249,16 @@ export const DocumentsPage: React.FC = () => {
                 throw new Error(`Erro ao salvar metadados: ${insertError.message}`);
             }
 
-            alert(isVersionMode
-                ? '✅ Nova versão criada com sucesso! Aguardando aprovação.'
-                : '✅ Documento enviado com sucesso!'
+            toast.success(isVersionMode
+                ? 'Nova versão criada com sucesso! Aguardando aprovação.'
+                : 'Documento enviado com sucesso!'
             );
 
             resetModalStates();
             fetchDocuments();
         } catch (error: any) {
             console.error('Upload error:', error);
-            alert(error.message || 'Erro ao fazer upload. Tente novamente.');
+            toast.error(error.message || 'Erro ao fazer upload. Tente novamente.');
         } finally {
             setUploading(false);
         }
@@ -278,11 +278,11 @@ export const DocumentsPage: React.FC = () => {
 
             if (error) throw error;
 
-            alert('✅ Documento enviado para análise!');
+            toast.success('Documento enviado para análise!');
             fetchDocuments();
         } catch (error: any) {
             console.error('Erro ao solicitar aprovação:', error);
-            alert('❌ Erro ao solicitar aprovação: ' + error.message);
+            toast.error('Erro ao solicitar aprovação: ' + error.message);
         }
     };
 
@@ -304,11 +304,11 @@ export const DocumentsPage: React.FC = () => {
                 ? `❌ Documento rejeitado.\n\nMotivo: ${motivo}`
                 : '❌ Documento rejeitado e retornado para rascunho.';
 
-            alert(mensagem);
+            toast.info(mensagem);
             fetchDocuments();
         } catch (error: any) {
             console.error('Erro ao rejeitar:', error);
-            alert('❌ Erro ao rejeitar documento: ' + error.message);
+            toast.error('Erro ao rejeitar documento: ' + error.message);
         }
     };
 
@@ -364,15 +364,15 @@ export const DocumentsPage: React.FC = () => {
             }
 
             if (docToApprove.code) {
-                alert('✅ Documento aprovado com sucesso!\n\n🔄 Versões anteriores foram automaticamente obsoletadas.');
+                toast.success('Documento aprovado com sucesso! Versões anteriores foram automaticamente obsoletadas.');
             } else {
-                alert('✅ Documento aprovado com sucesso!');
+                toast.success('Documento aprovado com sucesso!');
             }
 
             fetchDocuments();
         } catch (error: any) {
             console.error('Erro na aprovação:', error);
-            alert('❌ Erro ao aprovar documento:\n' + error.message);
+            toast.error('Erro ao aprovar documento: ' + error.message);
         }
     };
 

@@ -16,6 +16,7 @@ import {
     CheckCircle2,
     Clock
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Supplier, SupplierEvaluation } from '../../../types';
@@ -150,7 +151,7 @@ const SuppliersPageContent: React.FC = () => {
             setIsSupplierModalOpen(false);
         } catch (error) {
             console.error('Erro ao salvar fornecedor:', error);
-            alert('Erro ao salvar fornecedor');
+            toast.error('Erro ao salvar fornecedor');
         }
     };
 
@@ -205,7 +206,7 @@ const SuppliersPageContent: React.FC = () => {
             setIsEvaluationModalOpen(false);
         } catch (error) {
             console.error('Erro ao salvar avaliação:', error);
-            alert('Erro ao salvar avaliação');
+            toast.error('Erro ao salvar avaliação');
         }
     };
 
