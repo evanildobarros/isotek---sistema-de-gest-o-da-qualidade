@@ -494,15 +494,43 @@ RECURSOS NECESSÁRIOS:
             >
                 {selectedReview && (
                     <div className="p-8 bg-white print-area" style={{ fontFamily: 'serif' }}>
-                        {/* Cabeçalho da Ata */}
-                        <div className="text-center mb-8 pb-6 border-b-2 border-gray-300">
-                            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                                ATA DE ANÁLISE CRÍTICA PELA DIREÇÃO
-                            </h1>
-                            <p className="text-sm text-gray-600">ISO 9001:2015 - Requisito 9.3</p>
-                            <p className="text-sm text-gray-600 mt-2">
-                                Período: {selectedReview.period_analyzed} | Data: {new Date(selectedReview.date).toLocaleDateString('pt-BR')}
-                            </p>
+                        {/* Cabeçalho da Ata com Logo */}
+                        <div className="flex items-center justify-between border-b-2 border-gray-900 pb-6 mb-8">
+                            <div className="flex items-center gap-6">
+                                {/* Logo da Empresa */}
+                                {company?.logo_url ? (
+                                    <img 
+                                        src={company.logo_url} 
+                                        alt="Logo" 
+                                        className="h-20 w-auto object-contain" 
+                                    />
+                                ) : (
+                                    <div className="h-16 w-16 bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs border border-gray-300">
+                                        LOGO
+                                    </div>
+                                )}
+                                
+                                {/* Títulos */}
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900 uppercase leading-none mb-1">
+                                        Ata de Análise Crítica
+                                    </h1>
+                                    <h2 className="text-lg text-gray-600 font-medium">
+                                        {company?.name}
+                                    </h2>
+                                    <p className="text-xs text-gray-500 mt-1">ISO 9001:2015 - Requisito 9.3</p>
+                                </div>
+                            </div>
+
+                            {/* Meta Dados (Direita) */}
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-gray-900">
+                                    Data: {new Date(selectedReview.date).toLocaleDateString('pt-BR')}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Período: {selectedReview.period_analyzed}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Participantes */}
