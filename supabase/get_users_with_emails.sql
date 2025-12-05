@@ -1,5 +1,24 @@
--- Função para buscar usuários com seus emails (join entre profiles e auth.users)
-create or replace function get_users_with_emails()
+-- Função para buscar usuários com emails (join entre profiles e auth.users)
+-- Esta função usa SECURITY DEFINER para acessar auth.users
+
+-- Remover TODAS as versões anteriores da função
+do $$
+declare
+  r record;
+begin
+  for r in (
+    select p.oid::regprocedure as func_signature
+    from pg_proc p
+    join pg_namespace n on p.pronamespace = n.oid
+    where p.proname = 'get_users_with_emails'
+    and n.nspname = 'public'
+  ) loop
+    execute 'drop function if exists ' || r.func_signature || ' cascade';
+  end loop;
+end $$;
+
+-- Agora criar a função limpa
+create function get_users_with_emails()
 returns table (
   id uuid,
   email varchar,
@@ -11,14 +30,11 @@ returns table (
   company_name text
 )
 security definer
+set search_path = public
 as $$
 begin
   -- Verifica se o usuário é super admin
-  if exists (
-    select 1 from profiles
-    where profiles.id = auth.uid()
-    and profiles.is_super_admin = true
-  ) then
+  if is_super_admin() then
     -- Super Admin vê tudo
     return query
     select 
@@ -27,7 +43,7 @@ begin
       p.full_name,
       p.role,
       p.created_at,
-      p.last_sign_in_at,
+      au.last_sign_in_at,  -- Corrigido: usar au. em vez de p.
       p.company_id,
       c.name as company_name
     from profiles p
@@ -43,7 +59,7 @@ begin
       p.full_name,
       p.role,
       p.created_at,
-      p.last_sign_in_at,
+      au.last_sign_in_at,  -- Corrigido: usar au. em vez de p.
       p.company_id,
       c.name as company_name
     from profiles p
@@ -54,3 +70,6 @@ begin
   end if;
 end;
 $$ language plpgsql;
+
+-- Garantir permissão de execução
+grant execute on function get_users_with_emails to authenticated;

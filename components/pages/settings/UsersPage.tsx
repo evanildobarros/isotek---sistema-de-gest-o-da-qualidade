@@ -30,35 +30,80 @@ export const UsersPage: React.FC = () => {
   });
 
   useEffect(() => {
-    if (company) {
-      fetchUsers();
-    }
-  }, [company]);
+    fetchUsers();
+  }, [isSuperAdmin, company?.id]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log('[UsersPage] Iniciando fetchUsers...');
+      console.log('[UsersPage] isSuperAdmin:', isSuperAdmin);
+      console.log('[UsersPage] company:', company);
 
-      // Use RPC to get users with emails securely
-      const { data, error } = await supabase.rpc('get_users_with_emails');
+      // Primeiro tenta a RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_users_with_emails');
 
-      if (error) throw error;
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        console.log('[UsersPage] RPC sucesso! Dados:', rpcData);
+        let mappedUsers = rpcData.map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          full_name: u.full_name,
+          role: u.role,
+          created_at: u.created_at,
+          last_sign_in_at: u.last_sign_in_at,
+          company_id: u.company_id,
+          company_name: u.company_name
+        }));
 
-      // Map the data to match UserProfile interface
-      const mappedUsers = (data || []).map((u: any) => ({
+        // Se não for Super Admin, filtra apenas usuários da mesma empresa
+        if (!isSuperAdmin && company?.id) {
+          console.log('[UsersPage] Filtrando por company_id:', company.id);
+          mappedUsers = mappedUsers.filter((u: UserProfile) => u.company_id === company.id);
+        }
+
+        setUsers(mappedUsers);
+        return;
+      }
+
+      console.warn('[UsersPage] RPC falhou ou vazio, tentando fallback. Erro:', rpcError);
+
+      // Fallback: Query direta na tabela profiles
+      let query = supabase
+        .from('profiles')
+        .select('id, full_name, role, created_at, company_id')
+        .order('created_at', { ascending: false });
+
+      // Se não for Super Admin, filtra por company_id diretamente na query
+      if (!isSuperAdmin && company?.id) {
+        query = query.eq('company_id', company.id);
+      }
+
+      const { data: profilesData, error: profilesError } = await query;
+
+      console.log('[UsersPage] Fallback profiles. Dados:', profilesData, 'Erro:', profilesError);
+
+      if (profilesError) {
+        console.error('[UsersPage] Erro no fallback:', profilesError);
+        return;
+      }
+
+      // Mapear dados do fallback (sem email, pois profiles não tem essa coluna)
+      const usersFromProfiles = (profilesData || []).map((u: any) => ({
         id: u.id,
-        email: u.email,
-        full_name: u.full_name,
-        role: u.role,
+        email: 'Email via RPC', // Placeholder
+        full_name: u.full_name || 'Sem nome',
+        role: u.role || 'user',
         created_at: u.created_at,
-        last_sign_in_at: u.last_sign_in_at,
         company_id: u.company_id,
-        company_name: u.company_name
+        company_name: ''
       }));
 
-      setUsers(mappedUsers);
+      console.log('[UsersPage] Usuários mapeados:', usersFromProfiles);
+      setUsers(usersFromProfiles);
+
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('[UsersPage] Erro geral:', error);
     } finally {
       setLoading(false);
     }
