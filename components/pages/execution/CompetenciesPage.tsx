@@ -187,7 +187,7 @@ export const CompetenciesPage: React.FC = () => {
     };
 
     const handleDeleteEmployee = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este colaborador?')) return;
+        if (!window.confirm('Tem certeza que deseja excluir este colaborador?')) return;
 
         try {
             const { error } = await supabase
@@ -282,7 +282,7 @@ export const CompetenciesPage: React.FC = () => {
     };
 
     const handleDeleteTraining = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este treinamento?')) return;
+        if (!window.confirm('Tem certeza que deseja excluir este treinamento?')) return;
 
         try {
             const { error } = await supabase

@@ -156,7 +156,7 @@ const SuppliersPageContent: React.FC = () => {
     };
 
     const handleDeleteSupplier = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este fornecedor?')) return;
+        if (!window.confirm('Tem certeza que deseja excluir este fornecedor?')) return;
 
         try {
             const { error } = await supabase
