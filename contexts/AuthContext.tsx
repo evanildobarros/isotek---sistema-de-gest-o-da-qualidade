@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
@@ -22,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [company, setCompany] = useState<Company | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingCompany, setLoadingCompany] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         // 1. Get initial session
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return () => subscription.unsubscribe();
     }, []);
 
-    const fetchCompany = async () => {
+    const fetchCompany = useCallback(async () => {
         if (!user) {
             setCompany(null);
             setLoadingCompany(false);
@@ -90,15 +91,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setLoadingCompany(false);
         }
-    };
+    }, [user]);
 
     // 3. Fetch Company Data when User changes
     useEffect(() => {
         fetchCompany();
-    }, [user]);
+    }, [fetchCompany]);
 
-    const navigate = useNavigate();
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         try {
             await supabase.auth.signOut();
         } catch (error) {
@@ -112,9 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoadingCompany(false);
         // Redirect to login page
         navigate('/login', { replace: true });
-    };
+    }, [navigate]);
 
-    const value = {
+    const value = useMemo(() => ({
         session,
         user,
         company,
@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadingCompany,
         signOut,
         refreshCompany: fetchCompany
-    };
+    }), [session, user, company, loading, loadingCompany, signOut, fetchCompany]);
 
     return (
         <AuthContext.Provider value={value}>

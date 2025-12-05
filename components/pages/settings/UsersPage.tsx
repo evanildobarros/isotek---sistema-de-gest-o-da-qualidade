@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Users, Plus, Search, Mail, Shield, Trash2, Edit2, X, Check } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -33,7 +33,7 @@ export const UsersPage: React.FC = () => {
     }
   }, [company]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       // In a real scenario with RLS, we might just query profiles
@@ -53,9 +53,9 @@ export const UsersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [company?.id]);
 
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleInvite = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteLoading(true);
 
@@ -89,12 +89,12 @@ export const UsersPage: React.FC = () => {
     } finally {
       setInviteLoading(false);
     }
-  };
+  }, [formData, company?.id, fetchUsers]);
 
-  const filteredUsers = users.filter(u =>
+  const filteredUsers = useMemo(() => users.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  ), [users, search]);
 
   return (
     <div className="space-y-6">
@@ -162,8 +162,8 @@ export const UsersPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-gray-100 text-gray-800'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
                             }`}>
                             {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
                           </span>
@@ -219,8 +219,8 @@ export const UsersPage: React.FC = () => {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">Função:</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-gray-100 text-gray-800'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-gray-100 text-gray-800'
                         }`}>
                         {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
                       </span>
