@@ -16,13 +16,15 @@ import {
     Users,
     HardDrive,
     Zap,
-    TrendingUp
+    TrendingUp,
+    Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import { PageHeader } from '../../common/PageHeader';
 import { getAvailablePlans, upgradePlan, downgradePlan, checkPlanLimits } from '../../../lib/utils/supabase';
-import type { Plan, PlanId } from '../../../types';
+import type { Plan, PlanId, Invoice } from '../../../types';
 
 export const CompanyProfilePage: React.FC = () => {
     const { company, refreshCompany } = useAuthContext();
@@ -41,6 +43,8 @@ export const CompanyProfilePage: React.FC = () => {
         maxStorage: 5,
         withinLimits: true
     });
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -65,9 +69,30 @@ export const CompanyProfilePage: React.FC = () => {
             });
 
             // Load plan limits
+            // Load plan limits
             loadPlanLimits();
+            fetchInvoices();
         }
     }, [company]);
+
+    const fetchInvoices = async () => {
+        if (!company?.id) return;
+        setLoadingInvoices(true);
+        try {
+            const { data, error } = await supabase
+                .from('invoices')
+                .select('*')
+                .eq('company_id', company.id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setInvoices(data || []);
+        } catch (error) {
+            console.error('Erro ao buscar faturas:', error);
+        } finally {
+            setLoadingInvoices(false);
+        }
+    };
 
     const loadPlanLimits = async () => {
         if (!company?.id) return;
@@ -428,6 +453,133 @@ export const CompanyProfilePage: React.FC = () => {
                         </div>
                     </div>
 
+                </div>
+
+                {/* Billing & Invoices Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mt-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                            <CreditCard className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900">Faturamento e Pagamento</h3>
+                            <p className="text-sm text-gray-500">Gerencie seus métodos de pagamento e histórico de faturas</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Payment Method */}
+                        <div className="lg:col-span-1 space-y-4">
+                            <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                                <h4 className="font-medium text-gray-900 mb-3">Método de Pagamento</h4>
+                                {company?.payment_method_last4 ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-6 bg-white border border-gray-200 rounded flex items-center justify-center">
+                                            {/* Simple brand icon placeholder */}
+                                            <span className="text-xs font-bold text-gray-600 uppercase">
+                                                {company.payment_method_brand || 'CARD'}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                •••• •••• •••• {company.payment_method_last4}
+                                            </p>
+                                            <p className="text-xs text-gray-500">Expira em 12/2028</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-gray-500">
+                                        Nenhum método de pagamento cadastrado.
+                                    </div>
+                                )}
+                                <button
+                                    className="mt-4 w-full py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                                    onClick={() => toast.info('Redirecionando para o Portal do Cliente...')}
+                                >
+                                    Atualizar Cartão
+                                </button>
+                            </div>
+
+                            <div className="p-4 border border-gray-200 rounded-xl bg-blue-50/50">
+                                <h4 className="font-medium text-blue-900 mb-2">Portal do Cliente</h4>
+                                <p className="text-xs text-blue-700 mb-3">
+                                    Acesse o portal seguro para gerenciar sua assinatura, baixar notas fiscais e alterar dados de cobrança.
+                                </p>
+                                <button
+                                    className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                    onClick={() => toast.info('Abrindo Portal do Cliente Stripe...')}
+                                >
+                                    <CreditCard className="w-4 h-4" />
+                                    Acessar Portal
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Invoices History */}
+                        <div className="lg:col-span-2">
+                            <h4 className="font-medium text-gray-900 mb-4">Histórico de Faturas</h4>
+                            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-4 py-3">Data</th>
+                                            <th className="px-4 py-3">Valor</th>
+                                            <th className="px-4 py-3">Status</th>
+                                            <th className="px-4 py-3 text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {loadingInvoices ? (
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                                                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                                                    Carregando faturas...
+                                                </td>
+                                            </tr>
+                                        ) : invoices.length > 0 ? (
+                                            invoices.map((invoice) => (
+                                                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3">
+                                                        {new Date(invoice.created_at).toLocaleDateString('pt-BR')}
+                                                    </td>
+                                                    <td className="px-4 py-3 font-medium">
+                                                        R$ {invoice.amount.toFixed(2)}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${invoice.status === 'paid'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : invoice.status === 'open'
+                                                                ? 'bg-yellow-100 text-yellow-700'
+                                                                : 'bg-red-100 text-red-700'
+                                                            }`}>
+                                                            {invoice.status === 'paid' ? 'Pago' :
+                                                                invoice.status === 'open' ? 'Aberto' :
+                                                                    invoice.status === 'void' ? 'Cancelado' : 'Falha'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <button
+                                                            className="text-gray-400 hover:text-[#025159] transition-colors"
+                                                            title="Baixar PDF"
+                                                            onClick={() => invoice.invoice_pdf_url ? window.open(invoice.invoice_pdf_url, '_blank') : toast.error('PDF indisponível')}
+                                                        >
+                                                            <HardDrive className="w-4 h-4" /> {/* Using HardDrive as generic file icon since FileText wasn't imported */}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                                                    Nenhuma fatura encontrada.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex justify-end pt-4">

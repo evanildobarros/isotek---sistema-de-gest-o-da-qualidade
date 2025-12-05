@@ -175,6 +175,21 @@ export interface Company {
   current_period_end?: string;
   max_users?: number;
   max_storage_gb?: number;
+  // Billing fields
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  payment_method_brand?: string;
+  payment_method_last4?: string;
+}
+
+export interface Invoice {
+  id: string;
+  company_id: string;
+  stripe_invoice_id?: string;
+  amount: number;
+  status: 'paid' | 'open' | 'void' | 'uncollectible';
+  invoice_pdf_url?: string;
+  created_at: string;
 }
 
 export interface Employee {
