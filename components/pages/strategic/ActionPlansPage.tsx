@@ -298,37 +298,39 @@ export const ActionPlansPage: React.FC = () => {
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex gap-4">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar tarefas..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
-                    />
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar tarefas..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 whitespace-nowrap"
+                    >
+                        <Filter size={20} />
+                        <span>Filtros</span>
+                        {(statusFilter !== 'all' || responsibleFilter !== 'all' || deadlineFilter !== 'all') && (
+                            <span className="ml-1 px-2 py-0.5 bg-[#025159] text-white text-xs rounded-full">
+                                {[
+                                    statusFilter !== 'all' ? 1 : 0,
+                                    responsibleFilter !== 'all' ? 1 : 0,
+                                    deadlineFilter !== 'all' ? 1 : 0
+                                ].reduce((a, b) => a + b)}
+                            </span>
+                        )}
+                    </button>
                 </div>
-                <button
-                    onClick={() => setIsFilterModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
-                >
-                    <Filter size={20} />
-                    <span>Filtros</span>
-                    {(statusFilter !== 'all' || responsibleFilter !== 'all' || deadlineFilter !== 'all') && (
-                        <span className="ml-1 px-2 py-0.5 bg-[#025159] text-white text-xs rounded-full">
-                            {[
-                                statusFilter !== 'all' ? 1 : 0,
-                                responsibleFilter !== 'all' ? 1 : 0,
-                                deadlineFilter !== 'all' ? 1 : 0
-                            ].reduce((a, b) => a + b)}
-                        </span>
-                    )}
-                </button>
             </div>
 
-            {/* Tasks List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Desktop Table View - Hidden on mobile */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -353,8 +355,8 @@ export const ActionPlansPage: React.FC = () => {
                                             <button
                                                 onClick={() => handleToggleStatus(task)}
                                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
-                                                        ? 'bg-green-500 border-green-500'
-                                                        : 'border-gray-300 hover:border-green-500'
+                                                    ? 'bg-green-500 border-green-500'
+                                                    : 'border-gray-300 hover:border-green-500'
                                                     }`}
                                             >
                                                 {task.status === 'completed' && (
@@ -364,8 +366,8 @@ export const ActionPlansPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className={`text-sm font-medium ${task.status === 'completed'
-                                                    ? 'line-through text-gray-400'
-                                                    : 'text-gray-900'
+                                                ? 'line-through text-gray-400'
+                                                : 'text-gray-900'
                                                 }`}>
                                                 {task.description}
                                             </p>
@@ -404,10 +406,10 @@ export const ActionPlansPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'completed'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : isOverdue
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : 'bg-amber-100 text-amber-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : isOverdue
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-amber-100 text-amber-800'
                                                 }`}>
                                                 {task.status === 'completed' ? 'Concluída' : isOverdue ? 'Atrasada' : 'Pendente'}
                                             </span>
@@ -439,6 +441,111 @@ export const ActionPlansPage: React.FC = () => {
 
                 {filteredTasks.length === 0 && (
                     <div className="p-12 text-center text-gray-500">
+                        <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p>Nenhuma tarefa encontrada.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Mobile Card View - Hidden on desktop */}
+            <div className="md:hidden space-y-3">
+                {filteredTasks.length > 0 ? (
+                    filteredTasks.map((task) => {
+                        const riskInfo = getRiskInfo(task.risk_id);
+                        const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status === 'pending';
+
+                        return (
+                            <div key={task.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                                {/* Header with checkbox and actions */}
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                                        <button
+                                            onClick={() => handleToggleStatus(task)}
+                                            className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 ${task.status === 'completed'
+                                                ? 'bg-green-500 border-green-500'
+                                                : 'border-gray-300 hover:border-green-500'
+                                                }`}
+                                        >
+                                            {task.status === 'completed' && (
+                                                <CheckCircle2 size={14} className="text-white" />
+                                            )}
+                                        </button>
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-medium mb-1 ${task.status === 'completed'
+                                                ? 'line-through text-gray-400'
+                                                : 'text-gray-900'
+                                                }`}>
+                                                {task.description}
+                                            </p>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'completed'
+                                                ? 'bg-green-100 text-green-800'
+                                                : isOverdue
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-amber-100 text-amber-800'
+                                                }`}>
+                                                {task.status === 'completed' ? 'Concluída' : isOverdue ? 'Atrasada' : 'Pendente'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                                        <button
+                                            onClick={() => openTaskModal(task)}
+                                            className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                            title="Editar"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteTask(task.id)}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Details */}
+                                <div className="space-y-2 text-sm">
+                                    {riskInfo && (
+                                        <div className="flex items-start gap-2">
+                                            <span className="text-gray-500 text-xs font-medium whitespace-nowrap mt-0.5">Risco/Oport:</span>
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${riskInfo.type === 'risk' ? 'bg-red-500' : 'bg-blue-500'
+                                                    }`}></span>
+                                                <span className="text-gray-700 text-xs line-clamp-2">
+                                                    {riskInfo.description}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {task.responsible_name && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-500 text-xs font-medium">Responsável:</span>
+                                            <div className="flex items-center gap-1.5 text-gray-700 text-xs">
+                                                <User size={12} className="text-gray-400" />
+                                                {task.responsible_name}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {task.deadline && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-500 text-xs font-medium">Prazo:</span>
+                                            <div className={`flex items-center gap-1.5 text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-700'
+                                                }`}>
+                                                <Calendar size={12} />
+                                                {new Date(task.deadline).toLocaleDateString('pt-BR')}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500">
                         <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <p>Nenhuma tarefa encontrada.</p>
                     </div>
