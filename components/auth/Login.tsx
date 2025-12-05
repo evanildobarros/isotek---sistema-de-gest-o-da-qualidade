@@ -56,7 +56,10 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div
+            className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/assets/login-background.png')" }}
+        >
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex justify-center">
                     <Link to="/" className="hover:opacity-80 transition-opacity" title="Voltar para Home">
