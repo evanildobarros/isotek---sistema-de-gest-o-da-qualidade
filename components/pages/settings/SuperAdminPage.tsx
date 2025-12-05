@@ -155,6 +155,48 @@ export const SuperAdminPage: React.FC = () => {
         }
     };
 
+    const getSubscriptionBadge = (status: string | undefined) => {
+        const s = (status || 'unknown').toLowerCase();
+        switch (s) {
+            case 'active':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                        Em dia
+                    </span>
+                );
+            case 'past_due':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                        Atrasado
+                    </span>
+                );
+            case 'unpaid':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                        Pagamento Pendente
+                    </span>
+                );
+            case 'canceled':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                        Cancelado
+                    </span>
+                );
+            case 'trialing':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                        Em Teste
+                    </span>
+                );
+            default:
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                        Indefinido
+                    </span>
+                );
+        }
+    };
+
     // --- Actions ---
 
     const handleEdit = (company: Company) => {
@@ -389,6 +431,7 @@ export const SuperAdminPage: React.FC = () => {
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plano</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pagamento</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Receita</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Criado em</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
@@ -434,6 +477,9 @@ export const SuperAdminPage: React.FC = () => {
                                         <span className={`capitalize text-sm px-2 py-1 rounded border ${getPlanBadgeStyle(company.plan)}`}>
                                             {company.plan || 'Start'}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {getSubscriptionBadge(company.subscription_status)}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {(Number(company.monthly_revenue) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}

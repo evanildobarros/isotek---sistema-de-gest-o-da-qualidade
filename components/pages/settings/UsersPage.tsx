@@ -38,24 +38,14 @@ export const UsersPage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // In a real scenario with RLS, we might just query profiles
-      // But since auth.users is not accessible directly from client without specific setup,
-      // we usually rely on a public profiles table.
 
-      let query = supabase
-        .from('profiles')
-        .select('id,email,full_name,role,created_at,last_sign_in_at,company_id,companies(name)')
-        .order('created_at', { ascending: false });
-
-      if (!isSuperAdmin) {
-        query = query.eq('company_id', company?.id);
-      }
-
-      const { data, error } = await query;
+      // Use RPC to get users with emails securely
+      const { data, error } = await supabase.rpc('get_users_with_emails');
 
       if (error) throw error;
 
-      const usersWithCompany = (data || []).map((u: any) => ({
+      // Map the data to match UserProfile interface
+      const mappedUsers = (data || []).map((u: any) => ({
         id: u.id,
         email: u.email,
         full_name: u.full_name,
@@ -63,10 +53,10 @@ export const UsersPage: React.FC = () => {
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at,
         company_id: u.company_id,
-        company_name: (u.companies && u.companies.name) || company?.name || ''
+        company_name: u.company_name
       }));
 
-      setUsers(usersWithCompany);
+      setUsers(mappedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
