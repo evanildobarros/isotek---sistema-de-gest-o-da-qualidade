@@ -1,5 +1,6 @@
 import { Building2, Calendar, Camera, Loader2, Lock, Mail, Phone, Shield, Upload, User, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -118,12 +119,12 @@ export const SectionPerfil: React.FC = () => {
         if (!file) return;
 
         if (!file.type.startsWith('image/')) {
-            alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, etc.)');
+            toast.error('Por favor, selecione um arquivo de imagem válido (PNG, JPG, etc.)');
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('O arquivo deve ter no máximo 5MB');
+            toast.error('O arquivo deve ter no máximo 5MB');
             return;
         }
 
@@ -138,7 +139,7 @@ export const SectionPerfil: React.FC = () => {
 
     const handleSavePhoto = async () => {
         if (!selectedFile || !user) {
-            alert('Por favor, selecione uma foto primeiro');
+            toast.error('Por favor, selecione uma foto primeiro');
             return;
         }
 
@@ -189,10 +190,10 @@ export const SectionPerfil: React.FC = () => {
             localStorage.setItem('isotek_avatar', data.publicUrl);
             window.dispatchEvent(new Event('avatarUpdated'));
 
-            alert('Foto atualizada com sucesso!');
+            toast.success('Foto atualizada com sucesso!');
         } catch (error: any) {
             console.error('Error saving photo:', error);
-            alert('Erro ao atualizar foto: ' + (error.message || 'Tente novamente.'));
+            toast.error('Erro ao atualizar foto: ' + (error.message || 'Tente novamente.'));
         } finally {
             setSaving(false);
         }
@@ -213,10 +214,10 @@ export const SectionPerfil: React.FC = () => {
             setProfileData(prev => prev ? { ...prev, avatar_url: null } : null);
             setSelectedFile(null);
             setPreviewUrl(null);
-            alert('Foto removida com sucesso!');
+            toast.success('Foto removida com sucesso!');
         } catch (error) {
             console.error('Error removing photo:', error);
-            alert('Erro ao remover foto. Tente novamente.');
+            toast.error('Erro ao remover foto. Tente novamente.');
         } finally {
             setSaving(false);
         }
@@ -248,11 +249,11 @@ export const SectionPerfil: React.FC = () => {
                 setProfileData(data as ProfileData);
             }
 
-            alert('Perfil atualizado com sucesso!');
+            toast.success('Perfil atualizado com sucesso!');
             setIsEditModalOpen(false);
         } catch (error) {
             console.error('Error updating profile:', error);
-            alert('Erro ao atualizar perfil. Tente novamente.');
+            toast.error('Erro ao atualizar perfil. Tente novamente.');
         } finally {
             setSaving(false);
         }
@@ -260,11 +261,11 @@ export const SectionPerfil: React.FC = () => {
 
     const handleChangePassword = async () => {
         if (newPassword !== confirmPassword) {
-            alert('As senhas não coincidem!');
+            toast.error('As senhas não coincidem!');
             return;
         }
         if (newPassword.length < 6) {
-            alert('A senha deve ter pelo menos 6 caracteres!');
+            toast.error('A senha deve ter pelo menos 6 caracteres!');
             return;
         }
 
@@ -276,14 +277,14 @@ export const SectionPerfil: React.FC = () => {
 
             if (error) throw error;
 
-            alert('Senha alterada com sucesso!');
+            toast.success('Senha alterada com sucesso!');
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
             setIsPasswordModalOpen(false);
         } catch (error: any) {
             console.error('Error changing password:', error);
-            alert(error.message || 'Erro ao alterar senha. Tente novamente.');
+            toast.error(error.message || 'Erro ao alterar senha. Tente novamente.');
         } finally {
             setSaving(false);
         }
@@ -305,7 +306,7 @@ export const SectionPerfil: React.FC = () => {
         } catch (error) {
             console.error('Error updating preferences:', error);
             setPreferences(preferences); // Revert on error
-            alert('Erro ao atualizar configuração. Tente novamente.');
+            toast.error('Erro ao atualizar configuração. Tente novamente.');
         }
     };
 
@@ -500,12 +501,10 @@ export const SectionPerfil: React.FC = () => {
                                 checked={preferences.email_notifications}
                                 onChange={() => handleTogglePreference('email_notifications')}
                             />
-                            <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                                preferences.email_notifications ? 'bg-[#025159]' : 'bg-gray-200'
-                            } shadow-md`}>
-                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                                    preferences.email_notifications ? 'left-7' : 'left-1'
-                                } shadow-sm`}></div>
+                            <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ${preferences.email_notifications ? 'bg-[#025159]' : 'bg-gray-200'
+                                } shadow-md`}>
+                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${preferences.email_notifications ? 'left-7' : 'left-1'
+                                    } shadow-sm`}></div>
                             </div>
                         </label>
                     </div>
@@ -522,12 +521,10 @@ export const SectionPerfil: React.FC = () => {
                                 checked={preferences.two_factor_enabled}
                                 onChange={() => handleTogglePreference('two_factor_enabled')}
                             />
-                            <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                                preferences.two_factor_enabled ? 'bg-[#025159]' : 'bg-gray-200'
-                            } shadow-md`}>
-                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                                    preferences.two_factor_enabled ? 'left-7' : 'left-1'
-                                } shadow-sm`}></div>
+                            <div className={`relative w-14 h-8 rounded-full transition-all duration-300 ${preferences.two_factor_enabled ? 'bg-[#025159]' : 'bg-gray-200'
+                                } shadow-md`}>
+                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${preferences.two_factor_enabled ? 'left-7' : 'left-1'
+                                    } shadow-sm`}></div>
                             </div>
                         </label>
                     </div>

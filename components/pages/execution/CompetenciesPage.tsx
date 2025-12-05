@@ -171,11 +171,13 @@ export const CompetenciesPage: React.FC = () => {
                     .update(payload)
                     .eq('id', editingEmployee.id);
                 if (error) throw error;
+                toast.success('Colaborador atualizado com sucesso!');
             } else {
                 const { error } = await supabase
                     .from('employees')
                     .insert([payload]);
                 if (error) throw error;
+                toast.success('Colaborador cadastrado com sucesso!');
             }
 
             fetchEmployees();
@@ -197,6 +199,7 @@ export const CompetenciesPage: React.FC = () => {
 
             if (error) throw error;
 
+            toast.success('Colaborador excluído com sucesso!');
             if (selectedEmployee?.id === id) {
                 setSelectedEmployee(null);
             }
@@ -273,6 +276,7 @@ export const CompetenciesPage: React.FC = () => {
 
             if (error) throw error;
 
+            toast.success('Treinamento registrado com sucesso!');
             fetchTrainings(selectedEmployee.id);
             setIsTrainingModalOpen(false);
         } catch (error) {
@@ -292,6 +296,7 @@ export const CompetenciesPage: React.FC = () => {
 
             if (error) throw error;
 
+            toast.success('Treinamento excluído com sucesso!');
             if (selectedEmployee) {
                 fetchTrainings(selectedEmployee.id);
             }

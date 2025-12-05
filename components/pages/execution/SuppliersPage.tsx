@@ -140,11 +140,13 @@ const SuppliersPageContent: React.FC = () => {
                     .update(payload)
                     .eq('id', editingSupplier.id);
                 if (error) throw error;
+                toast.success('Fornecedor atualizado com sucesso!');
             } else {
                 const { error } = await supabase
                     .from('suppliers')
                     .insert([payload]);
                 if (error) throw error;
+                toast.success('Fornecedor cadastrado com sucesso!');
             }
 
             fetchSuppliers();
@@ -165,6 +167,7 @@ const SuppliersPageContent: React.FC = () => {
                 .eq('id', id);
 
             if (error) throw error;
+            toast.success('Fornecedor excluído com sucesso!');
             fetchSuppliers();
         } catch (error) {
             console.error('Erro ao excluir fornecedor:', error);
@@ -200,6 +203,7 @@ const SuppliersPageContent: React.FC = () => {
 
             if (error) throw error;
 
+            toast.success('Avaliação registrada com sucesso!');
             // Refresh data
             fetchSuppliers();
             fetchEvaluations();

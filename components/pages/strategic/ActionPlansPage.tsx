@@ -14,6 +14,7 @@ import {
     Target,
     Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { RiskTask } from '../../../types';
@@ -89,7 +90,7 @@ export const ActionPlansPage: React.FC = () => {
 
     const handleCreateTask = async () => {
         if (!taskForm.description.trim() || !taskForm.risk_id) {
-            alert('Preencha a descrição e selecione um risco');
+            toast.error('Preencha a descrição e selecione um risco');
             return;
         }
 
@@ -109,15 +110,15 @@ export const ActionPlansPage: React.FC = () => {
             setIsTaskModalOpen(false);
             setTaskForm({ risk_id: '', description: '', responsible_id: '', deadline: '' });
             await loadData();
-            alert('✅ Tarefa criada com sucesso!');
+            toast.success('Tarefa criada com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao criar tarefa: ' + error.message);
+            toast.error('Erro ao criar tarefa: ' + error.message);
         }
     };
 
     const handleUpdateTask = async () => {
         if (!selectedTask || !taskForm.description.trim()) {
-            alert('Preencha a descrição da tarefa');
+            toast.error('Preencha a descrição da tarefa');
             return;
         }
 
@@ -137,9 +138,9 @@ export const ActionPlansPage: React.FC = () => {
             setSelectedTask(null);
             setTaskForm({ risk_id: '', description: '', responsible_id: '', deadline: '' });
             await loadData();
-            alert('✅ Tarefa atualizada com sucesso!');
+            toast.success('Tarefa atualizada com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao atualizar tarefa: ' + error.message);
+            toast.error('Erro ao atualizar tarefa: ' + error.message);
         }
     };
 
@@ -154,7 +155,7 @@ export const ActionPlansPage: React.FC = () => {
             if (error) throw error;
             await loadData();
         } catch (error: any) {
-            alert('❌ Erro ao atualizar tarefa: ' + error.message);
+            toast.error('Erro ao atualizar tarefa: ' + error.message);
         }
     };
 
@@ -169,9 +170,9 @@ export const ActionPlansPage: React.FC = () => {
 
             if (error) throw error;
             await loadData();
-            alert('✅ Tarefa excluída com sucesso!');
+            toast.success('Tarefa excluída com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao excluir tarefa: ' + error.message);
+            toast.error('Erro ao excluir tarefa: ' + error.message);
         }
     };
 
