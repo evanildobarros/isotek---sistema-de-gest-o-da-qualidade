@@ -1130,13 +1130,13 @@ Ou use Diagrama de Ishikawa (6M):
                             <div className="flex items-center gap-6">
                                 {/* Logo da Empresa */}
                                 {company?.logo_url ? (
-                                    <img 
-                                        src={company.logo_url} 
-                                        alt="Logo Empresa" 
-                                        className="h-20 w-auto object-contain" 
-                                        style={{ 
+                                    <img
+                                        src={company.logo_url}
+                                        alt="Logo Empresa"
+                                        className="h-12 w-auto object-contain"
+                                        style={{
                                             display: 'block',
-                                            maxWidth: '120px',
+                                            maxWidth: '80px',
                                             height: 'auto'
                                         }}
                                         crossOrigin="anonymous"
@@ -1150,7 +1150,7 @@ Ou use Diagrama de Ishikawa (6M):
                                         LOGO
                                     </div>
                                 )}
-                                
+
                                 {/* Títulos */}
                                 <div>
                                     <h1 className="text-xl font-bold text-gray-900 uppercase leading-none mb-1">
