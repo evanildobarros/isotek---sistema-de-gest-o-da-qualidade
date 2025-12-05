@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Users, Plus, Search, Mail, Shield, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Users, Plus, Search, Mail, Shield, Trash2, X, Check } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { PageHeader } from '../../common/PageHeader';
 
 interface UserProfile {
   id: string;
-  email: string;
+  email?: string;
   full_name: string;
   role: string;
   created_at: string;
   last_sign_in_at?: string;
+  company_id: string;
+  company_name?: string;
 }
 
 export const UsersPage: React.FC = () => {
@@ -42,12 +44,27 @@ export const UsersPage: React.FC = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          company_info:company_id (
+            name,
+            email
+          )
+        `)
         .eq('company_id', company?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+
+      // Mapear para o formato esperado
+      const usersData = (data || []).map(profile => ({
+        ...profile,
+        company_name: profile.company_info?.name,
+        email: profile.company_info?.email || 'Email não cadastrado'
+      }));
+
+      console.log('Users data:', usersData);
+      setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -142,7 +159,7 @@ export const UsersPage: React.FC = () => {
                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Função</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Entrada</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -156,7 +173,7 @@ export const UsersPage: React.FC = () => {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">{userProfile.full_name || 'Sem nome'}</p>
-                              <p className="text-xs text-gray-500">{userProfile.email}</p>
+                              <p className="text-sm text-gray-500">{userProfile.email}</p>
                             </div>
                           </div>
                         </td>
@@ -176,10 +193,10 @@ export const UsersPage: React.FC = () => {
                             Ativo
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-900">
+                            {userProfile.company_name || 'N/A'}
+                          </span>
                         </td>
                       </tr>
                     ))
@@ -210,9 +227,6 @@ export const UsersPage: React.FC = () => {
                         <p className="text-sm text-gray-500 truncate">{userProfile.email}</p>
                       </div>
                     </div>
-                    <button className="text-gray-400 hover:text-blue-600 p-2 transition-colors flex-shrink-0 -mr-2">
-                      <Edit2 className="w-5 h-5" />
-                    </button>
                   </div>
 
                   <div className="space-y-2">
@@ -236,6 +250,11 @@ export const UsersPage: React.FC = () => {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Ativo
                       </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Empresa:</span>
+                      <span className="text-gray-900">{userProfile.company_name || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
