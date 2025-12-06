@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check, EyeOff, Plus, X, Building2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import { Unit } from '../../../types';
@@ -55,7 +56,7 @@ export const UnitsPage: React.FC = () => {
 
       if (createError) {
         console.error('Error creating company:', createError);
-        alert(`Erro ao criar empresa: ${createError.message || JSON.stringify(createError)}`);
+        toast.error(`Erro ao criar empresa: ${createError.message || 'Erro desconhecido'}`);
         return;
       }
 
@@ -81,7 +82,7 @@ export const UnitsPage: React.FC = () => {
 
     if (error) {
       console.error('Error loading units:', error);
-      alert('Erro ao carregar unidades');
+      toast.error('Erro ao carregar unidades');
     } else {
       setUnits(data || []);
     }
@@ -120,7 +121,7 @@ export const UnitsPage: React.FC = () => {
     e.preventDefault();
 
     if (!companyId) {
-      alert('ID da empresa não encontrado. Recarregue a página.');
+      toast.warning('ID da empresa não encontrado. Recarregue a página.');
       return;
     }
 
@@ -148,9 +149,9 @@ export const UnitsPage: React.FC = () => {
 
     if (error) {
       console.error('Error saving unit:', error);
-      alert('Erro ao salvar unidade: ' + error.message);
+      toast.error('Erro ao salvar unidade: ' + error.message);
     } else {
-      alert(editingUnit ? 'Unidade atualizada com sucesso!' : 'Unidade criada com sucesso!');
+      toast.success(editingUnit ? 'Unidade atualizada com sucesso!' : 'Unidade criada com sucesso!');
       handleCloseModal();
       loadUnits();
     }

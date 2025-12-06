@@ -18,6 +18,7 @@ import {
     XCircle,
     Printer
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { getStatusLabel } from '../../../lib/utils/format';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -280,7 +281,7 @@ export const CorrectiveActionsPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar: ' + (error.message || error.error_description || JSON.stringify(error)));
+            toast.error('Erro ao salvar: ' + (error.message || error.error_description || 'Erro desconhecido'));
         }
     };
 
@@ -315,7 +316,7 @@ export const CorrectiveActionsPage: React.FC = () => {
 
     const handleAddTask = () => {
         if (!newTask.description || !newTask.responsible_id || !newTask.due_date) {
-            alert('Preencha todos os campos da tarefa');
+            toast.warning('Preencha todos os campos da tarefa');
             return;
         }
 
@@ -360,10 +361,10 @@ export const CorrectiveActionsPage: React.FC = () => {
             if (error) throw error;
 
             fetchActions();
-            alert('✅ Ação corretiva excluída com sucesso!');
+            toast.success('Ação corretiva excluída com sucesso!');
         } catch (error: any) {
             console.error('Erro ao excluir:', error);
-            alert('Erro ao excluir: ' + (error.message || JSON.stringify(error)));
+            toast.error('Erro ao excluir: ' + (error.message || 'Erro desconhecido'));
         }
     };
 
@@ -391,10 +392,10 @@ export const CorrectiveActionsPage: React.FC = () => {
             if (error) throw error;
 
             fetchActions();
-            alert('✅ Ação corretiva duplicada com sucesso!');
+            toast.success('Ação corretiva duplicada com sucesso!');
         } catch (error: any) {
             console.error('Erro ao duplicar:', error);
-            alert('Erro ao duplicar: ' + (error.message || JSON.stringify(error)));
+            toast.error('Erro ao duplicar: ' + (error.message || 'Erro desconhecido'));
         }
     };
 
@@ -1130,11 +1131,11 @@ Ou use Diagrama de Ishikawa (6M):
                             <div className="flex items-center gap-6">
                                 {/* Logo da Empresa */}
                                 {company?.logo_url ? (
-                                    <img 
-                                        src={company.logo_url} 
-                                        alt="Logo Empresa" 
-                                        className="h-20 w-auto object-contain" 
-                                        style={{ 
+                                    <img
+                                        src={company.logo_url}
+                                        alt="Logo Empresa"
+                                        className="h-20 w-auto object-contain"
+                                        style={{
                                             display: 'block',
                                             maxWidth: '120px',
                                             height: 'auto'
@@ -1150,7 +1151,7 @@ Ou use Diagrama de Ishikawa (6M):
                                         LOGO
                                     </div>
                                 )}
-                                
+
                                 {/* Títulos */}
                                 <div>
                                     <h1 className="text-xl font-bold text-gray-900 uppercase leading-none mb-1">

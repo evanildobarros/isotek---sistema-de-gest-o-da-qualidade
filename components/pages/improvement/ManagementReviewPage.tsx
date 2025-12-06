@@ -11,6 +11,7 @@ import {
     X,
     Edit
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Modal } from '../../common/Modal';
@@ -136,7 +137,7 @@ export const ManagementReviewPage: React.FC = () => {
                     .eq('id', editingReview.id);
 
                 if (error) throw error;
-                alert('✅ Ata atualizada com sucesso!');
+                toast.success('Ata atualizada com sucesso!');
             } else {
                 // INSERT - Criando nova ata
                 const { error } = await supabase
@@ -145,7 +146,7 @@ export const ManagementReviewPage: React.FC = () => {
                     .select();
 
                 if (error) throw error;
-                alert('✅ Ata gerada com sucesso!');
+                toast.success('Ata gerada com sucesso!');
             }
 
             fetchReviews();
@@ -153,7 +154,7 @@ export const ManagementReviewPage: React.FC = () => {
             setEditingReview(null);
         } catch (error: any) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar: ' + (error.message || JSON.stringify(error)));
+            toast.error('Erro ao salvar: ' + (error.message || 'Erro desconhecido'));
         }
     };
 
@@ -499,11 +500,11 @@ RECURSOS NECESSÁRIOS:
                             <div className="flex items-center gap-6">
                                 {/* Logo da Empresa */}
                                 {company?.logo_url ? (
-                                    <img 
-                                        src={company.logo_url} 
-                                        alt="Logo Empresa" 
-                                        className="h-20 w-auto object-contain" 
-                                        style={{ 
+                                    <img
+                                        src={company.logo_url}
+                                        alt="Logo Empresa"
+                                        className="h-20 w-auto object-contain"
+                                        style={{
                                             display: 'block',
                                             maxWidth: '120px',
                                             height: 'auto'
@@ -519,7 +520,7 @@ RECURSOS NECESSÁRIOS:
                                         LOGO
                                     </div>
                                 )}
-                                
+
                                 {/* Títulos */}
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900 uppercase leading-none mb-1">

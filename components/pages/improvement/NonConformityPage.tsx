@@ -15,6 +15,7 @@ import {
     FileText,
     Printer
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { NonConformityProduct } from '../../../types';
@@ -119,7 +120,7 @@ export const NonConformityPage: React.FC = () => {
             resetCreateForm();
         } catch (error) {
             console.error('Erro ao criar não conformidade:', error);
-            alert('Erro ao criar registro');
+            toast.error('Erro ao criar registro');
         } finally {
             setUploading(false);
         }
@@ -145,7 +146,7 @@ export const NonConformityPage: React.FC = () => {
             setSelectedNC(null);
         } catch (error) {
             console.error('Erro ao aplicar disposição:', error);
-            alert('Erro ao salvar disposição');
+            toast.error('Erro ao salvar disposição');
         }
     };
 
@@ -607,10 +608,10 @@ export const NonConformityPage: React.FC = () => {
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
                                     {company?.logo_url ? (
-                                        <img 
-                                            src={company.logo_url} 
-                                            alt="Logo Empresa" 
-                                            className="h-14 w-auto object-contain" 
+                                        <img
+                                            src={company.logo_url}
+                                            alt="Logo Empresa"
+                                            className="h-14 w-auto object-contain"
                                             style={{ display: 'block', maxWidth: '100px', height: 'auto' }}
                                             crossOrigin="anonymous"
                                             onError={(e) => { console.error('Erro ao carregar logo:', e); e.currentTarget.style.display = 'none'; }}

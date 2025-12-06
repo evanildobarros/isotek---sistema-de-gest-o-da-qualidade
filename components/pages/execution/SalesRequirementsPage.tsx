@@ -9,6 +9,7 @@ import {
     XCircle
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import { SalesOrder } from '../../../types';
@@ -85,7 +86,7 @@ export const SalesRequirementsPage: React.FC = () => {
             resetCreateForm();
         } catch (error) {
             console.error('Erro ao criar pedido:', error);
-            alert('Erro ao criar pedido');
+            toast.error('Erro ao criar pedido');
         }
     };
 
@@ -123,7 +124,7 @@ export const SalesRequirementsPage: React.FC = () => {
             setSelectedOrder(null);
         } catch (error) {
             console.error('Erro ao salvar análise:', error);
-            alert('Erro ao salvar análise');
+            toast.error('Erro ao salvar análise');
         }
     };
 

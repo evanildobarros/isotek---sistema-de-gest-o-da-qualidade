@@ -9,6 +9,7 @@ import {
     MessageSquare,
     AlertCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
     LineChart,
     Line,
@@ -150,7 +151,7 @@ export const IndicatorsPage: React.FC = () => {
             });
         } catch (error) {
             console.error('Erro ao salvar medição:', error);
-            alert('Erro ao salvar medição');
+            toast.error('Erro ao salvar medição');
         }
     };
 
@@ -177,7 +178,7 @@ export const IndicatorsPage: React.FC = () => {
             });
         } catch (error) {
             console.error('Erro ao salvar pesquisa:', error);
-            alert('Erro ao salvar pesquisa');
+            toast.error('Erro ao salvar pesquisa');
         }
     };
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Save, Plus, ArrowRight, User, Settings, Layers, Trash2, Edit2, X, FileText, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { QualityManual, Process } from '../../../types';
@@ -83,7 +84,7 @@ export const ScopePage: React.FC = () => {
 
     const handleSaveScope = async () => {
         if (!user || !company) {
-            alert('Você precisa estar logado e vinculado a uma empresa.');
+            toast.warning('Você precisa estar logado e vinculado a uma empresa.');
             return;
         }
 
@@ -110,11 +111,11 @@ export const ScopePage: React.FC = () => {
                 if (data) setManualId(data.id);
             }
 
-            alert('Escopo salvo com sucesso!');
+            toast.success('Escopo salvo com sucesso!');
             setIsEditingScope(false); // Exit edit mode after save
         } catch (error) {
             console.error('Erro ao salvar escopo:', error);
-            alert(`Erro ao salvar escopo: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
+            toast.error(`Erro ao salvar escopo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         } finally {
             setSavingScope(false);
         }
@@ -153,7 +154,7 @@ export const ScopePage: React.FC = () => {
     const handleSaveProcess = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !company) {
-            alert('Você precisa estar logado e vinculado a uma empresa.');
+            toast.warning('Você precisa estar logado e vinculado a uma empresa.');
             return;
         }
 
@@ -180,7 +181,7 @@ export const ScopePage: React.FC = () => {
             handleCloseModal();
         } catch (error) {
             console.error('Erro ao salvar processo:', error);
-            alert(`Erro ao salvar processo: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
+            toast.error(`Erro ao salvar processo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         }
     };
 
