@@ -165,68 +165,131 @@ export const StakeholdersPage: React.FC = () => {
                 </button>
             </div>
 
-            <div className="grid gap-4">
+            {/* Table - Desktop Only */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="table-auto w-full text-left">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
+                                <th className="px-6 py-4">Parte Interessada</th>
+                                <th className="px-4 py-4">Tipo</th>
+                                <th className="px-4 py-4 max-w-xs">Necessidades</th>
+                                <th className="px-4 py-4 max-w-xs">Expectativas</th>
+                                <th className="px-4 py-4">Frequência</th>
+                                <th className="px-4 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {stakeholders.map((item) => (
+                                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                                                {getIconByType(item.type)}
+                                            </div>
+                                            <span className="font-semibold text-gray-900">{item.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <span className="text-xs text-gray-600 font-medium px-2.5 py-1 bg-gray-100 rounded-full">
+                                            {item.type}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-4 max-w-xs">
+                                        <p className="text-sm text-gray-600 line-clamp-2">{item.needs}</p>
+                                    </td>
+                                    <td className="px-4 py-4 max-w-xs">
+                                        <p className="text-sm text-gray-600 line-clamp-2">{item.expectations}</p>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium w-fit">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            <span className="whitespace-nowrap">{item.monitor_frequency}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => handleOpenModal(item)}
+                                                className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(item.id)}
+                                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                title="Excluir"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {stakeholders.length === 0 && !loading && (
+                    <div className="text-center py-12 text-gray-500">
+                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <h3 className="text-lg font-medium text-gray-900">Nenhuma parte interessada cadastrada</h3>
+                        <p className="text-gray-500">Comece adicionando quem influencia sua organização.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Cards - Mobile Only */}
+            <div className="md:hidden space-y-4">
                 {stakeholders.map((item) => (
-                    <div key={item.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 md:p-6">
-                        {/* Layout Mobile: Vertical Stack */}
-                        <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-                            {/* Ícone e Nome */}
-                            <div className="flex items-center gap-3 md:gap-4 md:min-w-[200px]">
-                                <div className="p-2.5 md:p-3 bg-gray-50 rounded-lg flex-shrink-0">
-                                    {getIconByType(item.type)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-gray-900 truncate">{item.name}</h3>
-                                    <span className="text-xs text-gray-500 font-medium px-2 py-0.5 bg-gray-100 rounded-full inline-block mt-1">
-                                        {item.type}
-                                    </span>
-                                </div>
+                    <div key={item.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                        {/* Header: Ícone, Nome e Tipo */}
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 bg-gray-50 rounded-lg flex-shrink-0">
+                                {getIconByType(item.type)}
                             </div>
-
-                            {/* Necessidades e Expectativas */}
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 md:border-l md:border-r border-gray-100 md:px-8">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <Shield className="w-4 h-4 text-gray-400" />
-                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Necessidades</span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">{item.needs}</p>
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <Target className="w-4 h-4 text-gray-400" />
-                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Expectativas</span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">{item.expectations}</p>
-                                </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-gray-900 truncate">{item.name}</h3>
+                                <span className="text-xs text-gray-500 font-medium px-2 py-0.5 bg-gray-100 rounded-full inline-block mt-1">
+                                    {item.type}
+                                </span>
                             </div>
+                        </div>
 
-                            {/* Monitoramento e Ações */}
-                            <div className="flex items-center justify-between md:justify-end gap-4 md:gap-6 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100">
-                                <div className="flex flex-col md:items-end">
-                                    <span className="text-xs text-gray-400 mb-1">Revisão</span>
-                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium">
-                                        <Calendar className="w-3.5 h-3.5" />
-                                        <span className="whitespace-nowrap">{item.monitor_frequency}</span>
-                                    </div>
-                                </div>
+                        {/* Necessidades e Expectativas - Compacto */}
+                        <div className="space-y-2 text-sm">
+                            <div>
+                                <span className="text-gray-400 font-medium">Necessidades: </span>
+                                <span className="text-gray-700">{item.needs || '-'}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 font-medium">Expectativas: </span>
+                                <span className="text-gray-700">{item.expectations || '-'}</span>
+                            </div>
+                        </div>
 
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleOpenModal(item)}
-                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                        title="Editar"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Excluir"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                        {/* Footer: Frequência e Ações */}
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>{item.monitor_frequency}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => handleOpenModal(item)}
+                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                    title="Editar"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(item.id)}
+                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                    title="Excluir"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                     </div>
