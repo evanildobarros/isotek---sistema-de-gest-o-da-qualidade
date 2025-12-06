@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Users, Save, Plus, Trash2, Edit2, CheckCircle, FileText, Loader2, History, Eye, Clock, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import { PolicyVersion } from '../../../types';
@@ -115,10 +116,10 @@ export const LeadershipPage: React.FC = () => {
             // Save version to history
             await saveVersion();
 
-            alert('Política da Qualidade salva com sucesso!');
+            toast.success('Política da Qualidade salva com sucesso!');
         } catch (error: any) {
             console.error('Error saving policy:', error);
-            alert('Erro ao salvar política: ' + error.message);
+            toast.error('Erro ao salvar política: ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -174,7 +175,7 @@ export const LeadershipPage: React.FC = () => {
             version: version.version
         });
         setViewingVersion(null);
-        alert('Versão restaurada! Clique em "Salvar Política" para confirmar.');
+        toast.info('Versão restaurada! Clique em "Salvar Política" para confirmar.');
     };
 
     const handleSaveRole = async (e: React.FormEvent) => {
@@ -215,7 +216,7 @@ export const LeadershipPage: React.FC = () => {
             loadData(); // Reload to get fresh data
         } catch (error: any) {
             console.error('Error saving role:', error);
-            alert('Erro ao salvar cargo: ' + error.message);
+            toast.error('Erro ao salvar cargo: ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -233,7 +234,7 @@ export const LeadershipPage: React.FC = () => {
             setRoles(roles.filter(r => r.id !== id));
         } catch (error: any) {
             console.error('Error deleting role:', error);
-            alert('Erro ao excluir cargo: ' + error.message);
+            toast.error('Erro ao excluir cargo: ' + error.message);
         }
     };
 

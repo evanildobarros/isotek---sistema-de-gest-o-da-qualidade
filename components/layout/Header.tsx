@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book, Menu, FileText } from 'lucide-react';
+import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserDropdown } from './UserDropdown';
-import { IsoSection } from '../../types';
+import { IsoSection, Notification, NotificationType } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuthContext } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ interface SearchResult {
 
 export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
+  const { company, user } = useAuthContext();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -27,7 +29,122 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
   const [isSearching, setIsSearching] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    if (!company) return;
+
+    try {
+      setLoadingNotifications(true);
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setNotifications(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar notificações:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  // Load notifications on mount and when company changes
+  useEffect(() => {
+    if (company) {
+      fetchNotifications();
+    }
+  }, [company]);
+
+  // Mark single notification as read
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+    } catch (error) {
+      console.error('Erro ao marcar como lida:', error);
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    if (!company) return;
+
+    try {
+      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      if (unreadIds.length === 0) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .in('id', unreadIds);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Erro ao marcar todas como lidas:', error);
+    }
+  };
+
+  // Handle notification click
+  const handleNotificationClick = async (notification: Notification) => {
+    await markAsRead(notification.id);
+    setShowNotifications(false);
+
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
+
+  // Get icon by notification type
+  const getNotificationIcon = (type: NotificationType) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle size={16} className="text-green-500" />;
+      case 'warning':
+        return <AlertTriangle size={16} className="text-yellow-500" />;
+      case 'error':
+        return <XCircle size={16} className="text-red-500" />;
+      default:
+        return <Info size={16} className="text-blue-500" />;
+    }
+  };
+
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Agora';
+    if (diffMins < 60) return `Há ${diffMins} min`;
+    if (diffHours < 24) return `Há ${diffHours}h`;
+    if (diffDays === 1) return 'Ontem';
+    if (diffDays < 7) return `Há ${diffDays} dias`;
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  // Count unread
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Debounced search
   useEffect(() => {
@@ -59,11 +176,14 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // Click outside to close
+  // Click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchResults(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
     };
 
@@ -170,11 +290,14 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
         </button>
 
         {/* Notifications */}
-        <div className="relative">
+        <div className="relative" ref={notificationsRef}>
           <button
             onClick={() => {
               setShowNotifications(!showNotifications);
               setShowHelp(false);
+              if (!showNotifications) {
+                fetchNotifications(); // Refresh on open
+              }
             }}
             className={`p-2 rounded-full transition-colors relative ${showNotifications
               ? 'text-[#025159] bg-[#025159]/10'
@@ -182,7 +305,11 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
               }`}
           >
             <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-900"></span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white dark:border-gray-900">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
 
           {/* Notifications Dropdown */}
@@ -190,27 +317,79 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
             <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 animate-fade-in">
               <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Notificações</h3>
-                <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={16} />
-                </button>
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                <div className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-                  <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">Nova Política Publicada</p>
-                  <p className="text-xs text-gray-500 mt-1">A Política da Qualidade v1.0 foi aprovada.</p>
-                  <p className="text-[10px] text-gray-400 mt-1">Há 2 horas</p>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-xs text-[#025159] hover:underline flex items-center gap-1"
+                      title="Marcar todas como lidas"
+                    >
+                      <Check size={12} />
+                      Marcar lidas
+                    </button>
+                  )}
+                  <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600">
+                    <X size={16} />
+                  </button>
                 </div>
-                <div className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors border-t border-gray-50 dark:border-gray-800">
-                  <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">Ação Corretiva Pendente</p>
-                  <p className="text-xs text-gray-500 mt-1">Você tem uma ação aguardando aprovação.</p>
-                  <p className="text-[10px] text-gray-400 mt-1">Há 5 horas</p>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {loadingNotifications ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#025159] mx-auto"></div>
+                  </div>
+                ) : notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                        }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex-shrink-0">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${!notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+                            }`}>
+                            {notification.title}
+                          </p>
+                          {notification.message && (
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                              {notification.message}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            {formatRelativeTime(notification.created_at)}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    <Bell size={24} className="mx-auto mb-2 opacity-50" />
+                    Nenhuma notificação
+                  </div>
+                )}
+              </div>
+              {notifications.length > 0 && (
+                <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-800 text-center">
+                  <button
+                    onClick={() => {
+                      setShowNotifications(false);
+                      navigate('/app/configuracoes');
+                    }}
+                    className="text-xs font-medium text-[#025159] hover:underline"
+                  >
+                    Ver todas as notificações
+                  </button>
                 </div>
-              </div>
-              <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-800 text-center">
-                <button className="text-xs font-medium text-[#025159] hover:underline">
-                  Ver todas as notificações
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>

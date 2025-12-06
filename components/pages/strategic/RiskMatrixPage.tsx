@@ -16,6 +16,7 @@ import {
     Calendar,
     User
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { RiskTask } from '../../../types';
@@ -182,9 +183,9 @@ export const RiskMatrixPage: React.FC = () => {
             setIsImportModalOpen(false);
             setSelectedSwotItems([]);
             await loadData(); // Reload to show new items and update available SWOT items
-            alert(`${newRisks.length} itens importados com sucesso!`);
+            toast.success(`${newRisks.length} itens importados com sucesso!`);
         } catch (error: any) {
-            alert('Erro ao importar: ' + error.message);
+            toast.error('Erro ao importar: ' + error.message);
         }
     };
 
@@ -226,9 +227,9 @@ export const RiskMatrixPage: React.FC = () => {
 
             setIsEditModalOpen(false);
             await loadData();
-            alert('✅ Risco atualizado com sucesso!');
+            toast.success('Risco atualizado com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao atualizar: ' + error.message);
+            toast.error('Erro ao atualizar: ' + error.message);
         }
     };
 
@@ -244,9 +245,9 @@ export const RiskMatrixPage: React.FC = () => {
             if (error) throw error;
 
             await loadData();
-            alert('✅ Item excluído com sucesso!');
+            toast.success('Item excluído com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao excluir: ' + error.message);
+            toast.error('Erro ao excluir: ' + error.message);
         }
     };
 
@@ -283,7 +284,7 @@ export const RiskMatrixPage: React.FC = () => {
 
     const handleCreateTask = async () => {
         if (!editingRisk || !taskForm.description.trim()) {
-            alert('Preencha a descrição da tarefa');
+            toast.warning('Preencha a descrição da tarefa');
             return;
         }
 
@@ -303,15 +304,15 @@ export const RiskMatrixPage: React.FC = () => {
             setIsTaskModalOpen(false);
             setTaskForm({ description: '', responsible_id: '', deadline: '' });
             await fetchTasksForRisk(editingRisk.id);
-            alert('✅ Tarefa criada com sucesso!');
+            toast.success('Tarefa criada com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao criar tarefa: ' + error.message);
+            toast.error('Erro ao criar tarefa: ' + error.message);
         }
     };
 
     const handleUpdateTask = async () => {
         if (!selectedTask || !taskForm.description.trim()) {
-            alert('Preencha a descrição da tarefa');
+            toast.warning('Preencha a descrição da tarefa');
             return;
         }
 
@@ -331,9 +332,9 @@ export const RiskMatrixPage: React.FC = () => {
             setSelectedTask(null);
             setTaskForm({ description: '', responsible_id: '', deadline: '' });
             if (editingRisk) await fetchTasksForRisk(editingRisk.id);
-            alert('✅ Tarefa atualizada com sucesso!');
+            toast.success('Tarefa atualizada com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao atualizar tarefa: ' + error.message);
+            toast.error('Erro ao atualizar tarefa: ' + error.message);
         }
     };
 
@@ -349,7 +350,7 @@ export const RiskMatrixPage: React.FC = () => {
 
             if (editingRisk) await fetchTasksForRisk(editingRisk.id);
         } catch (error: any) {
-            alert('❌ Erro ao atualizar tarefa: ' + error.message);
+            toast.error('Erro ao atualizar tarefa: ' + error.message);
         }
     };
 
@@ -365,9 +366,9 @@ export const RiskMatrixPage: React.FC = () => {
             if (error) throw error;
 
             if (editingRisk) await fetchTasksForRisk(editingRisk.id);
-            alert('✅ Tarefa excluída com sucesso!');
+            toast.success('Tarefa excluída com sucesso!');
         } catch (error: any) {
-            alert('❌ Erro ao excluir tarefa: ' + error.message);
+            toast.error('Erro ao excluir tarefa: ' + error.message);
         }
     };
 

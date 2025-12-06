@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Search, Mail, Shield, Trash2, Edit2, X, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { PageHeader } from '../../common/PageHeader';
@@ -126,7 +127,7 @@ export const UsersPage: React.FC = () => {
 
         if (error) throw error;
 
-        alert('Usuário convidado com sucesso!');
+        toast.success('Usuário convidado com sucesso!');
         setShowModal(false);
         setFormData({ email: '', fullName: '', role: 'user' });
         fetchUsers();
@@ -158,20 +159,20 @@ export const UsersPage: React.FC = () => {
             }
           }
 
-          alert('Usuário registrado (fallback) em profiles. Se necessário, configure o envio de convite por backend.');
+          toast.success('Usuário registrado! Configure o envio de convite por backend.');
           setShowModal(false);
           setFormData({ email: '', fullName: '', role: 'user' });
           fetchUsers();
         } catch (insertErr: any) {
           console.error('Fallback insert into profiles failed:', insertErr);
           // Mantemos mensagem original para indicar que o RPC precisa ser configurado
-          alert('Erro ao convidar usuário (Nota: Esta função requer configuração de backend/RPC): ' + (rpcError?.message || insertErr?.message || 'Erro desconhecido'));
+          toast.error('Erro ao convidar usuário: ' + (rpcError?.message || insertErr?.message || 'Erro desconhecido'));
         }
       }
 
     } catch (error: any) {
       console.error('Error inviting user:', error);
-      alert('Erro ao convidar usuário (Nota: Esta função requer configuração de backend/RPC): ' + error.message);
+      toast.error('Erro ao convidar usuário: ' + error.message);
     } finally {
       setInviteLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -35,9 +36,9 @@ export const Login: React.FC = () => {
                 console.error('Erro Login:', error.message);
                 // Show detailed error message to help diagnose the issue
                 if (error.message.includes('Email not confirmed')) {
-                    alert('Seu email ainda não foi confirmado. Entre em contato com o administrador.');
+                    toast.error('Seu email ainda não foi confirmado. Entre em contato com o administrador.');
                 } else {
-                    alert(`Falha no login: ${error.message}\n\nVerifique suas credenciais.`);
+                    toast.error(`Falha no login: ${error.message}`);
                 }
                 setIsLoading(false);
                 return;
@@ -49,7 +50,7 @@ export const Login: React.FC = () => {
             }
         } catch (error) {
             console.error('Erro inesperado:', error);
-            alert('Ocorreu um erro inesperado.');
+            toast.error('Ocorreu um erro inesperado.');
         } finally {
             setIsLoading(false);
         }

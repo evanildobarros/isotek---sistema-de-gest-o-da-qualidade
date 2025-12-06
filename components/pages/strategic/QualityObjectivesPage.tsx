@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Plus, Edit2, Trash2, Save, Loader2, TrendingUp, Calendar, CheckCircle2, AlertCircle, Rocket, Users2, ChevronDown, ChevronUp } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 
@@ -122,7 +123,7 @@ export const QualityObjectivesPage: React.FC = () => {
             setIsModalOpen(false);
             loadData();
         } catch (error: any) {
-            alert('Erro ao salvar: ' + error.message);
+            toast.error('Erro ao salvar: ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -143,7 +144,7 @@ export const QualityObjectivesPage: React.FC = () => {
             setIsUpdateModalOpen(false);
             loadData();
         } catch (error: any) {
-            alert('Erro ao atualizar medição: ' + error.message);
+            toast.error('Erro ao atualizar medição: ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -159,7 +160,7 @@ export const QualityObjectivesPage: React.FC = () => {
             if (error) throw error;
             setObjectives(objectives.filter(o => o.id !== id));
         } catch (error: any) {
-            alert('Erro ao excluir: ' + error.message);
+            toast.error('Erro ao excluir: ' + error.message);
         }
     };
 

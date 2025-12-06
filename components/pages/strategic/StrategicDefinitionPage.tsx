@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, Telescope, Diamond, Save, Loader2, Upload, Camera } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -57,7 +58,7 @@ export const StrategicDefinitionPage: React.FC = () => {
 
     const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!isEditing) {
-            alert('Clique em "Editar" primeiro para alterar o logo.');
+            toast.info('Clique em "Editar" primeiro para alterar o logo.');
             return;
         }
 
@@ -88,7 +89,7 @@ export const StrategicDefinitionPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Error uploading logo:', error);
-            alert('Erro ao fazer upload do logo: ' + error.message);
+            toast.error('Erro ao fazer upload do logo: ' + error.message);
         } finally {
             setUploadingLogo(false);
         }
@@ -126,12 +127,12 @@ export const StrategicDefinitionPage: React.FC = () => {
                     localStorage.setItem('isotek_avatar', formData.logo_url);
                     window.dispatchEvent(new Event('avatarUpdated'));
                 }
-                alert('Identidade corporativa salva com sucesso!');
+                toast.success('Identidade corporativa salva com sucesso!');
                 setIsEditing(false); // Exit edit mode
             }
         } catch (error: any) {
             console.error('Error saving strategy:', error);
-            alert(`Erro ao salvar: ${error.message}`);
+            toast.error(`Erro ao salvar: ${error.message}`);
         } finally {
             setSaving(false);
         }

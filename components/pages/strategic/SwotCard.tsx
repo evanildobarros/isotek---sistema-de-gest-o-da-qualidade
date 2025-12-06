@@ -1,5 +1,6 @@
 import { AlertCircle, Plus, Trash2, X, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
 
@@ -159,14 +160,14 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             setImpact('medio');
             setIsModalOpen(false);
             setIsLoading(false);
-            alert('⚠️ Modo Offline: Item adicionado apenas localmente. Configure o Supabase para salvar no banco.');
+            toast.warning('Modo Offline: Item adicionado apenas localmente.');
             return;
         }
 
         // Online mode - save to Supabase
         try {
             if (!user || !company) {
-                alert('⚠️ Você precisa estar logado e vinculado a uma empresa para adicionar itens.');
+                toast.warning('Você precisa estar logado e vinculado a uma empresa para adicionar itens.');
                 setIsLoading(false);
                 return;
             }
@@ -234,10 +235,10 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             setDescription('');
             setImpact('medio');
             setIsModalOpen(false);
-            alert('✅ Item salvo com sucesso!');
+            toast.success('Item salvo com sucesso!');
         } catch (error: any) {
             console.error('Erro ao adicionar item:', error);
-            alert(`❌ Erro ao adicionar item: ${error.message || 'Verifique sua conexão com o Supabase.'}`);
+            toast.error(`Erro ao adicionar item: ${error.message || 'Verifique sua conexão.'}`);
         } finally {
             setIsLoading(false);
         }
@@ -249,7 +250,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
         // Offline mode
         if (!isSupabaseConfigured) {
             setItems(items.filter(item => item.id !== id));
-            alert('⚠️ Modo Offline: Item removido apenas localmente.');
+            toast.warning('Modo Offline: Item removido apenas localmente.');
             return;
         }
 
@@ -262,21 +263,21 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
             if (error) throw error;
             setItems(items.filter(item => item.id !== id));
-            alert('✅ Item removido com sucesso!');
+            toast.success('Item removido com sucesso!');
         } catch (error) {
             console.error('Erro ao remover item:', error);
-            alert('❌ Erro ao remover item.');
+            toast.error('Erro ao remover item.');
         }
     };
 
     const handlePromoteToRisk = async (item: SwotItem) => {
         if (!isSupabaseConfigured) {
-            alert('⚠️ Funcionalidade disponível apenas no modo online.');
+            toast.warning('Funcionalidade disponível apenas no modo online.');
             return;
         }
 
         if (!user) {
-            alert('⚠️ Você precisa estar logado para realizar esta ação.');
+            toast.warning('Você precisa estar logado para realizar esta ação.');
             return;
         }
 
@@ -304,11 +305,11 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             if (error) throw error;
 
             setProcessedItems(prev => new Set(prev).add(item.id));
-            alert('Registro criado no Módulo de Planejamento! Acesse a tela de Riscos para definir a gravidade e o plano de ação.');
+            toast.success('Registro criado no Módulo de Planejamento! Acesse a tela de Riscos.');
 
         } catch (error: any) {
             console.error('Erro ao promover item:', error);
-            alert(`❌ Erro ao criar registro: ${error.message || 'Tente novamente.'}`);
+            toast.error(`Erro ao criar registro: ${error.message || 'Tente novamente.'}`);
         }
     };
 

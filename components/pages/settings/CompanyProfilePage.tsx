@@ -123,13 +123,13 @@ export const CompanyProfilePage: React.FC = () => {
             if (result.success) {
                 await refreshCompany();
                 await loadPlanLimits();
-                alert(`✅ Plano alterado para ${selectedPlan.name} com sucesso!`);
+                toast.success(`Plano alterado para ${selectedPlan.name} com sucesso!`);
             } else {
-                alert(`❌ Erro ao alterar plano: ${result.error}`);
+                toast.error(`Erro ao alterar plano: ${result.error}`);
             }
         } catch (error: any) {
             console.error('Error changing plan:', error);
-            alert('❌ Erro ao processar mudança de plano');
+            toast.error('Erro ao processar mudança de plano');
         } finally {
             setSaving(false);
             setShowConfirmModal(false);
@@ -174,7 +174,7 @@ export const CompanyProfilePage: React.FC = () => {
 
         } catch (error: any) {
             console.error('Error uploading logo:', error);
-            alert('Erro ao fazer upload da logo: ' + error.message);
+            toast.error('Erro ao fazer upload da logo: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -202,11 +202,11 @@ export const CompanyProfilePage: React.FC = () => {
             if (error) throw error;
 
             await refreshCompany();
-            alert('✅ Perfil atualizado com sucesso!');
+            toast.success('Perfil atualizado com sucesso!');
 
         } catch (error: any) {
             console.error('Error updating profile:', error);
-            alert('Erro ao atualizar perfil: ' + error.message);
+            toast.error('Erro ao atualizar perfil: ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -547,10 +547,10 @@ export const CompanyProfilePage: React.FC = () => {
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${invoice.status === 'paid'
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : invoice.status === 'open'
-                                                                    ? 'bg-yellow-100 text-yellow-700'
-                                                                    : 'bg-red-100 text-red-700'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : invoice.status === 'open'
+                                                                ? 'bg-yellow-100 text-yellow-700'
+                                                                : 'bg-red-100 text-red-700'
                                                             }`}>
                                                             {invoice.status === 'paid' ? 'Pago' :
                                                                 invoice.status === 'open' ? 'Aberto' :

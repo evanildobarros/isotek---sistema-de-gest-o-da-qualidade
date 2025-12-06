@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Plus, Users, Building, Briefcase, Globe, Shield, Edit2, Trash2, X, Target, Calendar } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Stakeholder } from '../../../types';
@@ -115,7 +116,7 @@ export const StakeholdersPage: React.FC = () => {
             handleCloseModal();
         } catch (error) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar parte interessada');
+            toast.error('Erro ao salvar parte interessada');
         }
     };
 

@@ -4,6 +4,7 @@ import {
     Shield, Users, DollarSign, Activity, Plus, Search,
     MoreVertical, Lock, Unlock, ExternalLink, Building2, Mail, Key, AlertCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Company } from '../../../types';
@@ -230,12 +231,12 @@ export const SuperAdminPage: React.FC = () => {
 
             if (error) throw error;
 
-            alert('Empresa atualizada com sucesso!');
+            toast.success('Empresa atualizada com sucesso!');
             setIsEditModalOpen(false);
             fetchCompanies();
         } catch (error: any) {
             console.error('Error updating company:', error);
-            alert(`Erro ao atualizar: ${error.message}`);
+            toast.error(`Erro ao atualizar: ${error.message}`);
         } finally {
             setEditLoading(false);
         }
@@ -257,7 +258,7 @@ export const SuperAdminPage: React.FC = () => {
             fetchCompanies();
         } catch (error: any) {
             console.error('Error toggling status:', error);
-            alert(`Erro ao alterar status: ${error.message}`);
+            toast.error(`Erro ao alterar status: ${error.message}`);
         }
     };
 
@@ -271,11 +272,11 @@ export const SuperAdminPage: React.FC = () => {
 
             if (error) throw error;
 
-            alert('Empresa excluída com sucesso.');
+            toast.success('Empresa excluída com sucesso.');
             fetchCompanies();
         } catch (error: any) {
             console.error('Error deleting company:', error);
-            alert(`Erro ao excluir: ${error.message}`);
+            toast.error(`Erro ao excluir: ${error.message}`);
         }
     };
 
@@ -321,13 +322,13 @@ export const SuperAdminPage: React.FC = () => {
             if (rpcError) throw rpcError;
 
             // Success!
-            alert(`Cliente criado com sucesso!\n\nEnvie para o cliente:\nLogin: ${userForm.email}\nSenha: ${userForm.password}`);
+            toast.success(`Cliente criado!\nLogin: ${userForm.email}\nSenha: ${userForm.password}`);
             setIsWizardOpen(false);
             fetchCompanies();
 
         } catch (error: any) {
             console.error('Erro ao criar cliente:', error);
-            alert(`Erro ao criar cliente: ${error.message || JSON.stringify(error)}`);
+            toast.error(`Erro ao criar cliente: ${error.message || 'Erro desconhecido'}`);
         } finally {
             setWizardLoading(false);
         }
