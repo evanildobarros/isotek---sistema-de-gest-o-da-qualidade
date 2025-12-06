@@ -10,6 +10,7 @@ import {
     Search
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import { ProductionOrder, SalesOrder } from '../../../types';
@@ -107,9 +108,10 @@ export const ProductionControlPage: React.FC = () => {
             fetchOrders();
             setIsCreateModalOpen(false);
             resetCreateForm();
+            toast.success('Ordem de produção criada!');
         } catch (error) {
             console.error('Erro ao criar ordem:', error);
-            alert('Erro ao criar ordem');
+            toast.error('Erro ao criar ordem de produção');
         }
     };
 
@@ -130,7 +132,7 @@ export const ProductionControlPage: React.FC = () => {
 
         // Validação ISO 8.5.2: Rastreabilidade obrigatória para conclusão
         if (updateForm.status === 'completed' && !updateForm.batch_number.trim()) {
-            alert('⚠️ Número de rastreabilidade (Lote/Série) é obrigatório para concluir a ordem!\n\nISO 9001:2015 - Requisito 8.5.2');
+            toast.warning('Número de rastreabilidade (Lote/Série) é obrigatório para concluir a ordem! (ISO 9001:2015 - Requisito 8.5.2)');
             return;
         }
 
@@ -145,9 +147,10 @@ export const ProductionControlPage: React.FC = () => {
             fetchOrders();
             setIsUpdateModalOpen(false);
             setSelectedOrder(null);
+            toast.success('Ordem atualizada!');
         } catch (error) {
             console.error('Erro ao atualizar ordem:', error);
-            alert('Erro ao atualizar ordem');
+            toast.error('Erro ao atualizar ordem');
         }
     };
 

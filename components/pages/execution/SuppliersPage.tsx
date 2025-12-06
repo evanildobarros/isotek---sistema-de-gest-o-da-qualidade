@@ -74,6 +74,7 @@ const SuppliersPageContent: React.FC = () => {
             setSuppliers(data || []);
         } catch (error) {
             console.error('Erro ao carregar fornecedores:', error);
+            toast.error('Erro ao carregar fornecedores');
         } finally {
             setLoading(false);
         }
@@ -149,6 +150,7 @@ const SuppliersPageContent: React.FC = () => {
 
             fetchSuppliers();
             setIsSupplierModalOpen(false);
+            toast.success(editingSupplier ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!');
         } catch (error) {
             console.error('Erro ao salvar fornecedor:', error);
             toast.error('Erro ao salvar fornecedor');
@@ -166,8 +168,10 @@ const SuppliersPageContent: React.FC = () => {
 
             if (error) throw error;
             fetchSuppliers();
+            toast.success('Fornecedor excluído!');
         } catch (error) {
             console.error('Erro ao excluir fornecedor:', error);
+            toast.error('Erro ao excluir fornecedor');
         }
     };
 
@@ -204,6 +208,7 @@ const SuppliersPageContent: React.FC = () => {
             fetchSuppliers();
             fetchEvaluations();
             setIsEvaluationModalOpen(false);
+            toast.success('Avaliação registrada!');
         } catch (error) {
             console.error('Erro ao salvar avaliação:', error);
             toast.error('Erro ao salvar avaliação');
