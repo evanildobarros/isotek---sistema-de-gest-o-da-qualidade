@@ -53,46 +53,6 @@ O sistema é estruturado no ciclo **PDCA** (Plan, Do, Check, Act), cobrindo todo
 
 ---
 
-## 📦 Instalação e Execução
-
-### Pré-requisitos
-
-- Node.js 18+
-- Conta no Supabase
-
-### Passos
-
-1. **Clone o repositório**
-
-   ```bash
-   git clone https://github.com/seu-usuario/isotek.git
-   cd isotek
-   ```
-
-2. **Instale as dependências**
-
-   ```bash
-   npm install
-   ```
-
-3. **Configure as variáveis de ambiente**
-   Crie um arquivo `.env` na raiz do projeto:
-
-   ```env
-   VITE_SUPABASE_URL=sua_url_supabase
-   VITE_SUPABASE_ANON_KEY=sua_chave_anonima
-   ```
-
-4. **Execute o servidor de desenvolvimento**
-
-   ```bash
-   npm run dev
-   ```
-
-O sistema estará acessível em `http://localhost:5173`.
-
----
-
 ## 📄 Licença
 
 Este projeto é proprietário e desenvolvido para a Isotek Solutions. Todos os direitos reservados.
