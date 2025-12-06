@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, Loader2, Minimize2, Sparkles } from 'lucide-react';
+import { X, Send, Bot, User, Loader2, Minimize2, HelpCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import ReactMarkdown from 'react-markdown';
@@ -181,11 +181,10 @@ REGRAS:
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#025159] to-[#3F858C] text-white rounded-full shadow-lg hover:shadow-xl hover:shadow-[#025159]/30 transition-all duration-300 group hover:scale-105"
+                className="fixed bottom-6 right-6 z-50 p-4 bg-[#03A6A6] text-white rounded-full shadow-lg hover:shadow-xl hover:bg-[#028f8f] transition-all duration-300 hover:scale-105"
                 title="Isotek AI Assistant"
             >
-                <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
-                <span className="font-semibold">Isotek AI</span>
+                <HelpCircle className="w-6 h-6" />
             </button>
         );
     }
@@ -196,10 +195,10 @@ REGRAS:
                 }`}
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#025159] to-[#3F858C] rounded-t-2xl">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#03A6A6] rounded-t-2xl">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-white/20 rounded-lg">
-                        <Sparkles className="w-5 h-5 text-white" />
+                        <HelpCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
                         <h3 className="text-white font-semibold text-sm">Isotek AI</h3>
