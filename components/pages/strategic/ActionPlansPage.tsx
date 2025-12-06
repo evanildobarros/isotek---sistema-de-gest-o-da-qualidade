@@ -239,23 +239,23 @@ export const ActionPlansPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <Target className="w-6 h-6 text-blue-600" />
+                        <div className="p-2 md:p-3 bg-blue-100 rounded-lg">
+                            <Target className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
                         </div>
-                        <h1 className="text-2xl font-bold text-[#025159]">Planos de Ação</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-[#025159]">Planos de Ação</h1>
                     </div>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 text-xs md:text-sm">
                         Gerenciamento centralizado de tarefas de riscos e oportunidades
                     </p>
                 </div>
                 <button
                     onClick={() => openTaskModal()}
-                    className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
+                    className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
                 >
                     <Plus size={20} />
                     <span>Nova Tarefa</span>
@@ -263,58 +263,58 @@ export const ActionPlansPage: React.FC = () => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-gray-500">Total</h3>
-                        <Target className="w-5 h-5 text-gray-400" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <h3 className="text-xs md:text-sm font-medium text-gray-500">Total</h3>
+                        <Target className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{totalTasks}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900">{totalTasks}</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-gray-500">Pendentes</h3>
-                        <Clock className="w-5 h-5 text-amber-400" />
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <h3 className="text-xs md:text-sm font-medium text-gray-500">Pendentes</h3>
+                        <Clock className="w-4 h-4 md:w-5 md:h-5 text-amber-400" />
                     </div>
-                    <p className="text-3xl font-bold text-amber-600">{pendingTasks}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-amber-600">{pendingTasks}</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-gray-500">Concluídas</h3>
-                        <CheckCircle2 className="w-5 h-5 text-green-400" />
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <h3 className="text-xs md:text-sm font-medium text-gray-500">Concluídas</h3>
+                        <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
                     </div>
-                    <p className="text-3xl font-bold text-green-600">{completedTasks}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-green-600">{completedTasks}</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-gray-500">Atrasadas</h3>
-                        <AlertTriangle className="w-5 h-5 text-red-400" />
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <h3 className="text-xs md:text-sm font-medium text-gray-500">Atrasadas</h3>
+                        <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-400" />
                     </div>
-                    <p className="text-3xl font-bold text-red-600">{overdueTasks}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-red-600">{overdueTasks}</p>
                 </div>
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex gap-4">
-                <div className="relative flex-1 max-w-md">
+            <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 mb-4 md:mb-6 flex flex-col md:flex-row gap-3 md:gap-4">
+                <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                         type="text"
                         placeholder="Buscar tarefas..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] text-sm"
                     />
                 </div>
                 <button
                     onClick={() => setIsFilterModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
+                    className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
                 >
                     <Filter size={20} />
-                    <span>Filtros</span>
+                    <span className="hidden sm:inline">Filtros</span>
                     {(statusFilter !== 'all' || responsibleFilter !== 'all' || deadlineFilter !== 'all') && (
                         <span className="ml-1 px-2 py-0.5 bg-[#025159] text-white text-xs rounded-full">
                             {[
@@ -327,8 +327,8 @@ export const ActionPlansPage: React.FC = () => {
                 </button>
             </div>
 
-            {/* Tasks List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Tasks List - Desktop Table */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -353,8 +353,8 @@ export const ActionPlansPage: React.FC = () => {
                                             <button
                                                 onClick={() => handleToggleStatus(task)}
                                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
-                                                        ? 'bg-green-500 border-green-500'
-                                                        : 'border-gray-300 hover:border-green-500'
+                                                    ? 'bg-green-500 border-green-500'
+                                                    : 'border-gray-300 hover:border-green-500'
                                                     }`}
                                             >
                                                 {task.status === 'completed' && (
@@ -364,8 +364,8 @@ export const ActionPlansPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className={`text-sm font-medium ${task.status === 'completed'
-                                                    ? 'line-through text-gray-400'
-                                                    : 'text-gray-900'
+                                                ? 'line-through text-gray-400'
+                                                : 'text-gray-900'
                                                 }`}>
                                                 {task.description}
                                             </p>
@@ -404,10 +404,10 @@ export const ActionPlansPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'completed'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : isOverdue
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : 'bg-amber-100 text-amber-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : isOverdue
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-amber-100 text-amber-800'
                                                 }`}>
                                                 {task.status === 'completed' ? 'Concluída' : isOverdue ? 'Atrasada' : 'Pendente'}
                                             </span>
@@ -441,6 +441,99 @@ export const ActionPlansPage: React.FC = () => {
                     <div className="p-12 text-center text-gray-500">
                         <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <p>Nenhuma tarefa encontrada.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Tasks List - Mobile Cards */}
+            <div className="md:hidden space-y-3">
+                {filteredTasks.map((task) => {
+                    const riskInfo = getRiskInfo(task.risk_id);
+                    const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status === 'pending';
+
+                    return (
+                        <div key={task.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                            <div className="flex items-start gap-3">
+                                <button
+                                    onClick={() => handleToggleStatus(task)}
+                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 mt-0.5 ${task.status === 'completed'
+                                        ? 'bg-green-500 border-green-500'
+                                        : 'border-gray-300 hover:border-green-500'
+                                        }`}
+                                >
+                                    {task.status === 'completed' && (
+                                        <CheckCircle2 size={14} className="text-white" />
+                                    )}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-medium mb-2 ${task.status === 'completed'
+                                        ? 'line-through text-gray-400'
+                                        : 'text-gray-900'
+                                        }`}>
+                                        {task.description}
+                                    </p>
+
+                                    {riskInfo && (
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${riskInfo.type === 'risk' ? 'bg-red-500' : 'bg-blue-500'
+                                                }`}></span>
+                                            <span className="text-xs text-gray-500 line-clamp-1">
+                                                {riskInfo.description}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                                        {task.responsible_name && (
+                                            <div className="flex items-center gap-1">
+                                                <User size={12} className="text-gray-400" />
+                                                <span>{task.responsible_name}</span>
+                                            </div>
+                                        )}
+                                        {task.deadline && (
+                                            <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                                                <Calendar size={12} />
+                                                <span>{new Date(task.deadline).toLocaleDateString('pt-BR')}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${task.status === 'completed'
+                                    ? 'bg-green-100 text-green-800'
+                                    : isOverdue
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-amber-100 text-amber-800'
+                                    }`}>
+                                    {task.status === 'completed' ? 'Concluída' : isOverdue ? 'Atrasada' : 'Pendente'}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => openTaskModal(task)}
+                                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                        title="Editar"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteTask(task.id)}
+                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {filteredTasks.length === 0 && (
+                    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+                        <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm">Nenhuma tarefa encontrada.</p>
                     </div>
                 )}
             </div>

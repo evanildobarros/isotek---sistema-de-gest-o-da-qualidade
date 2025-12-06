@@ -417,23 +417,23 @@ export const RiskMatrixPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <ShieldAlert className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        <div className="p-2 md:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <ShieldAlert className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
                         </div>
-                        <h1 className="text-2xl font-bold text-[#025159]">Matriz de Riscos e Oportunidades</h1>
+                        <h1 className="text-lg md:text-2xl font-bold text-[#025159]">Matriz de Riscos e Oportunidades</h1>
                     </div>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 text-xs md:text-sm">
                         Gestão baseada em riscos (ISO 9001: 6.1)
                     </p>
                 </div>
                 <button
                     onClick={() => setIsImportModalOpen(true)}
-                    className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
+                    className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
                 >
                     <Download size={20} />
                     <span>Importar da SWOT</span>
@@ -441,23 +441,23 @@ export const RiskMatrixPage: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex gap-4">
-                <div className="relative flex-1 max-w-md">
+            <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 mb-4 md:mb-6 flex flex-col md:flex-row gap-3 md:gap-4">
+                <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                         type="text"
                         placeholder="Buscar riscos..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] text-sm"
                     />
                 </div>
                 <button
                     onClick={() => setIsFilterModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
+                    className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
                 >
                     <Filter size={20} />
-                    <span>Filtros</span>
+                    <span className="hidden sm:inline">Filtros</span>
                     {(filters.type !== 'all' || filters.severity !== 'all') && (
                         <span className="ml-1 px-2 py-0.5 bg-[#025159] text-white text-xs rounded-full">
                             {[filters.type !== 'all' ? 1 : 0, filters.severity !== 'all' ? 1 : 0].reduce((a, b) => a + b)}
@@ -466,8 +466,8 @@ export const RiskMatrixPage: React.FC = () => {
                 </button>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Table - Desktop Only */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -568,6 +568,94 @@ export const RiskMatrixPage: React.FC = () => {
                 {filteredRisks.length === 0 && (
                     <div className="p-12 text-center text-gray-500">
                         <p>Nenhum item encontrado.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Cards - Mobile Only */}
+            <div className="md:hidden space-y-4">
+                {filteredRisks.map((risk) => {
+                    const severity = calculateSeverity(risk.probability, risk.impact);
+                    const level = getSeverityLevel(severity, risk.type);
+                    const isSwot = risk.origin.toLowerCase().includes('swot') || risk.origin.toLowerCase().includes('contexto');
+
+                    return (
+                        <div key={risk.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                            {/* Topo: Tipo e Nível */}
+                            <div className="flex items-center justify-between mb-3">
+                                {risk.type === 'risk' ? (
+                                    <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-1 rounded-md">
+                                        <AlertTriangle size={14} />
+                                        <span className="text-xs font-bold">Risco</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                                        <TrendingUp size={14} />
+                                        <span className="text-xs font-bold">Oportunidade</span>
+                                    </div>
+                                )}
+                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-bold ${level.color}`}>
+                                    {level.label} ({severity})
+                                </div>
+                            </div>
+
+                            {/* Origem */}
+                            <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border w-fit mb-2 ${isSwot
+                                ? 'bg-purple-50 text-purple-700 border-purple-100'
+                                : 'bg-gray-50 text-gray-600 border-gray-200'
+                                }`}>
+                                <LinkIcon size={10} />
+                                <span>{risk.origin}</span>
+                            </div>
+
+                            {/* Descrição */}
+                            <p className="text-sm text-gray-900 font-medium mb-3">{risk.description}</p>
+
+                            {/* Métricas: Prob e Imp */}
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                <div className="bg-gray-50 rounded-lg p-2 text-center">
+                                    <span className="text-xs text-gray-500 block">Probabilidade</span>
+                                    <span className="text-lg font-bold text-gray-800">{risk.probability}</span>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-2 text-center">
+                                    <span className="text-xs text-gray-500 block">Impacto</span>
+                                    <span className="text-lg font-bold text-gray-800">{risk.impact}</span>
+                                </div>
+                            </div>
+
+                            {/* Plano de Ação */}
+                            {risk.action_plan && (
+                                <div className="flex items-start gap-2 text-gray-600 mb-3">
+                                    <ShieldAlert size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <p className="text-xs line-clamp-2">{risk.action_plan}</p>
+                                </div>
+                            )}
+
+                            {/* Rodapé: Ações */}
+                            <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                                <button
+                                    onClick={() => openEditModal(risk)}
+                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                    title="Editar"
+                                >
+                                    <Edit2 size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteRisk(risk.id)}
+                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                    title="Excluir"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {filteredRisks.length === 0 && (
+                    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+                        <ShieldAlert className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm">Nenhum item encontrado.</p>
                     </div>
                 )}
             </div>
