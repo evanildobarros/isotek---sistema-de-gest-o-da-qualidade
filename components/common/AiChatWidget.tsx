@@ -93,7 +93,7 @@ REGRAS:
             console.log('📡 Enviando requisição para Gemini...');
 
             const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -181,17 +181,17 @@ REGRAS:
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-50 p-4 bg-[#03A6A6] text-white rounded-full shadow-lg hover:shadow-xl hover:bg-[#028f8f] transition-all duration-300 hover:scale-105"
+                className="fixed bottom-6 right-6 z-50 p-3 bg-[#03A6A6] text-white rounded-full shadow-lg hover:shadow-xl hover:bg-[#028f8f] transition-all duration-300 hover:scale-105"
                 title="Isotek AI Assistant"
             >
-                <HelpCircle className="w-6 h-6" />
+                <HelpCircle className="w-5 h-5" />
             </button>
         );
     }
 
     return (
         <div
-            className={`fixed bottom-6 right-6 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col ${isMinimized ? 'w-80 h-14' : 'w-96 h-[600px] max-h-[80vh]'
+            className={`fixed bottom-6 right-6 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col ${isMinimized ? 'w-72 h-14' : 'w-80 h-[550px] max-h-[80vh]'
                 }`}
         >
             {/* Header */}

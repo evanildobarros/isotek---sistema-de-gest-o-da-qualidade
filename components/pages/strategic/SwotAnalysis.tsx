@@ -31,14 +31,7 @@ export const SwotAnalysis: React.FC = () => {
                 <SwotCard type="threat" />
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-bold text-blue-900 mb-2">💡 Dica</h3>
-                <p className="text-sm text-blue-800">
-                    A matriz SWOT é uma ferramenta estratégica essencial para ISO 9001:2015 (cláusula 4.1).
-                    Use-a para entender o contexto interno (Forças e Fraquezas) e externo (Oportunidades e Ameaças)
-                    da sua organização.
-                </p>
-            </div>
+
         </div>
     );
 };
