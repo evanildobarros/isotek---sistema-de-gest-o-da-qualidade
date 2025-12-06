@@ -6,7 +6,7 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import { Stakeholder } from '../../../types';
 
 export const StakeholdersPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, loadingCompany } = useAuthContext();
     const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,8 +20,10 @@ export const StakeholdersPage: React.FC = () => {
     });
 
     useEffect(() => {
-        fetchStakeholders();
-    }, [user]);
+        if (!loadingCompany && company) {
+            fetchStakeholders();
+        }
+    }, [company, loadingCompany]);
 
     const fetchStakeholders = async () => {
         try {
