@@ -158,6 +158,13 @@ const menuGroups: MenuGroup[] = [
             section: IsoSection.COMPETENCIES_TRAINING,
             path: '/app/treinamentos',
             icon: GraduationCap
+          },
+          // Suporte
+          {
+            label: 'Documentação',
+            icon: BookOpen,
+            section: IsoSection.SUPPORT,
+            path: '/app/ajuda'
           }
         ]
       },

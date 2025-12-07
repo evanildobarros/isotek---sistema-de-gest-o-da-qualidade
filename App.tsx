@@ -34,8 +34,9 @@ import {
   CompetenciesPage,
   SalesRequirementsPage,
   SuppliersPage,
-  ProductionControlPage
-} from './components/pages/execution';
+  ProductionControlPage,
+  DocumentationPage
+} from './components/pages';
 
 // Page components - Improvement
 import {
@@ -112,6 +113,7 @@ const App: React.FC = () => {
                 {/* Configurações */}
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="unidades" element={<UnitsPage />} />
+                <Route path="ajuda" element={<DocumentationPage />} />
                 <Route path="configuracoes" element={<CompanyProfilePage />} />
                 <Route path="sistema" element={<Navigate to="/app/configuracoes" replace />} />
 

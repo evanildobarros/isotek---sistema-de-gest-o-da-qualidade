@@ -7,59 +7,30 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Mapa de conhecimento do App (Campos e Regras de cada tela)
+// Mapa de conhecimento do App
 const getAppKnowledge = (path: string) => {
-    if (path.includes('contexto-analise')) {
+    if (path?.includes('contexto-analise')) {
         return `
       TELA: ANÁLISE SWOT (Contexto da Organização)
-      CAMPOS DO FORMULÁRIO:
-      1. Tipo: Força (Interno/Positivo), Fraqueza (Interno/Negativo), Oportunidade (Externo/Positivo), Ameaça (Externo/Negativo).
-      2. Descrição: O texto detalhado do item.
-      
-      SUA MISSÃO: Ajude o usuário a preencher. Se ele perguntar "O que colocar em Forças?", dê exemplos reais como "Equipe treinada", "Patente própria". Explique a diferença entre fatores internos e externos.
+      CAMPOS: Força, Fraqueza, Oportunidade, Ameaça.
+      MISSÃO: Ajude a preencher fatores estratégicos internos e externos.
     `
     }
-
-    if (path.includes('saidas-nao-conformes')) {
+    if (path?.includes('saidas-nao-conformes')) {
         return `
-      TELA: REGISTRO DE NÃO CONFORMIDADE (RNC - Produto/Serviço)
-      CAMPOS DO FORMULÁRIO:
-      1. Descrição: O defeito exato (O que aconteceu?).
-      2. Origem: Opções [Produção, Fornecedor, Cliente/Reclamação].
-      3. Severidade: Opções [Baixa, Média, Crítica].
-      4. Disposição: O que fazer com a peça agora? (Retrabalho, Refugo, Concessão).
-      
-      SUA MISSÃO: Oriente o preenchimento técnico. Ajude a classificar a severidade. Se o usuário disser "O cliente reclamou", sugira selecionar Origem: "Cliente/Reclamação".
+      TELA: RNC (Não Conformidade)
+      CAMPOS: Origem (Produção/Fornecedor), Severidade, Disposição.
+      MISSÃO: Ajude a descrever a falha tecnicamente e sugerir a disposição correta.
     `
     }
-
-    if (path.includes('matriz-riscos')) {
+    if (path?.includes('matriz-riscos')) {
         return `
-      TELA: MATRIZ DE RISCOS E OPORTUNIDADES
-      CAMPOS DO FORMULÁRIO:
-      1. Tipo: Risco (Negativo) ou Oportunidade (Positivo).
-      2. Probabilidade: Nota de 1 (Muito Raro) a 5 (Quase Certo).
-      3. Impacto: Nota de 1 (Insignificante) a 5 (Catastrófico).
-      4. Plano de Ação: O que fazer para mitigar ou aproveitar.
-      
-      SUA MISSÃO: Ajude a calibrar a nota de Probabilidade x Impacto. Sugira planos de ação (ex: "Para risco de falta de luz, sugira Gerador").
+      TELA: GESTÃO DE RISCOS
+      CAMPOS: Tipo (Risco/Oportunidade), Probabilidade (1-5), Impacto (1-5).
+      MISSÃO: Ajude a classificar o nível do risco e sugerir planos de ação.
     `
     }
-
-    if (path.includes('partes-interessadas')) {
-        return `
-      TELA: PARTES INTERESSADAS
-      CAMPOS DO FORMULÁRIO:
-      1. Nome: Quem é? (Ex: Clientes, Governo, Vizinhos).
-      2. Tipo: Categoria (Cliente, Fornecedor, Regulador...).
-      3. Necessidades: O que é obrigatório para eles?
-      4. Expectativas: O que seria desejável?
-      
-      SUA MISSÃO: Ajude a diferenciar "Necessidade" (mandatório) de "Expectativa" (desejável).
-    `
-    }
-
-    return "TELA GERAL: O usuário está navegando no sistema. Responda dúvidas gerais sobre ISO 9001:2015."
+    return "TELA GERAL: O usuário está navegando no sistema SGQ ISO 9001."
 }
 
 serve(async (req) => {
@@ -68,37 +39,42 @@ serve(async (req) => {
     try {
         const { query, context } = await req.json()
 
-        // 1. Obter o conhecimento específico da tela atual
         const specificKnowledge = getAppKnowledge(context || '')
 
-        // 2. Montar o Prompt de Sistema Robusto
         const systemPrompt = `
-      VOCÊ É: O Isotek AI, um consultor sênior de Qualidade (ISO 9001) e ESPECIALISTA neste software.
+      Você é o Isotek AI, um consultor especialista em ISO 9001:2015.
       
-      OBJETIVO: Orientar o usuário a PREENCHER O FORMULÁRIO da tela atual corretamente.
-      
-      REGRA DE OURO: Seja prático. Use os nomes exatos dos campos do formulário listados abaixo.
-      
-      CONTEXTO ATUAL:
+      CONTEXTO DO USUÁRIO:
       ${specificKnowledge}
       
-      PERGUNTA DO USUÁRIO: "${query}"
+      DIRETRIZES:
+      - Seja direto e profissional.
+      - Use formatação Markdown (negrito, listas).
+      - Responda em português do Brasil.
+      - Foco total em ajudar a preencher o formulário atual.
       
-      RESPOSTA (Mantenha curto, use Markdown, máx 3 parágrafos):
+      PERGUNTA: ${query}
     `
 
-        // 3. Chamar o Gemini
+        // Chamada à API do Gemini
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] })
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: systemPrompt }] }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 1024,
+                    }
+                })
             }
         )
 
         if (!response.ok) {
-            throw new Error(`Gemini API Error: ${response.statusText}`)
+            const err = await response.text()
+            throw new Error(`Gemini API Error: ${err}`)
         }
 
         const data = await response.json()
@@ -109,6 +85,7 @@ serve(async (req) => {
         })
 
     } catch (error) {
+        console.error("Erro na Edge Function:", error)
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })

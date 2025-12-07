@@ -80,45 +80,24 @@ REGRAS:
 
             const fullPrompt = `${systemContext}\n\n**PERGUNTA:** ${userMessage.content}`;
 
-            // Get API key from environment variable (secure for production)
-            const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+            console.log('📡 Enviando requisição para Edge Function...');
 
-            console.log('🔑 API Key presente:', !!GEMINI_API_KEY);
-            console.log('🔑 API Key (primeiros 10 chars):', GEMINI_API_KEY?.substring(0, 10) + '...');
-
-            if (!GEMINI_API_KEY) {
-                throw new Error('API Key não configurada. Adicione VITE_GEMINI_API_KEY ao .env e reinicie o servidor.');
-            }
-
-            console.log('📡 Enviando requisição para Gemini...');
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: fullPrompt }] }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 1024,
-                        }
-                    })
+            // Chamar a Edge Function do Supabase (que faz a chamada para DeepSeek)
+            const response = await supabase.functions.invoke('ai-advisor', {
+                body: {
+                    query: userMessage.content,
+                    context: location.pathname
                 }
-            );
+            });
 
-            console.log('📡 Response status:', response.status);
+            console.log('📡 Response:', response);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('❌ Erro da API Gemini:', errorData);
-                throw new Error(`Erro na API: ${response.status} - ${errorData?.error?.message || 'Erro desconhecido'}`);
+            if (response.error) {
+                console.error('❌ Erro da Edge Function:', response.error);
+                throw new Error(response.error.message || 'Erro ao chamar o assistente AI');
             }
 
-            const data = await response.json();
-            console.log('✅ Resposta recebida:', data);
-
-            const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+            const answer = response.data?.answer ||
                 'Desculpe, não consegui processar sua solicitação.';
 
             const assistantMessage: Message = {

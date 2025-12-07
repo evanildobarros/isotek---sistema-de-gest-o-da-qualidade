@@ -44,6 +44,7 @@ export enum IsoSection {
   UNITS = 'Minhas Unidades',
   COMPANY_PROFILE = 'Perfil da Empresa',
   USER_PROFILE = 'Meu Perfil',
+  SUPPORT = 'Suporte',
 }
 
 
