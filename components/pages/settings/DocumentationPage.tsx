@@ -1,127 +1,65 @@
 import React from 'react';
+import { BookOpen, Map, FileText, CheckCircle, Search, PlayCircle } from 'lucide-react';
 import { PageHeader } from '../../common/PageHeader';
-import { BookOpen, Target, Shield, FileText, Settings, Users, BarChart3, Briefcase } from 'lucide-react';
-
-interface DocCardProps {
-    title: string;
-    description: string;
-    icon: React.ElementType;
-    category: string;
-}
-
-const DocCard: React.FC<DocCardProps> = ({ title, description, icon: Icon, category }) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer group">
-        <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-lg ${category === 'Estratégia' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' :
-                category === 'Execução' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
-                    'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                }`}>
-                <Icon className="w-6 h-6" />
-            </div>
-            <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-[#025159] transition-colors">{title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
-            </div>
-        </div>
-    </div>
-);
 
 export const DocumentationPage: React.FC = () => {
-    const docs: DocCardProps[] = [
-        // Estratégia
+    const sections = [
         {
-            title: 'Como fazer a Análise SWOT',
-            description: 'Guia passo a passo para identificar Forças, Fraquezas, Oportunidades e Ameaças.',
-            icon: Target,
-            category: 'Estratégia'
+            title: 'Planejamento Estratégico',
+            icon: Map,
+            color: 'bg-purple-100 text-purple-600',
+            items: ['Como fazer a Análise SWOT', 'Definindo Partes Interessadas', 'Matriz de Riscos e Oportunidades']
         },
         {
-            title: 'Matriz de Riscos e Oportunidades',
-            description: 'Aprenda a classificar e tratar riscos conforme a ISO 9001.',
-            icon: Shield,
-            category: 'Estratégia'
-        },
-        // Execução
-        {
-            title: 'Gestão de Documentos (GED)',
-            description: 'Como criar, revisar e aprovar documentos controlados.',
+            title: 'Execução e Operação',
             icon: FileText,
-            category: 'Execução'
+            color: 'bg-blue-100 text-blue-600',
+            items: ['Gestão de Documentos (GED)', 'Controle de Fornecedores', 'Matriz de Competências']
         },
         {
-            title: 'Avaliação de Fornecedores',
-            description: 'Critérios e fluxo para qualificação de fornecedores.',
-            icon: Users,
-            category: 'Execução'
-        },
-        // Melhoria
-        {
-            title: 'Registrando RNCs',
-            description: 'Fluxo correto para registrar e tratar não conformidades.',
-            icon: Settings,
-            category: 'Melhoria'
-        },
-        {
-            title: 'Realizando Auditorias',
-            description: 'Planejamento e execução de auditorias internas.',
-            icon: Briefcase,
-            category: 'Melhoria'
-        },
-        {
-            title: 'Indicadores de Desempenho',
-            description: 'Como definir e monitorar seus KPIs no dashboard.',
-            icon: BarChart3,
-            category: 'Melhoria'
+            title: 'Melhoria Contínua',
+            icon: CheckCircle,
+            color: 'bg-green-100 text-green-600',
+            items: ['Registrando uma RNC', 'Realizando Auditorias', 'Ações Corretivas']
         }
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="p-6 space-y-6">
             <PageHeader
-                icon={BookOpen}
                 title="Documentação do Sistema"
-                subtitle="Manuais e tutoriais de uso"
+                subtitle="Manuais, tutoriais e guias de uso do Isotek."
             />
 
-            <div className="grid gap-8">
-                {/* Seção Estratégia */}
-                <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                        <span className="w-2 h-8 bg-purple-500 rounded-full"></span>
-                        Estratégia e Planejamento
-                    </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {docs.filter(d => d.category === 'Estratégia').map((doc, idx) => (
-                            <DocCard key={idx} {...doc} />
-                        ))}
-                    </div>
-                </section>
+            {/* Search Bar Placeholder */}
+            <div className="relative max-w-2xl">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                    type="text"
+                    placeholder="O que você precisa aprender hoje?"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#025159]/20 transition-all shadow-sm"
+                />
+            </div>
 
-                {/* Seção Execução */}
-                <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                        <span className="w-2 h-8 bg-blue-500 rounded-full"></span>
-                        Execução e Operação
-                    </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {docs.filter(d => d.category === 'Execução').map((doc, idx) => (
-                            <DocCard key={idx} {...doc} />
-                        ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {sections.map((section, idx) => (
+                    <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${section.color}`}>
+                                <section.icon size={20} />
+                            </div>
+                            <h3 className="font-semibold text-gray-900">{section.title}</h3>
+                        </div>
+                        <div className="p-2">
+                            {section.items.map((item, i) => (
+                                <button key={i} className="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between group transition-colors">
+                                    <span className="text-sm text-gray-600 group-hover:text-gray-900">{item}</span>
+                                    <PlayCircle size={16} className="text-gray-300 group-hover:text-[#025159]" />
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </section>
-
-                {/* Seção Melhoria */}
-                <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                        <span className="w-2 h-8 bg-green-500 rounded-full"></span>
-                        Avaliação e Melhoria
-                    </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {docs.filter(d => d.category === 'Melhoria').map((doc, idx) => (
-                            <DocCard key={idx} {...doc} />
-                        ))}
-                    </div>
-                </section>
+                ))}
             </div>
         </div>
     );

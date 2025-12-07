@@ -158,13 +158,6 @@ const menuGroups: MenuGroup[] = [
             section: IsoSection.COMPETENCIES_TRAINING,
             path: '/app/treinamentos',
             icon: GraduationCap
-          },
-          // Suporte
-          {
-            label: 'Documentação',
-            icon: BookOpen,
-            section: IsoSection.SUPPORT,
-            path: '/app/ajuda'
           }
         ]
       },
@@ -235,6 +228,19 @@ const menuGroups: MenuGroup[] = [
             icon: AlertTriangle
           }
         ]
+      },
+      {
+        sectionNumber: '',
+        sectionTitle: 'Documentação',
+        icon: BookOpen,
+        items: [
+          {
+            label: 'Ajuda e Tutoriais',
+            section: IsoSection.SUPPORT,
+            path: '/app/ajuda',
+            icon: BookOpen
+          }
+        ]
       }
     ]
   }
@@ -262,6 +268,12 @@ const settingsGroup: MenuSection = {
       section: IsoSection.COMPANY_PROFILE,
       path: '/app/configuracoes',
       icon: Settings
+    },
+    {
+      label: 'Suporte Técnico',
+      section: IsoSection.SUPPORT,
+      path: '/app/suporte',
+      icon: HelpingHand
     }
   ]
 };
