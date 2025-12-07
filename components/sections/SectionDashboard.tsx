@@ -400,7 +400,7 @@ export const SectionDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Chart 2: NC by Dept */}
+        {/* Chart 2: NC by Dept - DONUT CHART */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">NCs por Origem</h3>
@@ -408,19 +408,51 @@ export const SectionDashboard: React.FC = () => {
               <MoreHorizontal size={20} />
             </button>
           </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={metrics.ncByDept} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={100} />
-                <Tooltip
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="value" fill="#025159" radius={[0, 4, 4, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex items-center justify-center gap-8">
+            {/* Donut Chart */}
+            <div className="w-48 h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={metrics.ncByDept}
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {metrics.ncByDept.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={['#025159', '#3F858C', '#A67458', '#7AB8BF', '#64748b'][index % 5]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [`${value} registros`, 'Quantidade']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Legenda */}
+            <div className="space-y-3">
+              {metrics.ncByDept.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-3">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: ['#025159', '#3F858C', '#A67458', '#7AB8BF', '#64748b'][index % 5] }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                    <span className="text-xs text-gray-400">{item.value} registro{item.value !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+              ))}
+              {metrics.ncByDept.length === 0 && (
+                <p className="text-sm text-gray-400">Nenhum dado disponível</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -429,7 +461,7 @@ export const SectionDashboard: React.FC = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-900">Tarefas Pendentes</h3>
-          <button 
+          <button
             onClick={() => navigate('/app/planos-de-acao')}
             className="text-sm text-[#025159] font-medium hover:underline"
           >
@@ -460,7 +492,7 @@ export const SectionDashboard: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => navigate('/app/planos-de-acao')}
                   className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors"
                 >

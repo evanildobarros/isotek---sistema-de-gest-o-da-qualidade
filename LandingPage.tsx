@@ -294,29 +294,37 @@ export const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* LOGOS DE EMPRESAS PARCEIRAS */}
+            {/* EMPRESAS QUE CONFIAM NA ISOTEK */}
             {companyLogos.length > 0 && (
-                <section className="py-16 bg-white border-b border-gray-100">
+                <section className="py-20 bg-gradient-to-b from-white to-gray-50">
                     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <p className="text-center text-gray-500 text-sm mb-10">
-                            Equipes de várias empresas confiam nas nossas soluções
-                        </p>
-                        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                        {/* Título da seção */}
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl md:text-3xl font-bold text-[#025159] mb-3">
+                                Empresas que Confiam na Isotek
+                            </h2>
+                            <p className="text-gray-500 text-base max-w-xl mx-auto">
+                                Organizações de diversos setores utilizam nossa plataforma para alcançar a excelência em gestão da qualidade
+                            </p>
+                        </div>
+
+                        {/* Grid de logos */}
+                        <div className="flex flex-wrap justify-center items-center gap-10 md:gap-16">
                             {companyLogos.map((company) => (
                                 <div
                                     key={company.id}
-                                    className="opacity-70 hover:opacity-100 transition-opacity"
+                                    className="group p-4 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-300"
                                     title={company.name}
                                 >
                                     {company.logo_url ? (
                                         <img
                                             src={company.logo_url}
                                             alt={company.name}
-                                            style={{ height: '8rem' }}
-                                            className="w-auto object-contain grayscale hover:grayscale-0 transition-all"
+                                            style={{ height: '5rem' }}
+                                            className="w-auto object-contain grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all duration-300"
                                         />
                                     ) : (
-                                        <span className="text-xl font-bold text-gray-800">
+                                        <span className="text-xl font-bold text-gray-600 group-hover:text-[#025159]">
                                             {company.name}
                                         </span>
                                     )}
