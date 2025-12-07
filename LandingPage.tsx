@@ -2,11 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, X, Shield, BarChart3, Users, CheckCircle2, FileText, TrendingUp } from 'lucide-react';
 import logo from './assets/isotek-logo.png';
+import { supabase } from './lib/supabase';
+
+interface CompanyLogo {
+    id: string;
+    name: string;
+    logo_url: string | null;
+}
 
 export const LandingPage: React.FC = () => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [companyLogos, setCompanyLogos] = useState<CompanyLogo[]>([]);
 
     // 1. MENU FIXO (Sticky Navbar logic)
     useEffect(() => {
@@ -20,6 +28,31 @@ export const LandingPage: React.FC = () => {
 
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Buscar logos das empresas cadastradas
+    useEffect(() => {
+        const fetchCompanyLogos = async () => {
+            try {
+                console.log('🔍 Buscando logos das empresas...');
+                const { data, error } = await supabase
+                    .from('company_info')
+                    .select('id, name, logo_url')
+                    .neq('logo_url', '')
+                    .not('logo_url', 'is', null)
+                    .limit(6);
+
+                console.log('📦 Dados retornados:', data);
+                console.log('❌ Erro:', error);
+
+                if (!error && data && data.length > 0) {
+                    setCompanyLogos(data);
+                }
+            } catch (err) {
+                console.error('Erro ao buscar logos:', err);
+            }
+        };
+        fetchCompanyLogos();
     }, []);
 
     const handleLoginClick = () => {
@@ -241,7 +274,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* D. DEPOIMENTO (FileText) */}
-            <section className="py-24 bg-[#7AB8BF] relative min-h-screen flex items-center">
+            <section className="py-16 bg-[#7AB8BF] relative flex items-center">
                 <div className="max-w-4xl mx-auto px-4 text-center">
                     <div className="mb-8 flex justify-center">
                         <FileText size={64} className="text-[#A67458] opacity-80" fill="currentColor" />
@@ -260,6 +293,39 @@ export const LandingPage: React.FC = () => {
                     </div>
                 </div>
             </section>
+
+            {/* LOGOS DE EMPRESAS PARCEIRAS */}
+            {companyLogos.length > 0 && (
+                <section className="py-16 bg-white border-b border-gray-100">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <p className="text-center text-gray-500 text-sm mb-10">
+                            Equipes de várias empresas confiam nas nossas soluções
+                        </p>
+                        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                            {companyLogos.map((company) => (
+                                <div
+                                    key={company.id}
+                                    className="opacity-70 hover:opacity-100 transition-opacity"
+                                    title={company.name}
+                                >
+                                    {company.logo_url ? (
+                                        <img
+                                            src={company.logo_url}
+                                            alt={company.name}
+                                            style={{ height: '8rem' }}
+                                            className="w-auto object-contain grayscale hover:grayscale-0 transition-all"
+                                        />
+                                    ) : (
+                                        <span className="text-xl font-bold text-gray-800">
+                                            {company.name}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* E. RODAPÉ PROFISSIONAL (Split Footer) */}
             <footer id="contato" className="flex flex-col md:flex-row">

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, Loader2, Minimize2, HelpCircle } from 'lucide-react';
+import { X, Send, Bot, User, Loader2, Minimize2, HelpCircle, RefreshCw } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import ReactMarkdown from 'react-markdown';
@@ -9,7 +9,47 @@ interface Message {
     role: 'user' | 'assistant';
     content: string;
     timestamp: Date;
+    isError?: boolean;
 }
+
+// Mensagens de erro amigáveis baseadas no código de erro
+const getErrorMessage = (error: any): { message: string; canRetry: boolean } => {
+    const code = error?.code || error?.data?.code;
+
+    switch (code) {
+        case 'RATE_LIMIT_EXCEEDED':
+            return {
+                message: '⏳ Você atingiu o limite de mensagens. Aguarde 1 minuto e tente novamente.',
+                canRetry: false
+            };
+        case 'API_RATE_LIMIT':
+            return {
+                message: '🔄 Serviço temporariamente sobrecarregado. Tente novamente em alguns segundos.',
+                canRetry: true
+            };
+        case 'API_NOT_CONFIGURED':
+        case 'API_AUTH_ERROR':
+            return {
+                message: '⚙️ O assistente está temporariamente indisponível. Entre em contato com o suporte.',
+                canRetry: false
+            };
+        case 'EMPTY_QUERY':
+            return {
+                message: '📝 Por favor, digite uma pergunta.',
+                canRetry: false
+            };
+        case 'INTERNAL_ERROR':
+            return {
+                message: '⚠️ Ocorreu um erro inesperado. Tente novamente.',
+                canRetry: true
+            };
+        default:
+            return {
+                message: `❌ ${error?.message || error?.data?.error || 'Erro ao processar sua solicitação.'}`,
+                canRetry: true
+            };
+    }
+};
 
 export const AiChatWidget: React.FC = () => {
     const location = useLocation();
@@ -25,6 +65,7 @@ export const AiChatWidget: React.FC = () => {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -40,61 +81,82 @@ export const AiChatWidget: React.FC = () => {
         }
     }, [isOpen, isMinimized]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    // Prepara o histórico para enviar à API (últimas 6 mensagens, excluindo a mensagem de boas-vindas)
+    const getHistoryForAPI = () => {
+        return messages
+            .filter(m => m.id !== '1' && !m.isError) // Exclui boas-vindas e erros
+            .slice(-6) // Últimas 6 mensagens
+            .map(m => ({ role: m.role, content: m.content }));
+    };
+
+    const handleSend = async (retryMessage?: string) => {
+        const messageToSend = retryMessage || input.trim();
+        if (!messageToSend || isLoading) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: input.trim(),
+            content: messageToSend,
             timestamp: new Date()
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        // Só adiciona a mensagem do usuário se não for retry
+        if (!retryMessage) {
+            setMessages(prev => [...prev, userMessage]);
+        }
         setInput('');
         setIsLoading(true);
+        setLastFailedMessage(null);
 
         try {
-            // Build contextual system prompt
-            let systemContext = `Você é o **Isotek AI**, um consultor sênior especialista em ISO 9001:2015 e Sistemas de Gestão da Qualidade (SGQ).
-
-REGRAS:
-- Responda SEMPRE em português brasileiro
-- Seja CONCISO e DIRETO (máximo 3 parágrafos curtos)
-- Use linguagem profissional mas acessível
-- Quando aplicável, cite o requisito ISO específico (ex: "Conforme ISO 9001:2015 - 8.7...")
-- Se não souber algo, admita e sugira consultar um especialista
-- NÃO invente informações técnicas
-- Formate sua resposta em Markdown quando útil (listas, negrito, etc.)`;
-
-            const path = location.pathname;
-            if (path.includes('/contexto-analise') || path.includes('/definicao-estrategica')) {
-                systemContext += `\n\nCONTEXTO: Análise SWOT e Definição Estratégica (ISO 9001 - 4.1/4.2).`;
-            } else if (path.includes('/saidas-nao-conformes') || path.includes('/acoes-corretivas')) {
-                systemContext += `\n\nCONTEXTO: RNC/Ação Corretiva (ISO 9001 - 8.7/10.2).`;
-            } else if (path.includes('/auditorias')) {
-                systemContext += `\n\nCONTEXTO: Auditorias Internas (ISO 9001 - 9.2).`;
-            } else if (path.includes('/matriz-riscos')) {
-                systemContext += `\n\nCONTEXTO: Gestão de Riscos (ISO 9001 - 6.1).`;
-            }
-
-            const fullPrompt = `${systemContext}\n\n**PERGUNTA:** ${userMessage.content}`;
-
             console.log('📡 Enviando requisição para Edge Function...');
 
-            // Chamar a Edge Function do Supabase (que faz a chamada para DeepSeek)
+            // Chamar a Edge Function do Supabase com histórico
             const response = await supabase.functions.invoke('ai-advisor', {
                 body: {
-                    query: userMessage.content,
-                    context: location.pathname
+                    query: messageToSend,
+                    context: location.pathname,
+                    history: getHistoryForAPI()
                 }
             });
 
             console.log('📡 Response:', response);
 
+            // Verificar erros específicos
             if (response.error) {
                 console.error('❌ Erro da Edge Function:', response.error);
-                throw new Error(response.error.message || 'Erro ao chamar o assistente AI');
+                const { message, canRetry } = getErrorMessage(response.error);
+
+                if (canRetry) {
+                    setLastFailedMessage(messageToSend);
+                }
+
+                setMessages(prev => [...prev, {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    content: message,
+                    timestamp: new Date(),
+                    isError: true
+                }]);
+                return;
+            }
+
+            // Verificar erro no body da resposta
+            if (response.data?.error) {
+                const { message, canRetry } = getErrorMessage(response.data);
+
+                if (canRetry) {
+                    setLastFailedMessage(messageToSend);
+                }
+
+                setMessages(prev => [...prev, {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    content: message,
+                    timestamp: new Date(),
+                    isError: true
+                }]);
+                return;
             }
 
             const answer = response.data?.answer ||
@@ -110,15 +172,27 @@ REGRAS:
             setMessages(prev => [...prev, assistantMessage]);
         } catch (error: any) {
             console.error('❌ Erro ao chamar AI:', error);
-            const errorMessage = error?.message || 'Erro desconhecido';
+            const { message, canRetry } = getErrorMessage(error);
+
+            if (canRetry) {
+                setLastFailedMessage(messageToSend);
+            }
+
             setMessages(prev => [...prev, {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: `❌ ${errorMessage}`,
-                timestamp: new Date()
+                content: message,
+                timestamp: new Date(),
+                isError: true
             }]);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleRetry = () => {
+        if (lastFailedMessage) {
+            handleSend(lastFailedMessage);
         }
     };
 
@@ -129,24 +203,36 @@ REGRAS:
         }
     };
 
-    // Quick suggestions based on current page
+    // Quick suggestions based on current page - expandido
     const getSuggestions = (): string[] => {
         const path = location.pathname;
 
-        if (path.includes('/contexto-analise')) {
-            return ['Como fazer uma análise SWOT?', 'Quais são as partes interessadas típicas?'];
+        if (path.includes('/contexto-analise') || path.includes('/definicao-estrategica')) {
+            return ['Como fazer uma análise SWOT?', 'Quais são as partes interessadas?'];
         }
-        if (path.includes('/saidas-nao-conformes') || path.includes('/acoes-corretivas')) {
+        if (path.includes('/saidas-nao-conformes')) {
+            return ['Como descrever uma não conformidade?', 'Quais são as disposições possíveis?'];
+        }
+        if (path.includes('/acoes-corretivas')) {
             return ['Como usar os 5 Porquês?', 'O que é uma ação corretiva eficaz?'];
         }
         if (path.includes('/auditorias')) {
             return ['Como preparar uma auditoria interna?', 'Quais são os critérios de auditoria?'];
         }
         if (path.includes('/matriz-riscos')) {
-            return ['Como avaliar riscos?', 'O que é matriz de probabilidade x impacto?'];
+            return ['Como avaliar riscos?', 'O que é matriz probabilidade x impacto?'];
         }
         if (path.includes('/indicadores')) {
             return ['Como definir KPIs?', 'O que são metas SMART?'];
+        }
+        if (path.includes('/documentos')) {
+            return ['Como controlar versões de documentos?', 'O que é informação documentada?'];
+        }
+        if (path.includes('/fornecedores')) {
+            return ['Como avaliar fornecedores?', 'Quais critérios de qualificação usar?'];
+        }
+        if (path.includes('/analise-critica')) {
+            return ['O que incluir na análise crítica?', 'Quais são as entradas requeridas?'];
         }
         return ['O que é ISO 9001?', 'Quais são os requisitos principais?'];
     };
@@ -215,7 +301,9 @@ REGRAS:
                             >
                                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.role === 'user'
                                     ? 'bg-[#025159] text-white'
-                                    : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white'
+                                    : message.isError
+                                        ? 'bg-red-100 text-red-600'
+                                        : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white'
                                     }`}>
                                     {message.role === 'user' ? (
                                         <User className="w-4 h-4" />
@@ -225,7 +313,9 @@ REGRAS:
                                 </div>
                                 <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${message.role === 'user'
                                     ? 'bg-[#025159] text-white rounded-tr-sm'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
+                                    : message.isError
+                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-tl-sm'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
                                     }`}>
                                     <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
                                         <ReactMarkdown>
@@ -257,6 +347,19 @@ REGRAS:
 
                         <div ref={messagesEndRef} />
                     </div>
+
+                    {/* Retry button */}
+                    {lastFailedMessage && !isLoading && (
+                        <div className="px-4 pb-2">
+                            <button
+                                onClick={handleRetry}
+                                className="w-full flex items-center justify-center gap-2 text-sm px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                Tentar novamente
+                            </button>
+                        </div>
+                    )}
 
                     {/* Suggestions */}
                     {messages.length <= 2 && !isLoading && (
@@ -290,7 +393,7 @@ REGRAS:
                                 disabled={isLoading}
                             />
                             <button
-                                onClick={handleSend}
+                                onClick={() => handleSend()}
                                 disabled={!input.trim() || isLoading}
                                 className="p-2.5 bg-[#025159] text-white rounded-xl hover:bg-[#3F858C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
