@@ -187,9 +187,9 @@ serve(async (req) => {
         const systemPrompt = buildSystemPrompt(specificKnowledge, historyText)
         const fullPrompt = `${systemPrompt}\n\n**PERGUNTA ATUAL:** ${query}`
 
-        // Chamada à API do Gemini
+        // Chamada à API do Gemini - usando modelo 1.5-flash (mais estável e eficiente)
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -197,7 +197,7 @@ serve(async (req) => {
                     contents: [{ parts: [{ text: fullPrompt }] }],
                     generationConfig: {
                         temperature: 0.7,
-                        maxOutputTokens: 1024,
+                        maxOutputTokens: 512, // Reduzido para economizar cota
                     },
                     safetySettings: [
                         { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -209,11 +209,12 @@ serve(async (req) => {
 
         if (!response.ok) {
             const errorText = await response.text()
-            console.error('Gemini API Error:', response.status, errorText)
+            // Log apenas no servidor, não enviar detalhes ao cliente
+            console.error('Gemini API Error:', response.status)
 
             if (response.status === 429) {
                 return new Response(JSON.stringify({
-                    error: 'Serviço de IA sobrecarregado. Tente novamente em alguns segundos.',
+                    error: 'O serviço de IA está temporariamente sobrecarregado. Aguarde alguns segundos e tente novamente.',
                     code: 'API_RATE_LIMIT'
                 }), {
                     status: 429,
@@ -231,7 +232,14 @@ serve(async (req) => {
                 })
             }
 
-            throw new Error(`Gemini API Error: ${response.status}`)
+            // Erro genérico - não expor detalhes técnicos
+            return new Response(JSON.stringify({
+                error: 'Serviço de IA temporariamente indisponível. Tente novamente em alguns segundos.',
+                code: 'API_ERROR'
+            }), {
+                status: 503,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
         }
 
         const data = await response.json()
