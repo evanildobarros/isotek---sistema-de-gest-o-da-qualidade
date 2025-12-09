@@ -43,6 +43,7 @@ const getAppKnowledge = (path: string) => {
       TELA: RNC - REGISTRO DE NÃO CONFORMIDADE (ISO 9001 - 8.7)
       CAMPOS: Origem (Produção/Fornecedor/Cliente), Descrição, Severidade, Disposição.
       MISSÃO: Ajude a descrever a falha tecnicamente e sugerir a disposição correta (segregar, retrabalhar, aceitar com concessão, sucatar).
+      ANÁLISE DE IMAGEM: Se o usuário enviar uma foto, analise o defeito visualmente e descreva tecnicamente o problema observado.
     `
     }
     if (path?.includes('acoes-corretivas')) {
@@ -64,6 +65,7 @@ const getAppKnowledge = (path: string) => {
       TELA: AUDITORIAS INTERNAS (ISO 9001 - 9.2)
       CAMPOS: Escopo, Critérios, Auditor, Data, Constatações, Não conformidades.
       MISSÃO: Ajude a elaborar checklists, avaliar conformidade e redigir constatações.
+      ANÁLISE DE IMAGEM: Se o usuário enviar uma foto, analise evidências de conformidade/não conformidade visíveis.
     `
     }
     if (path?.includes('indicadores')) {
@@ -78,6 +80,7 @@ const getAppKnowledge = (path: string) => {
       TELA: CONTROLE DE DOCUMENTOS (ISO 9001 - 7.5)
       CAMPOS: Código, Título, Versão, Status (Rascunho/Vigente/Obsoleto), Responsável.
       MISSÃO: Ajude a estruturar documentos, definir códigos e controlar versões.
+      ANÁLISE DE IMAGEM: Se o usuário enviar uma foto de documento, ajude a identificar informações e sugerir melhorias.
     `
     }
     if (path?.includes('fornecedores')) {
@@ -104,11 +107,12 @@ const getAppKnowledge = (path: string) => {
     return `
       TELA GERAL: O usuário está navegando no sistema SGQ ISO 9001.
       MISSÃO: Forneça orientações gerais sobre gestão da qualidade e norma ISO 9001:2015.
+      ANÁLISE DE IMAGEM: Se o usuário enviar uma imagem, analise-a no contexto de gestão da qualidade.
     `
 }
 
-// Sistema de prompt otimizado
-const buildSystemPrompt = (knowledge: string, history: string) => `
+// Sistema de prompt otimizado (com suporte a imagem)
+const buildSystemPrompt = (knowledge: string, history: string, hasImage: boolean) => `
 Você é o **Isotek AI**, um consultor sênior especialista em ISO 9001:2015 e Sistemas de Gestão da Qualidade (SGQ).
 
 ${knowledge}
@@ -121,6 +125,7 @@ DIRETRIZES OBRIGATÓRIAS:
 5. Se não souber algo, admita e sugira consultar um especialista
 6. NÃO invente informações técnicas ou normativas
 7. Foco total em ajudar o usuário com a tarefa atual
+${hasImage ? `8. ANÁLISE DE IMAGEM: Analise a imagem enviada no contexto de gestão da qualidade ISO 9001. Descreva o que você vê e forneça insights relevantes.` : ''}
 
 ${history ? `HISTÓRICO DA CONVERSA:\n${history}\n` : ''}
 `
@@ -148,11 +153,15 @@ serve(async (req) => {
     }
 
     try {
-        const { query, context, history } = await req.json()
+        const { query, context, history, image } = await req.json()
 
-        if (!query || typeof query !== 'string' || query.trim().length === 0) {
+        // Validação: precisa ter query OU imagem
+        const hasQuery = query && typeof query === 'string' && query.trim().length > 0
+        const hasImage = image && typeof image === 'string' && image.length > 0
+
+        if (!hasQuery && !hasImage) {
             return new Response(JSON.stringify({
-                error: 'Por favor, digite uma pergunta.',
+                error: 'Por favor, digite uma pergunta ou envie uma imagem.',
                 code: 'EMPTY_QUERY'
             }), {
                 status: 400,
@@ -184,20 +193,49 @@ serve(async (req) => {
                 .join('\n')
         }
 
-        const systemPrompt = buildSystemPrompt(specificKnowledge, historyText)
-        const fullPrompt = `${systemPrompt}\n\n**PERGUNTA ATUAL:** ${query}`
+        const systemPrompt = buildSystemPrompt(specificKnowledge, historyText, hasImage)
+        const userMessage = hasQuery ? query : 'Analise esta imagem no contexto de gestão da qualidade ISO 9001.'
+        const fullPrompt = `${systemPrompt}\n\n**PERGUNTA ATUAL:** ${userMessage}`
 
-        // Chamada à API do Gemini - usando modelo 1.5-flash (mais estável e eficiente)
+        // Construir o conteúdo da requisição (texto + imagem se houver)
+        const parts: Array<{ text?: string; inline_data?: { mime_type: string; data: string } }> = []
+
+        // Adicionar texto
+        parts.push({ text: fullPrompt })
+
+        // Adicionar imagem se existir
+        if (hasImage) {
+            // Extrair dados da imagem base64
+            // Formato esperado: "data:image/jpeg;base64,/9j/4AAQSkZ..."
+            const matches = image.match(/^data:(.+);base64,(.+)$/)
+            if (matches && matches.length === 3) {
+                const mimeType = matches[1]
+                const base64Data = matches[2]
+
+                // Validar tipo de imagem
+                const validMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+                if (validMimeTypes.includes(mimeType)) {
+                    parts.push({
+                        inline_data: {
+                            mime_type: mimeType,
+                            data: base64Data
+                        }
+                    })
+                }
+            }
+        }
+
+        // Chamada à API do Gemini - usando modelo 1.5-flash (suporta multimodal)
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: fullPrompt }] }],
+                    contents: [{ parts }],
                     generationConfig: {
                         temperature: 0.7,
-                        maxOutputTokens: 512, // Reduzido para economizar cota
+                        maxOutputTokens: hasImage ? 1024 : 512, // Mais tokens para análise de imagem
                     },
                     safetySettings: [
                         { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },

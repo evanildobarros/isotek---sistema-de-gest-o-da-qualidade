@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, Loader2, Minimize2, HelpCircle, RefreshCw } from 'lucide-react';
+import { X, Send, Bot, User, Loader2, Minimize2, HelpCircle, RefreshCw, Image, Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import ReactMarkdown from 'react-markdown';
@@ -10,6 +10,7 @@ interface Message {
     content: string;
     timestamp: Date;
     isError?: boolean;
+    imageUrl?: string; // URL da imagem anexada
 }
 
 // Mensagens de erro amigáveis baseadas no código de erro
@@ -35,7 +36,7 @@ const getErrorMessage = (error: any): { message: string; canRetry: boolean } => 
             };
         case 'EMPTY_QUERY':
             return {
-                message: '📝 Por favor, digite uma pergunta.',
+                message: '📝 Por favor, digite uma pergunta ou envie uma imagem.',
                 canRetry: false
             };
         case 'INTERNAL_ERROR':
@@ -51,6 +52,9 @@ const getErrorMessage = (error: any): { message: string; canRetry: boolean } => 
     }
 };
 
+// Limite de tamanho de imagem (5MB)
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
 export const AiChatWidget: React.FC = () => {
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
@@ -59,15 +63,19 @@ export const AiChatWidget: React.FC = () => {
         {
             id: '1',
             role: 'assistant',
-            content: 'Olá! 👋 Sou o **Isotek AI**, seu consultor especialista em ISO 9001:2015.\n\nComo posso ajudá-lo hoje?',
+            content: 'Olá! 👋 Sou o **Isotek AI**, seu consultor especialista em ISO 9001:2015.\n\n📷 Você pode enviar **imagens** de documentos, produtos ou processos para análise!\n\nComo posso ajudá-lo hoje?',
             timestamp: new Date()
         }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
+    const [lastFailedImage, setLastFailedImage] = useState<string | null>(null);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null); // Base64 da imagem selecionada
+    const [imagePreview, setImagePreview] = useState<string | null>(null); // Preview visual
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Scroll to bottom when new messages arrive
     useEffect(() => {
@@ -89,34 +97,119 @@ export const AiChatWidget: React.FC = () => {
             .map(m => ({ role: m.role, content: m.content }));
     };
 
-    const handleSend = async (retryMessage?: string) => {
+    // Converter arquivo para base64
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
+    // Processar imagem (usado tanto para seleção quanto para paste)
+    const processImageFile = async (file: File) => {
+        // Validar tipo de arquivo
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor, selecione apenas arquivos de imagem.');
+            return false;
+        }
+
+        // Validar tamanho
+        if (file.size > MAX_IMAGE_SIZE) {
+            alert('A imagem é muito grande. O tamanho máximo é 5MB.');
+            return false;
+        }
+
+        try {
+            const base64 = await fileToBase64(file);
+            setSelectedImage(base64);
+            setImagePreview(base64);
+            return true;
+        } catch (error) {
+            console.error('Erro ao processar imagem:', error);
+            alert('Erro ao processar a imagem. Tente novamente.');
+            return false;
+        }
+    };
+
+    // Handler para seleção de imagem via input file
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        await processImageFile(file);
+
+        // Limpar input para permitir selecionar o mesmo arquivo novamente
+        e.target.value = '';
+    };
+
+    // Handler para colar (Ctrl+V) - suporta texto e imagens
+    const handlePaste = async (e: React.ClipboardEvent) => {
+        const clipboardData = e.clipboardData;
+
+        // Verificar se há imagens no clipboard
+        const items = clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+
+            // Se for uma imagem
+            if (item.type.startsWith('image/')) {
+                e.preventDefault(); // Prevenir paste padrão de texto
+                const file = item.getAsFile();
+                if (file) {
+                    await processImageFile(file);
+                }
+                return; // Sair após processar a imagem
+            }
+        }
+
+        // Se não for imagem, deixar o comportamento padrão de paste de texto
+    };
+
+    // Remover imagem selecionada
+    const handleRemoveImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+    };
+
+    const handleSend = async (retryMessage?: string, retryImage?: string) => {
         const messageToSend = retryMessage || input.trim();
-        if (!messageToSend || isLoading) return;
+        const imageToSend = retryImage || selectedImage;
+
+        // Precisa ter texto OU imagem
+        if (!messageToSend && !imageToSend) return;
+        if (isLoading) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: messageToSend,
-            timestamp: new Date()
+            content: messageToSend || '📷 [Imagem enviada para análise]',
+            timestamp: new Date(),
+            imageUrl: imageToSend || undefined
         };
 
         // Só adiciona a mensagem do usuário se não for retry
-        if (!retryMessage) {
+        if (!retryMessage && !retryImage) {
             setMessages(prev => [...prev, userMessage]);
         }
         setInput('');
+        setSelectedImage(null);
+        setImagePreview(null);
         setIsLoading(true);
         setLastFailedMessage(null);
+        setLastFailedImage(null);
 
         try {
-            console.log('📡 Enviando requisição para Edge Function...');
+            console.log('📡 Enviando requisição para Edge Function...', { hasImage: !!imageToSend });
 
-            // Chamar a Edge Function do Supabase com histórico
+            // Chamar a Edge Function do Supabase com histórico e imagem
             const response = await supabase.functions.invoke('ai-advisor', {
                 body: {
                     query: messageToSend,
                     context: location.pathname,
-                    history: getHistoryForAPI()
+                    history: getHistoryForAPI(),
+                    image: imageToSend || undefined
                 }
             });
 
@@ -129,6 +222,7 @@ export const AiChatWidget: React.FC = () => {
 
                 if (canRetry) {
                     setLastFailedMessage(messageToSend);
+                    setLastFailedImage(imageToSend);
                 }
 
                 setMessages(prev => [...prev, {
@@ -147,6 +241,7 @@ export const AiChatWidget: React.FC = () => {
 
                 if (canRetry) {
                     setLastFailedMessage(messageToSend);
+                    setLastFailedImage(imageToSend);
                 }
 
                 setMessages(prev => [...prev, {
@@ -176,6 +271,7 @@ export const AiChatWidget: React.FC = () => {
 
             if (canRetry) {
                 setLastFailedMessage(messageToSend);
+                setLastFailedImage(imageToSend);
             }
 
             setMessages(prev => [...prev, {
@@ -191,8 +287,8 @@ export const AiChatWidget: React.FC = () => {
     };
 
     const handleRetry = () => {
-        if (lastFailedMessage) {
-            handleSend(lastFailedMessage);
+        if (lastFailedMessage || lastFailedImage) {
+            handleSend(lastFailedMessage || undefined, lastFailedImage || undefined);
         }
     };
 
@@ -317,6 +413,16 @@ export const AiChatWidget: React.FC = () => {
                                         ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-tl-sm'
                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
                                     }`}>
+                                    {/* Preview da imagem se existir */}
+                                    {message.imageUrl && (
+                                        <div className="mb-2">
+                                            <img
+                                                src={message.imageUrl}
+                                                alt="Imagem anexada"
+                                                className="max-w-full h-auto rounded-lg max-h-32 object-cover"
+                                            />
+                                        </div>
+                                    )}
                                     <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
                                         <ReactMarkdown>
                                             {message.content}
@@ -349,7 +455,7 @@ export const AiChatWidget: React.FC = () => {
                     </div>
 
                     {/* Retry button */}
-                    {lastFailedMessage && !isLoading && (
+                    {(lastFailedMessage || lastFailedImage) && !isLoading && (
                         <div className="px-4 pb-2">
                             <button
                                 onClick={handleRetry}
@@ -362,7 +468,7 @@ export const AiChatWidget: React.FC = () => {
                     )}
 
                     {/* Suggestions */}
-                    {messages.length <= 2 && !isLoading && (
+                    {messages.length <= 2 && !isLoading && !imagePreview && (
                         <div className="px-4 pb-2">
                             <p className="text-xs text-gray-500 mb-2">💡 Sugestões:</p>
                             <div className="flex flex-wrap gap-2">
@@ -379,29 +485,70 @@ export const AiChatWidget: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Image Preview */}
+                    {imagePreview && (
+                        <div className="px-4 pb-2">
+                            <div className="relative inline-block">
+                                <img
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    className="h-16 w-auto rounded-lg border border-gray-300 dark:border-gray-600"
+                                />
+                                <button
+                                    onClick={handleRemoveImage}
+                                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                    title="Remover imagem"
+                                >
+                                    <Trash2 className="w-3 h-3" />
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">📷 Imagem pronta para enviar</p>
+                        </div>
+                    )}
+
                     {/* Input */}
                     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageSelect}
+                            className="hidden"
+                        />
+
                         <div className="flex gap-2">
+                            {/* Image upload button */}
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isLoading}
+                                className="p-2.5 text-gray-500 hover:text-[#03A6A6] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Anexar imagem"
+                            >
+                                <Image className="w-5 h-5" />
+                            </button>
+
                             <textarea
                                 ref={inputRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Pergunte sobre ISO 9001..."
+                                onPaste={handlePaste}
+                                placeholder={imagePreview ? "Adicione uma pergunta (opcional)..." : "Cole uma imagem ou pergunte..."}
                                 rows={1}
                                 className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-[#025159] outline-none resize-none"
                                 disabled={isLoading}
                             />
                             <button
                                 onClick={() => handleSend()}
-                                disabled={!input.trim() || isLoading}
+                                disabled={(!input.trim() && !selectedImage) || isLoading}
                                 className="p-2.5 bg-[#025159] text-white rounded-xl hover:bg-[#3F858C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Send className="w-5 h-5" />
                             </button>
                         </div>
                         <p className="text-xs text-gray-400 mt-2 text-center">
-                            Powered by Google Gemini AI
+                            📷 Cole ou anexe imagens • Powered by Gemini AI
                         </p>
                     </div>
                 </>
