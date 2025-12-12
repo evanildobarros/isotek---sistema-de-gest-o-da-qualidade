@@ -5,6 +5,18 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import { Unit } from '../../../types';
 
+// Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
+const formatCNPJ = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  const limited = numbers.slice(0, 14);
+  let formatted = limited;
+  if (limited.length > 2) formatted = limited.slice(0, 2) + '.' + limited.slice(2);
+  if (limited.length > 5) formatted = formatted.slice(0, 6) + '.' + formatted.slice(6);
+  if (limited.length > 8) formatted = formatted.slice(0, 10) + '/' + formatted.slice(10);
+  if (limited.length > 12) formatted = formatted.slice(0, 15) + '-' + formatted.slice(15);
+  return formatted;
+};
+
 export const UnitsPage: React.FC = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
@@ -95,7 +107,7 @@ export const UnitsPage: React.FC = () => {
       name: unit.name,
       code: unit.code || '',
       is_headquarters: unit.is_headquarters,
-      cnpj: unit.cnpj || '',
+      cnpj: formatCNPJ(unit.cnpj || ''),
       address: unit.address || '',
       city: unit.city || '',
       state: unit.state || '',
@@ -127,12 +139,16 @@ export const UnitsPage: React.FC = () => {
 
     let error;
 
+    // Prepara dados para salvar (remove formatação do CNPJ)
+    const dataToSave = {
+      ...formData,
+      cnpj: formData.cnpj.replace(/\D/g, ''),
+    };
+
     if (editingUnit) {
       const { error: updateError } = await supabase
         .from('units')
-        .update({
-          ...formData,
-        })
+        .update(dataToSave)
         .eq('id', editingUnit.id);
       error = updateError;
     } else {
@@ -140,7 +156,7 @@ export const UnitsPage: React.FC = () => {
         .from('units')
         .insert([
           {
-            ...formData,
+            ...dataToSave,
             company_id: companyId,
           },
         ]);
@@ -236,7 +252,7 @@ export const UnitsPage: React.FC = () => {
                   </p>
                   {unit.cnpj && (
                     <p className="text-xs text-gray-500 mt-1">
-                      CNPJ: {unit.cnpj}
+                      CNPJ: {formatCNPJ(unit.cnpj)}
                     </p>
                   )}
                 </div>
@@ -329,7 +345,7 @@ export const UnitsPage: React.FC = () => {
                     type="text"
                     value={formData.cnpj}
                     onChange={(e) =>
-                      setFormData({ ...formData, cnpj: e.target.value })
+                      setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })
                     }
                     placeholder="00.000.000/0000-00"
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#025159] focus:border-transparent"

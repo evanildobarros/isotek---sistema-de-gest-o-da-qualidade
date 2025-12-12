@@ -26,6 +26,32 @@ import { PageHeader } from '../../common/PageHeader';
 import { getAvailablePlans, upgradePlan, downgradePlan, checkPlanLimits } from '../../../lib/utils/supabase';
 import type { Plan, PlanId, Invoice } from '../../../types';
 
+// Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
+const formatCNPJ = (value: string): string => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+
+    // Limita a 14 dígitos
+    const limited = numbers.slice(0, 14);
+
+    // Aplica a máscara
+    let formatted = limited;
+    if (limited.length > 2) {
+        formatted = limited.slice(0, 2) + '.' + limited.slice(2);
+    }
+    if (limited.length > 5) {
+        formatted = formatted.slice(0, 6) + '.' + formatted.slice(6);
+    }
+    if (limited.length > 8) {
+        formatted = formatted.slice(0, 10) + '/' + formatted.slice(10);
+    }
+    if (limited.length > 12) {
+        formatted = formatted.slice(0, 15) + '-' + formatted.slice(15);
+    }
+
+    return formatted;
+};
+
 export const CompanyProfilePage: React.FC = () => {
     const { company, refreshCompany } = useAuthContext();
     const [loading, setLoading] = useState(false);
@@ -61,7 +87,7 @@ export const CompanyProfilePage: React.FC = () => {
             setFormData({
                 name: company.name || '',
                 slogan: company.slogan || '',
-                cnpj: company.cnpj || '',
+                cnpj: formatCNPJ(company.cnpj || ''),
                 email: company.email || '',
                 phone: company.phone || '',
                 address: company.address || '',
@@ -139,7 +165,13 @@ export const CompanyProfilePage: React.FC = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Aplica formatação automática para campo CNPJ
+        if (name === 'cnpj') {
+            setFormData(prev => ({ ...prev, [name]: formatCNPJ(value) }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,7 +223,7 @@ export const CompanyProfilePage: React.FC = () => {
                 .update({
                     name: formData.name,
                     slogan: formData.slogan,
-                    cnpj: formData.cnpj,
+                    cnpj: formData.cnpj.replace(/\D/g, ''), // Remove formatação antes de salvar
                     email: formData.email,
                     phone: formData.phone,
                     address: formData.address,

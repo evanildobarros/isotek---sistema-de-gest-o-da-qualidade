@@ -22,6 +22,18 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import { Supplier, SupplierEvaluation } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
 
+// Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
+const formatCNPJ = (value: string): string => {
+    const numbers = value.replace(/\D/g, '');
+    const limited = numbers.slice(0, 14);
+    let formatted = limited;
+    if (limited.length > 2) formatted = limited.slice(0, 2) + '.' + limited.slice(2);
+    if (limited.length > 5) formatted = formatted.slice(0, 6) + '.' + formatted.slice(6);
+    if (limited.length > 8) formatted = formatted.slice(0, 10) + '/' + formatted.slice(10);
+    if (limited.length > 12) formatted = formatted.slice(0, 15) + '-' + formatted.slice(15);
+    return formatted;
+};
+
 const SuppliersPageContent: React.FC = () => {
     const { user, company } = useAuthContext();
     const [activeTab, setActiveTab] = useState<'directory' | 'evaluations'>('directory');
@@ -37,13 +49,21 @@ const SuppliersPageContent: React.FC = () => {
     const [evaluatingSupplier, setEvaluatingSupplier] = useState<Supplier | null>(null);
 
     // Forms
-    const [supplierForm, setSupplierForm] = useState({
+    const [supplierForm, setSupplierForm] = useState<{
+        name: string;
+        cnpj: string;
+        email: string;
+        phone: string;
+        category: string;
+        status: Supplier['status'];
+        blocked_reason: string;
+    }>({
         name: '',
         cnpj: '',
         email: '',
         phone: '',
         category: 'Matéria Prima',
-        status: 'em_analise' as const,
+        status: 'em_analise',
         blocked_reason: ''
     });
 
@@ -103,7 +123,7 @@ const SuppliersPageContent: React.FC = () => {
             setEditingSupplier(supplier);
             setSupplierForm({
                 name: supplier.name,
-                cnpj: supplier.cnpj || '',
+                cnpj: formatCNPJ(supplier.cnpj || ''),
                 email: supplier.email || '',
                 phone: supplier.phone || '',
                 category: supplier.category,
@@ -132,6 +152,7 @@ const SuppliersPageContent: React.FC = () => {
         try {
             const payload = {
                 ...supplierForm,
+                cnpj: supplierForm.cnpj.replace(/\D/g, ''), // Remove formatação antes de salvar
                 company_id: company.id
             };
 
@@ -354,7 +375,7 @@ const SuppliersPageContent: React.FC = () => {
                                                         </h3>
                                                         {supplier.cnpj && (
                                                             <p className="text-xs text-gray-500 truncate">
-                                                                {supplier.cnpj}
+                                                                {formatCNPJ(supplier.cnpj)}
                                                             </p>
                                                         )}
                                                     </div>
@@ -431,7 +452,7 @@ const SuppliersPageContent: React.FC = () => {
                                                         </h3>
                                                         {supplier.cnpj && (
                                                             <p className="text-xs text-gray-500 mt-0.5">
-                                                                {supplier.cnpj}
+                                                                {formatCNPJ(supplier.cnpj)}
                                                             </p>
                                                         )}
                                                         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -590,7 +611,7 @@ const SuppliersPageContent: React.FC = () => {
                                     <input
                                         type="text"
                                         value={supplierForm.cnpj}
-                                        onChange={e => setSupplierForm({ ...supplierForm, cnpj: e.target.value })}
+                                        onChange={e => setSupplierForm({ ...supplierForm, cnpj: formatCNPJ(e.target.value) })}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                                         placeholder="00.000.000/0000-00"
                                     />

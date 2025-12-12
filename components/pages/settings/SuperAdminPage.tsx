@@ -9,6 +9,18 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Company } from '../../../types';
 
+// Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
+const formatCNPJ = (value: string): string => {
+    const numbers = value.replace(/\D/g, '');
+    const limited = numbers.slice(0, 14);
+    let formatted = limited;
+    if (limited.length > 2) formatted = limited.slice(0, 2) + '.' + limited.slice(2);
+    if (limited.length > 5) formatted = formatted.slice(0, 6) + '.' + formatted.slice(6);
+    if (limited.length > 8) formatted = formatted.slice(0, 10) + '/' + formatted.slice(10);
+    if (limited.length > 12) formatted = formatted.slice(0, 15) + '-' + formatted.slice(15);
+    return formatted;
+};
+
 export const SuperAdminPage: React.FC = () => {
     const { user } = useAuthContext();
     const navigate = useNavigate();
@@ -204,7 +216,7 @@ export const SuperAdminPage: React.FC = () => {
         setEditingCompany(company);
         setEditForm({
             name: company.name,
-            cnpj: company.cnpj || '',
+            cnpj: formatCNPJ(company.cnpj || ''),
             email: company.email || '',
             plan: company.plan || 'start',
             status: company.status || 'active'
@@ -221,7 +233,7 @@ export const SuperAdminPage: React.FC = () => {
                 .from('company_info')
                 .update({
                     name: editForm.name,
-                    cnpj: editForm.cnpj,
+                    cnpj: editForm.cnpj.replace(/\D/g, ''), // Remove formatação antes de salvar
                     email: editForm.email,
                     plan: editForm.plan,
                     status: editForm.status,
@@ -313,7 +325,7 @@ export const SuperAdminPage: React.FC = () => {
             // 2. Call RPC to create Company and Link User (Bypassing RLS)
             const { error: rpcError } = await supabase.rpc('create_client_company', {
                 p_name: companyForm.name,
-                p_cnpj: companyForm.cnpj,
+                p_cnpj: companyForm.cnpj.replace(/\D/g, ''), // Remove formatação antes de salvar
                 p_plan: companyForm.plan,
                 p_owner_id: userId,
                 p_monthly_revenue: companyForm.plan === 'enterprise' ? 999 : (companyForm.plan === 'pro' ? 299 : 99)
@@ -456,7 +468,7 @@ export const SuperAdminPage: React.FC = () => {
                                             )}
                                             <div>
                                                 <p className="font-medium text-gray-900">{company.name}</p>
-                                                <p className="text-xs text-gray-500">{company.cnpj || 'Sem CNPJ'}</p>
+                                                <p className="text-xs text-gray-500">{company.cnpj ? formatCNPJ(company.cnpj) : 'Sem CNPJ'}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -567,7 +579,7 @@ export const SuperAdminPage: React.FC = () => {
                                         <input
                                             type="text"
                                             value={companyForm.cnpj}
-                                            onChange={e => setCompanyForm({ ...companyForm, cnpj: e.target.value })}
+                                            onChange={e => setCompanyForm({ ...companyForm, cnpj: formatCNPJ(e.target.value) })}
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none"
                                             placeholder="00.000.000/0000-00"
                                         />
@@ -699,7 +711,7 @@ export const SuperAdminPage: React.FC = () => {
                                 <input
                                     type="text"
                                     value={editForm.cnpj}
-                                    onChange={e => setEditForm({ ...editForm, cnpj: e.target.value })}
+                                    onChange={e => setEditForm({ ...editForm, cnpj: formatCNPJ(e.target.value) })}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
                             </div>
