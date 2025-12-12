@@ -352,7 +352,7 @@ export const AiChatWidget: React.FC = () => {
 
     return (
         <div
-            className={`fixed bottom-6 right-6 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col ${isMinimized ? 'w-72 h-14' : 'w-80 h-[550px] max-h-[80vh]'
+            className={`fixed bottom-6 right-6 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col ${isMinimized ? 'w-72 h-14' : 'w-96 h-[600px] max-h-[85vh]'
                 }`}
         >
             {/* Header */}
@@ -547,9 +547,6 @@ export const AiChatWidget: React.FC = () => {
                                 <Send className="w-5 h-5" />
                             </button>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2 text-center">
-                            📷 Cole ou anexe imagens • Powered by Gemini AI
-                        </p>
                     </div>
                 </>
             )}

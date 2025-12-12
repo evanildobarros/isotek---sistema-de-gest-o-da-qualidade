@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon, GitBranch, Send, XCircle, Search } from 'lucide-react';
+import { Upload, X, FileText, Download, Loader2, Plus, Eye, CheckCircle, File, Image as ImageIcon, GitBranch, Send, XCircle, Search, Sparkles, BookOpen, FileCheck, Copy, Pencil, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
+import ReactMarkdown from 'react-markdown';
 
 type DocumentStatus = 'vigente' | 'rascunho' | 'obsoleto' | 'em_aprovacao';
 
@@ -18,6 +19,12 @@ interface Document {
     file_size: number;
     uploaded_at: string;
     owner_id: string;
+    elaborated_by?: string;
+    approved_by?: string;
+    approved_at?: string;
+    // From view
+    elaborated_by_name?: string;
+    approved_by_name?: string;
 }
 
 export const DocumentsPage: React.FC = () => {
@@ -39,10 +46,26 @@ export const DocumentsPage: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
+    const [elaboratedBy, setElaboratedBy] = useState('');
 
     // Version control states
     const [isVersionMode, setIsVersionMode] = useState(false);
     const [versionBaseDocument, setVersionBaseDocument] = useState<Document | null>(null);
+
+    // AI Generator states
+    const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState(false);
+    const [generatingDocument, setGeneratingDocument] = useState(false);
+    const [generatedContent, setGeneratedContent] = useState('');
+    const [selectedDocType, setSelectedDocType] = useState<'manual_qualidade' | 'procedimento' | 'politica_qualidade'>('manual_qualidade');
+    const [showPreviewGenerated, setShowPreviewGenerated] = useState(false);
+
+    // Edit mode states
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+    const [editContent, setEditContent] = useState('');
+    const [loadingEditContent, setLoadingEditContent] = useState(false);
+    const [savingEdit, setSavingEdit] = useState(false);
+    const [editPreviewMode, setEditPreviewMode] = useState(false);
 
     useEffect(() => {
         fetchDocuments();
@@ -89,7 +112,7 @@ export const DocumentsPage: React.FC = () => {
             }
 
             const { data, error } = await supabase
-                .from('documents')
+                .from('documents_with_responsibles')
                 .select('*')
                 .eq('company_id', company.id)
                 .order('uploaded_at', { ascending: false });
@@ -137,6 +160,7 @@ export const DocumentsPage: React.FC = () => {
         setSelectedFile(null);
         setIsVersionMode(false);
         setVersionBaseDocument(null);
+        setElaboratedBy('');
     };
 
     const handleFileSelect = (file: File) => {
@@ -241,7 +265,8 @@ export const DocumentsPage: React.FC = () => {
                         file_name: selectedFile.name,
                         file_size: selectedFile.size,
                         owner_id: user.id,
-                        company_id: company.id
+                        company_id: company.id,
+                        elaborated_by: user.id
                     }
                 ]);
 
@@ -353,10 +378,14 @@ export const DocumentsPage: React.FC = () => {
                 // console.log('✅ Versões antigas obsoletadas com sucesso');
             }
 
-            // 3. Aprovar o documento atual
+            // 3. Aprovar o documento atual (registrando quem aprovou)
             const { error: approveError } = await supabase
                 .from('documents')
-                .update({ status: 'vigente' })
+                .update({
+                    status: 'vigente',
+                    approved_by: user?.id,
+                    approved_at: new Date().toISOString()
+                })
                 .eq('id', docId);
 
             if (approveError) {
@@ -429,6 +458,175 @@ export const DocumentsPage: React.FC = () => {
         return ['pdf', 'png', 'jpg', 'jpeg'].includes(ext || '');
     };
 
+    // AI Document Generator
+    const handleGenerateDocument = async () => {
+        if (!company) {
+            toast.error('Empresa não encontrada');
+            return;
+        }
+
+        setGeneratingDocument(true);
+        setGeneratedContent('');
+
+        try {
+            const { data, error } = await supabase.functions.invoke('generate-manual', {
+                body: {
+                    companyName: company.name,
+                    cnpj: company.cnpj || '',
+                    documentType: selectedDocType
+                }
+            });
+
+            if (error) throw error;
+
+            if (data?.error) {
+                throw new Error(data.error);
+            }
+
+            setGeneratedContent(data.content);
+            setShowPreviewGenerated(true);
+            toast.success('Documento gerado com sucesso!');
+        } catch (error: any) {
+            console.error('Erro ao gerar documento:', error);
+            toast.error('Erro ao gerar documento: ' + (error.message || 'Tente novamente'));
+        } finally {
+            setGeneratingDocument(false);
+        }
+    };
+
+    const handleSaveGeneratedDocument = async () => {
+        if (!generatedContent || !user || !company) return;
+
+        try {
+            const docTitles: Record<string, { title: string; code: string }> = {
+                'manual_qualidade': { title: 'Manual da Qualidade', code: 'MQ-001' },
+                'procedimento': { title: 'Procedimento Operacional Padrão', code: 'PQ-001' },
+                'politica_qualidade': { title: 'Política da Qualidade', code: 'POL-001' }
+            };
+
+            const docInfo = docTitles[selectedDocType];
+
+            // Criar um Blob com o conteúdo Markdown
+            const blob = new Blob([generatedContent], { type: 'text/markdown' });
+            const fileName = `${docInfo.code}_${Date.now()}.md`;
+            const filePath = `${user.id}/${fileName}`;
+
+            // Upload para o Storage
+            const { error: uploadError } = await supabase.storage
+                .from('documents')
+                .upload(filePath, blob);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('documents')
+                .getPublicUrl(filePath);
+
+            // Inserir no banco
+            const { error: insertError } = await supabase
+                .from('documents')
+                .insert([{
+                    title: `${docInfo.title} - ${company.name}`,
+                    code: docInfo.code,
+                    version: '1.0',
+                    status: 'rascunho',
+                    file_url: publicUrl,
+                    file_name: fileName,
+                    file_size: blob.size,
+                    owner_id: user.id,
+                    company_id: company.id,
+                    elaborated_by: user.id
+                }]);
+
+            if (insertError) throw insertError;
+
+            toast.success('Documento salvo com sucesso!');
+            setIsGeneratorModalOpen(false);
+            setShowPreviewGenerated(false);
+            setGeneratedContent('');
+            fetchDocuments();
+        } catch (error: any) {
+            console.error('Erro ao salvar documento:', error);
+            toast.error('Erro ao salvar: ' + error.message);
+        }
+    };
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(generatedContent);
+        toast.success('Copiado para a área de transferência!');
+    };
+
+    // Função para abrir modal de edição
+    const handleOpenEditModal = async (doc: Document) => {
+        setEditingDocument(doc);
+        setEditContent('');
+        setEditPreviewMode(false);
+        setIsEditModalOpen(true);
+        setLoadingEditContent(true);
+
+        try {
+            // Carregar conteúdo do arquivo .md
+            const response = await fetch(doc.file_url);
+            if (!response.ok) throw new Error('Falha ao carregar arquivo');
+
+            const content = await response.text();
+            setEditContent(content);
+        } catch (error) {
+            console.error('Erro ao carregar conteúdo:', error);
+            toast.error('Erro ao carregar conteúdo do documento');
+            setIsEditModalOpen(false);
+        } finally {
+            setLoadingEditContent(false);
+        }
+    };
+
+    // Função para salvar edição
+    const handleSaveEdit = async () => {
+        if (!editingDocument || !user || !company) return;
+
+        setSavingEdit(true);
+
+        try {
+            // Criar novo blob com conteúdo editado
+            const blob = new Blob([editContent], { type: 'text/markdown' });
+            const fileName = editingDocument.file_name;
+            const filePath = `${user.id}/${fileName}`;
+
+            // Deletar arquivo antigo e fazer upload do novo
+            await supabase.storage
+                .from('documents')
+                .remove([filePath]);
+
+            const { error: uploadError } = await supabase.storage
+                .from('documents')
+                .upload(filePath, blob, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            // Atualizar tamanho do arquivo no banco
+            const { error: updateError } = await supabase
+                .from('documents')
+                .update({
+                    file_size: blob.size,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', editingDocument.id);
+
+            if (updateError) throw updateError;
+
+            toast.success('Documento salvo com sucesso!');
+            setIsEditModalOpen(false);
+            setEditingDocument(null);
+            setEditContent('');
+            fetchDocuments();
+        } catch (error: any) {
+            console.error('Erro ao salvar:', error);
+            toast.error('Erro ao salvar: ' + error.message);
+        } finally {
+            setSavingEdit(false);
+        }
+    };
+
     return (
         <div className="p-4 md:p-6 lg:p-8 space-y-6">
             {/* Header */}
@@ -442,13 +640,22 @@ export const DocumentsPage: React.FC = () => {
                     </div>
                     <p className="text-gray-500 text-sm">Controle da Informação Documentada (ISO 9001: 7.5)</p>
                 </div>
-                <button
-                    onClick={() => setIsUploadModalOpen(true)}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors w-full md:w-auto"
-                >
-                    <Plus size={20} />
-                    <span>Novo Documento</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <button
+                        onClick={() => setIsGeneratorModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159]/10 text-[#025159] border border-[#025159]/30 font-medium rounded-lg hover:bg-[#025159]/20 transition-all w-full md:w-auto"
+                    >
+                        <Sparkles size={20} />
+                        <span>Gerar com IA</span>
+                    </button>
+                    <button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors w-full md:w-auto"
+                    >
+                        <Plus size={20} />
+                        <span>Novo Documento</span>
+                    </button>
+                </div>
             </div>
 
             {/* Status Filters */}
@@ -580,6 +787,18 @@ export const DocumentsPage: React.FC = () => {
                                         </span>
                                     </div>
 
+                                    {/* Responsáveis */}
+                                    {(doc.elaborated_by_name || doc.approved_by_name) && (
+                                        <div className="text-xs text-gray-500 mt-2 space-y-1">
+                                            {doc.elaborated_by_name && (
+                                                <p>📝 Elaborado: <span className="font-medium">{doc.elaborated_by_name}</span></p>
+                                            )}
+                                            {doc.approved_by_name && (
+                                                <p>✅ Aprovado: <span className="font-medium">{doc.approved_by_name}</span></p>
+                                            )}
+                                        </div>
+                                    )}
+
                                     {/* Actions */}
                                     <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
                                         {/* Sempre mostrar Visualizar (se aplicável) */}
@@ -598,16 +817,28 @@ export const DocumentsPage: React.FC = () => {
                                             </button>
                                         )}
 
-                                        {/* RASCUNHO: Solicitar Aprovação */}
+                                        {/* RASCUNHO: Editar + Solicitar Aprovação */}
                                         {doc.status === 'rascunho' && (
-                                            <button
-                                                onClick={() => handleRequestApproval(doc.id)}
-                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                                                title="Solicitar Aprovação"
-                                            >
-                                                <Send size={16} />
-                                                <span>Solicitar Aprovação</span>
-                                            </button>
+                                            <>
+                                                {doc.file_name.endsWith('.md') && (
+                                                    <button
+                                                        onClick={() => handleOpenEditModal(doc)}
+                                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                                                        title="Editar Documento"
+                                                    >
+                                                        <Pencil size={16} />
+                                                        <span>Editar</span>
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleRequestApproval(doc.id)}
+                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                                                    title="Solicitar Aprovação"
+                                                >
+                                                    <Send size={16} />
+                                                    <span>Solicitar Aprovação</span>
+                                                </button>
+                                            </>
                                         )}
 
                                         {/* EM APROVAÇÃO: Aprovar + Rejeitar */}
@@ -851,6 +1082,294 @@ export const DocumentsPage: React.FC = () => {
                                 <Download size={18} />
                                 <span>Baixar Arquivo</span>
                             </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* AI Generator Modal */}
+            {isGeneratorModalOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-[#025159]/5 flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-[#025159] rounded-xl">
+                                    <Sparkles className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">
+                                        Gerador de Documentos com IA
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        Crie documentos ISO 9001 automaticamente
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsGeneratorModalOpen(false);
+                                    setShowPreviewGenerated(false);
+                                    setGeneratedContent('');
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                            {!showPreviewGenerated ? (
+                                <div className="space-y-6">
+                                    {/* Document Type Selection */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                                            Selecione o tipo de documento:
+                                        </label>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <button
+                                                onClick={() => setSelectedDocType('manual_qualidade')}
+                                                className={`p-4 rounded-xl border-2 transition-all text-left ${selectedDocType === 'manual_qualidade'
+                                                    ? 'border-[#025159] bg-[#025159]/10'
+                                                    : 'border-gray-200 hover:border-[#025159]/50'
+                                                    }`}
+                                            >
+                                                <BookOpen className={`w-8 h-8 mb-2 ${selectedDocType === 'manual_qualidade' ? 'text-[#025159]' : 'text-gray-400'
+                                                    }`} />
+                                                <h4 className="font-semibold text-gray-900">Manual da Qualidade</h4>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Documento completo com todos os requisitos ISO 9001
+                                                </p>
+                                            </button>
+
+                                            <button
+                                                onClick={() => setSelectedDocType('procedimento')}
+                                                className={`p-4 rounded-xl border-2 transition-all text-left ${selectedDocType === 'procedimento'
+                                                    ? 'border-[#025159] bg-[#025159]/10'
+                                                    : 'border-gray-200 hover:border-[#025159]/50'
+                                                    }`}
+                                            >
+                                                <FileCheck className={`w-8 h-8 mb-2 ${selectedDocType === 'procedimento' ? 'text-[#025159]' : 'text-gray-400'
+                                                    }`} />
+                                                <h4 className="font-semibold text-gray-900">Procedimento (POP)</h4>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Procedimento Operacional Padrão estruturado
+                                                </p>
+                                            </button>
+
+                                            <button
+                                                onClick={() => setSelectedDocType('politica_qualidade')}
+                                                className={`p-4 rounded-xl border-2 transition-all text-left ${selectedDocType === 'politica_qualidade'
+                                                    ? 'border-[#025159] bg-[#025159]/10'
+                                                    : 'border-gray-200 hover:border-[#025159]/50'
+                                                    }`}
+                                            >
+                                                <FileText className={`w-8 h-8 mb-2 ${selectedDocType === 'politica_qualidade' ? 'text-[#025159]' : 'text-gray-400'
+                                                    }`} />
+                                                <h4 className="font-semibold text-gray-900">Política da Qualidade</h4>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Declaração de compromisso da direção
+                                                </p>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Company Info */}
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                            Documento será gerado para:
+                                        </h4>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-[#025159] rounded-lg flex items-center justify-center text-white font-bold">
+                                                {company?.name?.charAt(0) || 'E'}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">{company?.name || 'Sua Empresa'}</p>
+                                                {company?.cnpj && (
+                                                    <p className="text-xs text-gray-500">CNPJ: {company.cnpj}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                        <p className="text-sm text-blue-800">
+                                            💡 A IA irá gerar um documento profissional baseado nos requisitos da ISO 9001:2015.
+                                            Você poderá revisar e editar antes de salvar.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Preview Generated Content */
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-semibold text-gray-900">Documento Gerado:</h4>
+                                        <button
+                                            onClick={copyToClipboard}
+                                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                            <Copy size={14} />
+                                            Copiar
+                                        </button>
+                                    </div>
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 max-h-[50vh] overflow-y-auto prose prose-sm max-w-none">
+                                        <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 md:p-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 flex-shrink-0 bg-gray-50">
+                            {!showPreviewGenerated ? (
+                                <>
+                                    <button
+                                        onClick={() => setIsGeneratorModalOpen(false)}
+                                        className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleGenerateDocument}
+                                        disabled={generatingDocument}
+                                        className="flex-1 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {generatingDocument ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                <span>Gerando documento...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={20} />
+                                                <span>Gerar Documento</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => setShowPreviewGenerated(false)}
+                                        className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                    >
+                                        ← Voltar
+                                    </button>
+                                    <button
+                                        onClick={handleGenerateDocument}
+                                        disabled={generatingDocument}
+                                        className="flex-1 px-4 py-2.5 bg-amber-100 text-amber-700 font-medium rounded-lg hover:bg-amber-200 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Sparkles size={18} />
+                                        Gerar Novamente
+                                    </button>
+                                    <button
+                                        onClick={handleSaveGeneratedDocument}
+                                        className="flex-1 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle size={18} />
+                                        Salvar Documento
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Document Modal */}
+            {isEditModalOpen && editingDocument && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 rounded-xl">
+                                    <Pencil className="w-6 h-6 text-amber-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 truncate max-w-md">
+                                        Editar: {editingDocument.title}
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        {editingDocument.code} • v{editingDocument.version}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setEditPreviewMode(!editPreviewMode)}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${editPreviewMode
+                                            ? 'bg-[#025159] text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    {editPreviewMode ? '✏️ Editar' : '👁️ Preview'}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsEditModalOpen(false);
+                                        setEditingDocument(null);
+                                        setEditContent('');
+                                    }}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                >
+                                    <X size={20} className="text-gray-500" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-hidden p-4 md:p-6">
+                            {loadingEditContent ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#025159]" />
+                                </div>
+                            ) : editPreviewMode ? (
+                                <div className="h-full overflow-y-auto bg-white border border-gray-200 rounded-xl p-6 prose prose-sm max-w-none">
+                                    <ReactMarkdown>{editContent}</ReactMarkdown>
+                                </div>
+                            ) : (
+                                <textarea
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    className="w-full h-full p-4 border border-gray-300 rounded-xl font-mono text-sm resize-none focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                    placeholder="Conteúdo do documento em Markdown..."
+                                />
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 md:p-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 flex-shrink-0 bg-gray-50">
+                            <button
+                                onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingDocument(null);
+                                    setEditContent('');
+                                }}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                disabled={savingEdit || !editContent.trim()}
+                                className="flex-1 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {savingEdit ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span>Salvando...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={18} />
+                                        <span>Salvar Alterações</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

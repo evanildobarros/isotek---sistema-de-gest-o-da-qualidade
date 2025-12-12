@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, HelpCircle, ChevronRight, Sun, Moon, X, ExternalLink, Book, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check } from 'lucide-react';
+import { Bell, Search, ChevronRight, Sun, Moon, X, ExternalLink, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserDropdown } from './UserDropdown';
 import { IsoSection, Notification, NotificationType } from '../../types';
@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -294,7 +294,6 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
           <button
             onClick={() => {
               setShowNotifications(!showNotifications);
-              setShowHelp(false);
               if (!showNotifications) {
                 fetchNotifications(); // Refresh on open
               }
@@ -394,40 +393,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
           )}
         </div>
 
-        {/* Help */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowHelp(!showHelp);
-              setShowNotifications(false);
-            }}
-            className={`p-2 rounded-full transition-colors ${showHelp
-              ? 'text-[#025159] bg-[#025159]/10'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-              }`}
-          >
-            <HelpCircle size={20} />
-          </button>
 
-          {/* Help Dropdown */}
-          {showHelp && (
-            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 py-2 animate-fade-in">
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Ajuda & Suporte</h3>
-              </div>
-              <div className="py-1">
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2">
-                  <Book size={16} />
-                  Documentação
-                </button>
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2">
-                  <ExternalLink size={16} />
-                  Suporte Técnico
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* User Dropdown */}
         <div className="ml-2 pl-4 border-l border-gray-200 dark:border-gray-700">

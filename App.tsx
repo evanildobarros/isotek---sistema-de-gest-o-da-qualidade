@@ -52,7 +52,8 @@ import {
   UsersPage,
   UnitsPage,
   CompanyProfilePage,
-  SuperAdminPage
+  SuperAdminPage,
+  SupportPage
 } from './components/pages/settings';
 
 const App: React.FC = () => {
@@ -115,6 +116,7 @@ const App: React.FC = () => {
                 <Route path="unidades" element={<UnitsPage />} />
                 <Route path="ajuda" element={<DocumentationPage />} />
                 <Route path="configuracoes" element={<CompanyProfilePage />} />
+                <Route path="suporte" element={<SupportPage />} />
                 <Route path="sistema" element={<Navigate to="/app/configuracoes" replace />} />
 
                 {/* Legacy Routes Redirects (Optional, or keep for compatibility) */}
