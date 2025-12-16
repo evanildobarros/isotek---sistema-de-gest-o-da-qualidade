@@ -643,9 +643,9 @@ export const DocumentsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <button
                         onClick={() => setIsGeneratorModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159]/10 text-[#025159] border border-[#025159]/30 font-medium rounded-lg hover:bg-[#025159]/20 transition-all w-full md:w-auto"
+                        className="group flex items-center gap-3 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-xl hover:bg-[#3F858C] hover:shadow-lg hover:scale-[1.02] transition-all duration-200 w-full md:w-auto"
                     >
-                        <Sparkles size={20} />
+                        <Sparkles size={20} className="group-hover:animate-pulse" />
                         <span>Gerar com IA</span>
                     </button>
                     <button
@@ -1302,8 +1302,8 @@ export const DocumentsPage: React.FC = () => {
                                 <button
                                     onClick={() => setEditPreviewMode(!editPreviewMode)}
                                     className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${editPreviewMode
-                                            ? 'bg-[#025159] text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        ? 'bg-[#025159] text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
                                     {editPreviewMode ? '✏️ Editar' : '👁️ Preview'}

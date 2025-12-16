@@ -365,23 +365,38 @@ export const ScopePage: React.FC = () => {
 
                                         {/* Fluxo Visual */}
                                         <div className="flex-1 bg-gray-50 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 border border-gray-100">
+                                            {/* Seta inicial */}
+                                            <div className="hidden md:flex items-center text-gray-400">
+                                                <ArrowRight className="w-4 h-4" />
+                                            </div>
+
                                             <div className="flex-1 text-center md:text-left w-full">
                                                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Entradas</span>
                                                 <p className="text-sm font-medium text-gray-700">{process.inputs}</p>
                                             </div>
 
-                                            <div className="flex flex-col items-center justify-center px-4">
-                                                <div className="h-8 w-0.5 md:h-0.5 md:w-16 bg-gray-300 my-2 md:my-0 relative">
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:right-0 md:translate-x-1/2 md:-translate-y-1/2 text-gray-400">
-                                                        <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
-                                                    </div>
-                                                </div>
-                                                <span className="text-[10px] font-bold text-blue-600 uppercase mt-2 md:mt-1 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Processo</span>
+                                            {/* Seta após Entradas */}
+                                            <div className="flex items-center text-gray-400">
+                                                <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
+                                            </div>
+
+                                            <div className="flex flex-col items-center justify-center px-2">
+                                                <span className="text-[10px] font-bold text-blue-600 uppercase bg-blue-50 px-3 py-1 rounded-full border border-blue-100">Processo</span>
+                                            </div>
+
+                                            {/* Seta após Processo */}
+                                            <div className="flex items-center text-gray-400">
+                                                <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
                                             </div>
 
                                             <div className="flex-1 text-center md:text-left w-full">
                                                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Saídas</span>
                                                 <p className="text-sm font-medium text-gray-700">{process.outputs}</p>
+                                            </div>
+
+                                            {/* Seta final */}
+                                            <div className="hidden md:flex items-center text-gray-400">
+                                                <ArrowRight className="w-4 h-4" />
                                             </div>
                                         </div>
 
