@@ -17,7 +17,7 @@ export const DashboardLayout: React.FC = () => {
 
     const handleExitAuditorMode = () => {
         exitAuditorMode();
-        navigate('/auditor-portal');
+        navigate('/app/auditor-portal');
     };
 
     // Helper to determine active section for Header title

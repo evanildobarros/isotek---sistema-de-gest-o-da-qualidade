@@ -53,7 +53,7 @@ export const Login: React.FC = () => {
 
                 // Redirect based on role
                 if (profileData?.role === 'auditor') {
-                    navigate('/auditor-portal', { replace: true });
+                    navigate('/app/auditor-portal', { replace: true });
                 } else {
                     navigate('/app/dashboard', { replace: true });
                 }

@@ -306,7 +306,7 @@ const auditorPortalGroups: MenuGroup[] = [
           {
             label: 'Meus Clientes',
             section: IsoSection.CONTEXT_ANALYSIS,
-            path: '/app/portal-auditor',
+            path: '/app/auditor-portal',
             icon: Briefcase
           },
           {
@@ -619,7 +619,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                 <button
                   onClick={() => {
                     exitAuditorMode();
-                    navigate('/auditor-portal');
+                    navigate('/app/auditor-portal');
                   }}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors font-medium"
                 >

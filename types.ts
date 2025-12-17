@@ -418,8 +418,60 @@ export interface Audit {
   status: 'Agendada' | 'Em Andamento' | 'Concluída' | 'Atrasada';
   progress: number; // 0-100
   notes?: string; // Notas/observações adicionais
+  // Campos ISO 19011 (Auditoria 2.0)
+  objectives?: string; // Objetivos da auditoria
+  criteria?: string; // Critérios de auditoria (normas, documentos de referência)
+  audit_type?: 'internal' | 'supplier' | 'certification' | 'process' | 'product';
+  template_id?: string; // Template de checklist vinculado
   created_at?: string;
   updated_at?: string;
+}
+
+// ============================================================================
+// Tipos do Sistema de Checklist de Auditoria (Auditoria 2.0)
+// ============================================================================
+
+export interface AuditChecklistTemplate {
+  id: string;
+  company_id: string;
+  name: string;
+  description?: string;
+  category?: string; // Ex: "ISO 9001", "ISO 14001", "5S"
+  is_active: boolean;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AuditChecklistItem {
+  id: string;
+  template_id: string;
+  question: string;
+  help_text?: string; // Dicas para o auditor
+  category?: string; // Agrupamento (ex: "Liderança", "Operação")
+  iso_clause?: string; // Referência ISO (ex: "7.1.4")
+  order_index: number;
+  is_required: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type AuditResponseStatus = 'compliant' | 'non_compliant' | 'not_applicable' | 'pending';
+
+export interface AuditChecklistResponse {
+  id: string;
+  audit_id: string;
+  item_id: string;
+  status: AuditResponseStatus;
+  evidence_text?: string; // Obrigatório se non_compliant
+  evidence_url?: string; // URL do arquivo de evidência
+  notes?: string;
+  verified_by?: string;
+  verified_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  // Campos joined (para exibição)
+  item?: AuditChecklistItem;
 }
 
 export interface RiskTask {

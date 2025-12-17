@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Audit } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
+import { AuditChecklist } from '../auditor/AuditChecklist';
 
 const AuditsPageContent: React.FC = () => {
     const { user, company, effectiveCompanyId } = useAuthContext();
@@ -13,6 +14,7 @@ const AuditsPageContent: React.FC = () => {
     const [selectedAudit, setSelectedAudit] = useState<Audit | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [checklistAudit, setChecklistAudit] = useState<Audit | null>(null);
 
     useEffect(() => {
         if (effectiveCompanyId) {
@@ -100,10 +102,53 @@ const AuditsPageContent: React.FC = () => {
     };
 
     const handlePlay = (audit: Audit) => {
+        if (!audit.template_id) {
+            toast.warning('Esta auditoria não possui um template de checklist vinculado. Edite a auditoria e selecione um template.');
+            return;
+        }
+
+        // Atualizar status para "Em Andamento" se estiver "Agendada"
         if (audit.status === 'Agendada') {
-            toast.info(`Iniciando auditoria: ${audit.scope}`);
-        } else if (audit.status === 'Em Andamento') {
-            toast.info(`Continuando auditoria: ${audit.scope}`);
+            updateAuditStatus(audit, 'Em Andamento');
+        }
+
+        setChecklistAudit(audit);
+    };
+
+    const updateAuditStatus = async (audit: Audit, newStatus: Audit['status']) => {
+        try {
+            const { error } = await supabase
+                .from('audits')
+                .update({ status: newStatus })
+                .eq('id', audit.id);
+
+            if (error) throw error;
+            fetchAudits();
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+        }
+    };
+
+    const handleChecklistComplete = async () => {
+        if (!checklistAudit) return;
+
+        try {
+            const { error } = await supabase
+                .from('audits')
+                .update({
+                    status: 'Concluída',
+                    progress: 100
+                })
+                .eq('id', checklistAudit.id);
+
+            if (error) throw error;
+
+            toast.success('Auditoria concluída com sucesso!');
+            setChecklistAudit(null);
+            fetchAudits();
+        } catch (error) {
+            console.error('Erro ao concluir auditoria:', error);
+            toast.error('Erro ao concluir auditoria');
         }
     };
 
@@ -117,7 +162,10 @@ const AuditsPageContent: React.FC = () => {
             date: new Date().toISOString().split('T')[0],
             status: 'Agendada',
             progress: 0,
-            notes: ''
+            notes: '',
+            // Campos ISO 19011 (Auditoria 2.0)
+            objectives: '',
+            criteria: ''
         });
         setIsCreating(true);
         setIsModalOpen(true);
@@ -156,16 +204,19 @@ const AuditsPageContent: React.FC = () => {
                     .from('audits')
                     .insert([{
                         company_id: effectiveCompanyId,
-                        created_by: user?.id || null, // Add user id
+                        created_by: user?.id || null,
                         scope: selectedAudit.scope,
                         type: selectedAudit.type,
                         auditor: selectedAudit.auditor,
                         date: selectedAudit.date,
                         status: selectedAudit.status,
                         progress: selectedAudit.progress,
-                        notes: selectedAudit.notes || null
+                        notes: selectedAudit.notes || null,
+                        // Campos ISO 19011
+                        objectives: selectedAudit.objectives || null,
+                        criteria: selectedAudit.criteria || null
                     }])
-                    .select(); // Add select to get inserted data
+                    .select();
 
                 if (error) {
                     console.error('Erro do Supabase (INSERT):', error);
@@ -185,7 +236,10 @@ const AuditsPageContent: React.FC = () => {
                         date: selectedAudit.date,
                         status: selectedAudit.status,
                         progress: selectedAudit.progress,
-                        notes: selectedAudit.notes || null
+                        notes: selectedAudit.notes || null,
+                        // Campos ISO 19011
+                        objectives: selectedAudit.objectives || null,
+                        criteria: selectedAudit.criteria || null
                     })
                     .eq('id', selectedAudit.id)
                     .select(); // Add select to get updated data
@@ -583,12 +637,48 @@ const AuditsPageContent: React.FC = () => {
                                 />
                             </div>
 
+                            {/* Seção ISO 19011 - Planejamento */}
+                            <div className="col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                <h3 className="text-sm font-semibold text-[#025159] mb-3 flex items-center gap-2">
+                                    <ClipboardCheck size={16} />
+                                    Planejamento ISO 19011
+                                </h3>
+                            </div>
+
                             <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Objetivos da Auditoria
+                                    <span className="text-xs text-gray-400 ml-1">(ISO 19011: 5.5.2)</span>
+                                </label>
+                                <textarea
+                                    value={selectedAudit.objectives || ''}
+                                    onChange={(e) => setSelectedAudit({ ...selectedAudit, objectives: e.target.value })}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#BF7B54] focus:border-transparent resize-none"
+                                    placeholder="Ex: Verificar conformidade com requisitos da cláusula 7, avaliar eficácia dos processos de apoio..."
+                                />
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Critérios de Auditoria
+                                    <span className="text-xs text-gray-400 ml-1">(Normas/Documentos de Referência)</span>
+                                </label>
+                                <textarea
+                                    value={selectedAudit.criteria || ''}
+                                    onChange={(e) => setSelectedAudit({ ...selectedAudit, criteria: e.target.value })}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#BF7B54] focus:border-transparent resize-none"
+                                    placeholder="Ex: ISO 9001:2015, Manual da Qualidade, PO-001 - Controle de Documentos..."
+                                />
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Notas/Observações</label>
                                 <textarea
                                     value={selectedAudit.notes || ''}
                                     onChange={(e) => setSelectedAudit({ ...selectedAudit, notes: e.target.value })}
-                                    rows={3}
+                                    rows={2}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#BF7B54] focus:border-transparent resize-none"
                                     placeholder="Observações adicionais..."
                                 />
@@ -611,6 +701,15 @@ const AuditsPageContent: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal de Execução de Checklist */}
+            {checklistAudit && (
+                <AuditChecklist
+                    audit={checklistAudit}
+                    onClose={() => setChecklistAudit(null)}
+                    onComplete={handleChecklistComplete}
+                />
             )}
         </div>
     );

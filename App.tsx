@@ -76,18 +76,15 @@ const App: React.FC = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/super-admin" element={<SuperAdminPage />} />
 
-              {/* Auditor Portal - Protected but without DashboardLayout */}
-              <Route path="/auditor-portal" element={
-                <ProtectedRoute>
-                  <AuditorPortal />
-                </ProtectedRoute>
-              } />
+              {/* Auditor Portal - Redirect to new route inside DashboardLayout */}
+              <Route path="/auditor-portal" element={<Navigate to="/app/auditor-portal" replace />} />
 
               {/* Protected Routes */}
               <Route path="/app" element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                   <Route index element={<Navigate to="/app/dashboard" replace />} />
                   <Route path="dashboard" element={<SectionDashboard />} />
+                  <Route path="auditor-portal" element={<AuditorPortal />} />
                   <Route path="perfil" element={<SectionPerfil />} />
 
                   {/* Grupo A: Estratégia (Plan) */}

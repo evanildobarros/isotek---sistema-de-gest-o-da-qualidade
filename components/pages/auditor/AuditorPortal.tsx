@@ -108,41 +108,11 @@ export const AuditorPortal: React.FC = () => {
         }
     };
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-[#025159] rounded-lg">
-                                <LayoutDashboard className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold text-gray-900">Portal do Auditor</h1>
-                                <p className="text-xs text-gray-500">Isotek SGQ</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <User size={16} />
-                                <span>{user?.email}</span>
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                                <LogOut size={16} />
-                                <span className="hidden sm:inline">Sair</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
 
+    return (
+        <div className="min-h-full">
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Welcome */}
+            <div className="py-2">
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-900">
                         Olá, Auditor! 👋
@@ -282,7 +252,7 @@ export const AuditorPortal: React.FC = () => {
                         </p>
                     </div>
                 )}
-            </main>
+            </div>
         </div>
     );
 };
