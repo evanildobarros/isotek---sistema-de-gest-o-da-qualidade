@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { useAuditor } from '../../../contexts/AuditorContext';
+import { GamificationCard } from '../../auditor/GamificationCard';
 
 interface Assignment {
     id: string;
@@ -113,7 +114,7 @@ export const AuditorPortal: React.FC = () => {
         <div className="min-h-full">
             {/* Main Content */}
             <div className="py-2">
-                <div className="mb-8">
+                <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">
                         Olá, Auditor! 👋
                     </h2>
@@ -122,9 +123,14 @@ export const AuditorPortal: React.FC = () => {
                     </p>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                {/* Widget de Gamificação - Largura Total */}
+                <div className="mb-6">
+                    <GamificationCard className="w-full" />
+                </div>
+
+                {/* KPI Cards - 3 Colunas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-yellow-100 rounded-xl">
                                 <CalendarCheck className="w-6 h-6 text-yellow-600" />
@@ -135,7 +141,7 @@ export const AuditorPortal: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-blue-100 rounded-xl">
                                 <PlayCircle className="w-6 h-6 text-blue-600" />
@@ -146,7 +152,7 @@ export const AuditorPortal: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-green-100 rounded-xl">
                                 <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -160,7 +166,7 @@ export const AuditorPortal: React.FC = () => {
                 </div>
 
                 {/* Section Title */}
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Meus Projetos de Auditoria</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Meus Projetos de Auditoria</h3>
 
                 {/* Assignments Grid */}
                 {loading ? (

@@ -6,3 +6,4 @@ export { AuditsPage } from './AuditsPage';
 export { ManagementReviewPage } from './ManagementReviewPage';
 export { ExternalAuditsPage } from './ExternalAuditsPage';
 export { ExternalAuditDetailsPage } from './ExternalAuditDetailsPage';
+export { CompanyFindingsResponsePage } from './CompanyFindingsResponsePage';

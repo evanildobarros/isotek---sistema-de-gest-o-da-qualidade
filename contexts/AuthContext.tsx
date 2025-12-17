@@ -197,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         try {
             await supabase.auth.signOut();
         } catch (error) {
@@ -215,15 +215,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setViewingAsCompanyName(null);
         sessionStorage.removeItem('auditor_viewing_company_id');
         sessionStorage.removeItem('auditor_viewing_company_name');
-        // Redirect to login page
-        navigate('/login', { replace: true });
-    };
+        // navigate('/login', { replace: true }); // Removed direct navigation to avoid context issues
+    }, [setSession, setUser, setCompany, setIsSuperAdmin, setLoading, setLoadingCompany, setAuditorAssignments, setViewingAsCompanyId, setViewingAsCompanyName]);
+
+    const refreshCompany = useCallback(async () => {
+        await fetchCompany();
+    }, [fetchCompany]);
 
     // Computar valores derivados
-    const isAuditorMode = viewingAsCompanyId !== null;
-    const effectiveCompanyId = isAuditorMode ? viewingAsCompanyId : (company?.id || null);
+    const isAuditorMode = !!viewingAsCompanyId;
+    const effectiveCompanyId = viewingAsCompanyId || company?.id || null;
 
-    const value = {
+    // Memoizar o valor do contexto para evitar re-renderizações
+    const value = React.useMemo(() => ({
         session,
         user,
         company,
@@ -231,15 +235,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         loadingCompany,
         signOut,
-        refreshCompany: fetchCompany,
-        // Auditor Externo
+        refreshCompany,
         auditorAssignments,
         viewingAsCompanyId,
         viewingAsCompanyName,
         isAuditorMode,
         setViewingAsCompany,
         effectiveCompanyId
-    };
+    }), [
+        session,
+        user,
+        company,
+        isSuperAdmin,
+        loading,
+        loadingCompany,
+        signOut,
+        refreshCompany,
+        auditorAssignments,
+        viewingAsCompanyId,
+        viewingAsCompanyName,
+        isAuditorMode,
+        setViewingAsCompany,
+        effectiveCompanyId
+    ]);
 
     return (
         <AuthContext.Provider value={value}>

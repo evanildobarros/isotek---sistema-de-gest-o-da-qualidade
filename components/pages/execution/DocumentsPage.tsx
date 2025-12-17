@@ -142,14 +142,13 @@ export const DocumentsPage: React.FC = () => {
         setLoading(true);
         try {
             if (!effectiveCompanyId) {
-                // console.warn('Usuário não vinculado a uma empresa');
                 setDocuments([]);
                 return;
             }
 
             const { data, error } = await supabase
                 .from('documents_with_responsibles')
-                .select('*')
+                .select('id, title, code, version, status, file_url, file_name, file_size, uploaded_at, owner_id, elaborated_by, approved_by, approved_at, elaborated_by_name, approved_by_name')
                 .eq('company_id', effectiveCompanyId)
                 .order('uploaded_at', { ascending: false });
 
@@ -284,7 +283,7 @@ export const DocumentsPage: React.FC = () => {
                     .eq('code', uploadCode);
 
                 if (existingDocs && existingDocs.length > 0) {
-                    // console.log(`✅ Nova versão detectada para código ${uploadCode}. Existem ${existingDocs.length} versão(ões) anterior(es).`);
+                    // Logic to handle existing versions can go here
                 }
             }
 
@@ -383,7 +382,7 @@ export const DocumentsPage: React.FC = () => {
             // 1. Buscar o documento que está sendo aprovado
             const { data: docToApprove, error: fetchError } = await supabase
                 .from('documents')
-                .select('*')
+                .select('id, title, code, version, status')
                 .eq('id', docId)
                 .single();
 
@@ -397,7 +396,7 @@ export const DocumentsPage: React.FC = () => {
 
             // 2. Se o documento tem código, obsoletear versões antigas do mesmo código
             if (docToApprove.code) {
-                // console.log(`🔄 Obsoletando versões antigas do código ${docToApprove.code}...`);
+
 
                 const { error: obsoleteError } = await supabase
                     .from('documents')
@@ -411,7 +410,7 @@ export const DocumentsPage: React.FC = () => {
                     throw new Error('Erro ao obsoletear versões antigas: ' + obsoleteError.message);
                 }
 
-                // console.log('✅ Versões antigas obsoletadas com sucesso');
+
             }
 
             // 3. Aprovar o documento atual (registrando quem aprovou)

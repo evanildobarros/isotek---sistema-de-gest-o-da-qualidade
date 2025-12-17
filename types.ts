@@ -118,6 +118,109 @@ export interface Profile {
   company_id: string;
   unit_id?: string;
   is_super_admin?: boolean;
+  // Campos de Gamificação
+  gamification_xp?: number;
+  gamification_level?: GamificationLevel;
+  reputation_score?: number;
+  audits_completed?: number;
+}
+
+// ===========================================
+// GAMIFICAÇÃO DE AUDITORES
+// ===========================================
+
+export type GamificationLevel = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+
+export type BadgeCategory = 'achievement' | 'milestone' | 'special';
+
+export interface Badge {
+  id: string;                  // Slug único (ex: 'speedster')
+  name: string;                // Nome exibido
+  description?: string;        // Descrição da conquista
+  icon_name: string;           // Nome do ícone Lucide (ex: 'Zap')
+  color: string;               // Classe Tailwind (ex: 'text-yellow-500')
+  category: BadgeCategory;     // Categoria do badge
+  xp_reward: number;           // XP concedido ao ganhar
+  created_at?: string;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  awarded_at: string;
+  awarded_reason?: string;
+  // Joined field
+  badge?: Badge;
+}
+
+export interface AuditorGamificationStats {
+  xp: number;
+  level: GamificationLevel;
+  reputation: number;
+  audits_completed: number;
+  badges: UserBadge[];
+  next_level_xp: number;      // XP necessário para próximo nível
+  progress_percent: number;    // Progresso até próximo nível (0-100)
+}
+
+// ===========================================
+// LÓGICA FINANCEIRA DE NÍVEIS
+// ===========================================
+
+export type PaymentStatus = 'pending' | 'paid' | 'cancelled';
+
+export interface AuditorLevel {
+  level_id: GamificationLevel;
+  name: string;
+  min_xp: number;
+  commission_rate: number;     // 0.70 = 70%
+  allowed_plans: string[];     // ['start', 'pro', 'enterprise']
+  max_simultaneous_audits: number;
+  priority_support: boolean;
+  badge_icon: string;
+  badge_color: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AuditAssignmentFinancials {
+  agreed_amount: number;           // Valor total acordado
+  auditor_commission_rate: number; // Taxa no momento da contratação
+  auditor_payout: number;          // Quanto auditor recebe
+  platform_fee: number;            // Quanto Isotek recebe
+  payment_status: PaymentStatus;
+  paid_at?: string;
+}
+
+export interface AuditorFinancialSummary {
+  auditor_id: string;
+  auditor_name: string;
+  gamification_xp: number;
+  gamification_level: GamificationLevel;
+  audits_completed: number;
+  total_earnings: number;
+  open_audits: number;
+}
+
+export interface XpLedgerEntry {
+  id: string;
+  user_id: string;
+  action_type: 'audit_completed' | 'five_star_review' | 'fast_validation' | 'penalty' | 'manual_adjustment';
+  xp_amount: number;
+  reference_id?: string;
+  reason?: string;
+  created_at: string;
+}
+
+export interface AuditReview {
+  id: string;
+  audit_id: string;
+  reviewer_id?: string;
+  rating: number; // 1-5
+  comment?: string;
+  created_at: string;
+  metadata?: Record<string, any>;
 }
 
 export interface Stakeholder {

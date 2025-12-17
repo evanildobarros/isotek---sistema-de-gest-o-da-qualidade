@@ -29,7 +29,7 @@ const AuditsPageContent: React.FC = () => {
             setLoading(true);
             const { data, error } = await supabase
                 .from('audits')
-                .select('*')
+                .select('id, company_id, date, scope, type, auditor, status, progress, notes, objectives, criteria, audit_type, template_id')
                 .eq('company_id', effectiveCompanyId)
                 .order('date', { ascending: false });
 

@@ -217,6 +217,12 @@ const menuGroups: MenuGroup[] = [
             icon: ShieldCheck
           },
           {
+            label: 'Apontamentos',
+            section: IsoSection.EXTERNAL_AUDITS,
+            path: '/app/apontamentos-auditoria',
+            icon: AlertTriangle
+          },
+          {
             label: 'Análise Crítica',
             section: IsoSection.MANAGEMENT_REVIEW,
             path: '/app/analise-critica',
@@ -489,7 +495,7 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
+export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [openGroups, setOpenGroups] = useState<string[]>(['4.0']);
@@ -504,15 +510,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const isAuditorUser = auditorAssignments?.length > 0;
 
   // Determine which menu to show
-  let displayedGroups = menuGroups; // Default (Company Owner)
-
-  if (isAuditorUser) {
-    if (isAuditorMode) {
-      displayedGroups = auditorClientGroups;
-    } else {
-      displayedGroups = auditorPortalGroups;
+  const displayedGroups = React.useMemo(() => {
+    if (isAuditorUser) {
+      if (isAuditorMode) {
+        return auditorClientGroups;
+      } else {
+        return auditorPortalGroups;
+      }
     }
-  }
+    return menuGroups;
+  }, [isAuditorUser, isAuditorMode]);
 
   // Effect to close mobile sidebar on navigation
   useEffect(() => {
@@ -533,20 +540,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
     });
   }, [location.pathname, displayedGroups, openGroups]);
 
-  const toggleGroup = (title: string) => {
+  const toggleGroup = React.useCallback((title: string) => {
     setOpenGroups(prev =>
       prev.includes(title)
         ? prev.filter(t => t !== title)
         : [...prev, title]
     );
-  };
+  }, []);
 
-  const handleExitAuditorMode = () => {
+  const handleExitAuditorMode = React.useCallback(() => {
     exitAuditorMode();
     navigate('/app/portal-auditor');
-  };
+  }, [exitAuditorMode, navigate]);
 
-  const renderMenuItem = (item: NavigationItem) => {
+  const renderMenuItem = React.useCallback((item: NavigationItem) => {
     // Check if module is restricted by plan (Only for Company Owner, Auditor usually has unrestricted view or specific)
     const moduleKey = item.path?.split('/').pop() || '';
     const isRestricted = !isAuditorUser && !canAccessModule(moduleKey);
@@ -584,7 +591,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
         {isRestricted && needsUpgrade && !isAuditorUser && <Lock size={14} className="text-purple-500" />}
       </button>
     );
-  };
+  }, [canAccessModule, isAuditorUser, location.pathname, navigate]);
 
   return (
     <>
@@ -741,3 +748,5 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
     </>
   );
 };
+
+export const Sidebar = React.memo(SidebarComponent);

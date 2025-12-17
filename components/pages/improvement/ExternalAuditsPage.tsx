@@ -15,6 +15,7 @@ import {
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
+import { AuditorPublicProfile } from '../../auditor/AuditorPublicProfile';
 
 interface AuditAssignment {
     id: string;
@@ -60,7 +61,7 @@ export const ExternalAuditsPage: React.FC = () => {
             // 1. Buscar auditorias
             const { data: auditsData, error: auditsError } = await supabase
                 .from('audit_assignments')
-                .select('*')
+                .select('id, auditor_id, company_id, status, start_date, end_date, notes')
                 .eq('company_id', effectiveCompanyId)
                 .order('start_date', { ascending: false });
 
@@ -87,12 +88,12 @@ export const ExternalAuditsPage: React.FC = () => {
             const auditsWithCounts = await Promise.all((auditsData || []).map(async (audit) => {
                 const { count: totalFindings } = await supabase
                     .from('audit_findings')
-                    .select('*', { count: 'exact', head: true })
+                    .select('id', { count: 'exact', head: true })
                     .eq('audit_assignment_id', audit.id);
 
                 const { count: openFindings } = await supabase
                     .from('audit_findings')
-                    .select('*', { count: 'exact', head: true })
+                    .select('id', { count: 'exact', head: true })
                     .eq('audit_assignment_id', audit.id)
                     .neq('status', 'closed');
 
@@ -209,7 +210,13 @@ export const ExternalAuditsPage: React.FC = () => {
                                             )}
                                         </div>
                                         <span className="text-sm text-gray-600">
-                                            Auditor: <span className="font-medium">{audit.auditor?.full_name || 'Desconhecido'}</span>
+                                            Auditor:{' '}
+                                            <span onClick={(e) => e.stopPropagation()}>
+                                                <AuditorPublicProfile
+                                                    auditorId={audit.auditor_id}
+                                                    auditorName={audit.auditor?.full_name || 'Desconhecido'}
+                                                />
+                                            </span>
                                         </span>
                                     </div>
                                 </div>
