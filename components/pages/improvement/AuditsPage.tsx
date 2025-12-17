@@ -7,7 +7,7 @@ import { Audit } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
 
 const AuditsPageContent: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId } = useAuthContext();
     const [audits, setAudits] = useState<Audit[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAudit, setSelectedAudit] = useState<Audit | null>(null);
@@ -15,20 +15,20 @@ const AuditsPageContent: React.FC = () => {
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        if (company) {
+        if (effectiveCompanyId) {
             fetchAudits();
         }
-    }, [company]);
+    }, [effectiveCompanyId]);
 
     const fetchAudits = async () => {
-        if (!company) return;
+        if (!effectiveCompanyId) return;
 
         try {
             setLoading(true);
             const { data, error } = await supabase
                 .from('audits')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('date', { ascending: false });
 
             if (error) throw error;
@@ -110,7 +110,7 @@ const AuditsPageContent: React.FC = () => {
     const handleCreate = () => {
         setSelectedAudit({
             id: '',
-            company_id: company?.id || '',
+            company_id: effectiveCompanyId || '',
             scope: '',
             type: 'Auditoria Interna',
             auditor: '',
@@ -130,10 +130,10 @@ const AuditsPageContent: React.FC = () => {
     };
 
     const saveEdit = async () => {
-        if (!selectedAudit || !company) {
-            console.error('Missing data:', { selectedAudit, company });
-            console.error('Missing data:', { selectedAudit, company });
-            toast.error('Erro: Dados incompletos. Empresa: ' + (company ? 'OK' : 'FALTA'));
+        if (!selectedAudit || !effectiveCompanyId) {
+            console.error('Missing data:', { selectedAudit, effectiveCompanyId });
+            console.error('Missing data:', { selectedAudit, effectiveCompanyId });
+            toast.error('Erro: Dados incompletos. Empresa: ' + (effectiveCompanyId ? 'OK' : 'FALTA'));
             return;
         }
 
@@ -155,7 +155,7 @@ const AuditsPageContent: React.FC = () => {
                 const { data, error } = await supabase
                     .from('audits')
                     .insert([{
-                        company_id: company.id,
+                        company_id: effectiveCompanyId,
                         created_by: user?.id || null, // Add user id
                         scope: selectedAudit.scope,
                         type: selectedAudit.type,
@@ -247,9 +247,9 @@ const AuditsPageContent: React.FC = () => {
                         <div className="p-3 bg-sky-100 dark:bg-sky-900/30 rounded-lg">
                             <ClipboardCheck className="w-6 h-6 text-sky-600 dark:text-sky-400" />
                         </div>
-                        <h1 className="text-2xl font-bold text-[#025159]">Gestão de Auditorias</h1>
+                        <h1 className="text-2xl font-bold text-[#025159]">Gestão de Auditorias Internas</h1>
                     </div>
-                    <p className="text-gray-600 text-sm">Planeje, execute e gerencie auditorias internas e externas (ISO 9001: 9.2).</p>
+                    <p className="text-gray-600 text-sm">Planeje, execute e gerencie auditorias internas e de processo (ISO 9001: 9.2).</p>
                 </div>
                 <button
                     onClick={handleCreate}

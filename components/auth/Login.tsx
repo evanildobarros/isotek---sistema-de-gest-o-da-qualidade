@@ -34,7 +34,6 @@ export const Login: React.FC = () => {
 
             if (error) {
                 console.error('Erro Login:', error.message);
-                // Show detailed error message to help diagnose the issue
                 if (error.message.includes('Email not confirmed')) {
                     toast.error('Seu email ainda não foi confirmado. Entre em contato com o administrador.');
                 } else {
@@ -44,8 +43,20 @@ export const Login: React.FC = () => {
                 return;
             }
 
-            if (data.session) {
-                // Navigation handled by useEffect
+            if (data.session && data.user) {
+                // Fetch user role from profiles
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', data.user.id)
+                    .single();
+
+                // Redirect based on role
+                if (profileData?.role === 'auditor') {
+                    navigate('/auditor-portal', { replace: true });
+                } else {
+                    navigate('/app/dashboard', { replace: true });
+                }
                 return;
             }
         } catch (error) {

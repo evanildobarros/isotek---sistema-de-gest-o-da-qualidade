@@ -6,7 +6,7 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import { QualityManual, Process } from '../../../types';
 
 export const ScopePage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [savingScope, setSavingScope] = useState(false);
     const [isEditingScope, setIsEditingScope] = useState(false);
@@ -40,7 +40,7 @@ export const ScopePage: React.FC = () => {
             setLoading(true);
 
             // Verificar se o usuário está vinculado a uma empresa
-            if (!company) {
+            if (!effectiveCompanyId) {
                 console.warn('Usuário não vinculado a uma empresa');
                 setLoading(false);
                 return;
@@ -50,7 +50,7 @@ export const ScopePage: React.FC = () => {
             const { data: manualData, error: manualError } = await supabase
                 .from('quality_manual')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .limit(1)
                 .maybeSingle();
 
@@ -67,7 +67,7 @@ export const ScopePage: React.FC = () => {
             const { data: processesData, error: processesError } = await supabase
                 .from('processes')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: true });
 
             if (processesError) throw processesError;
@@ -92,7 +92,7 @@ export const ScopePage: React.FC = () => {
         try {
             const payload = {
                 ...scopeData,
-                company_id: company.id
+                company_id: effectiveCompanyId
             };
 
             if (manualId) {
@@ -161,7 +161,7 @@ export const ScopePage: React.FC = () => {
         try {
             const payload = {
                 ...processForm,
-                company_id: company.id
+                company_id: effectiveCompanyId
             };
 
             if (editingProcessId) {
@@ -212,7 +212,7 @@ export const ScopePage: React.FC = () => {
             )}
 
             {/* No Company State */}
-            {!loading && !company && (
+            {!loading && !effectiveCompanyId && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
                     <p className="text-yellow-800 font-medium">Você não está vinculado a nenhuma empresa.</p>
                     <p className="text-yellow-600 text-sm mt-1">Entre em contato com o administrador do sistema.</p>
@@ -220,7 +220,7 @@ export const ScopePage: React.FC = () => {
             )}
 
             {/* Content - Only show when not loading and company exists */}
-            {!loading && company && (
+            {!loading && effectiveCompanyId && (
                 <>
 
                     {/* SEÇÃO 1: DEFINIÇÃO DO ESCOPO (4.3) */}

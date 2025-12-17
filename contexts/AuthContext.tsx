@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { Company } from '../types';
+import { Company, AuditAssignment } from '../types';
 
 interface AuthContextType {
     session: Session | null;
@@ -13,6 +13,13 @@ interface AuthContextType {
     loadingCompany: boolean;
     signOut: () => Promise<void>;
     refreshCompany: () => Promise<void>;
+    // Auditor Externo
+    auditorAssignments: AuditAssignment[];
+    viewingAsCompanyId: string | null;
+    viewingAsCompanyName: string | null;
+    isAuditorMode: boolean;
+    setViewingAsCompany: (companyId: string | null, companyName?: string | null) => void;
+    effectiveCompanyId: string | null; // company_id efetivo (própria ou visualizando)
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +31,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadingCompany, setLoadingCompany] = useState(true);
+
+    // Estados do Auditor Externo
+    const [auditorAssignments, setAuditorAssignments] = useState<AuditAssignment[]>([]);
+    const [viewingAsCompanyId, setViewingAsCompanyId] = useState<string | null>(null);
+    const [viewingAsCompanyName, setViewingAsCompanyName] = useState<string | null>(null);
 
     useEffect(() => {
         // 1. Get initial session
@@ -106,6 +118,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [user]);
 
     const navigate = useNavigate();
+
+    // Função para buscar vínculos de auditor
+    const fetchAuditorAssignments = useCallback(async () => {
+        if (!user) {
+            setAuditorAssignments([]);
+            return;
+        }
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from('audit_assignments')
+                .select(`
+                    *,
+                    company:company_info(id, name)
+                `)
+                .eq('auditor_id', user.id)
+                .in('status', ['agendada', 'em_andamento']) // Status ativos
+                .lte('start_date', today)
+                .or(`end_date.is.null,end_date.gte.${today}`);
+
+            if (error) {
+                console.error('[AuthContext] Erro ao buscar vínculos de auditor:', error);
+                setAuditorAssignments([]);
+                return;
+            }
+
+            const mappedAssignments: AuditAssignment[] = (data || []).map((item: any) => ({
+                id: item.id,
+                auditor_id: item.auditor_id,
+                company_id: item.company_id,
+                start_date: item.start_date,
+                end_date: item.end_date,
+                status: item.status,
+                notes: item.notes,
+                created_by: item.created_by,
+                created_at: item.created_at,
+                updated_at: item.updated_at,
+                company_name: item.company?.name || 'Empresa'
+            }));
+
+            setAuditorAssignments(mappedAssignments);
+        } catch (error) {
+            console.error('[AuthContext] Erro ao buscar vínculos:', error);
+            setAuditorAssignments([]);
+        }
+    }, [user]);
+
+    // Buscar vínculos de auditor quando user mudar
+    useEffect(() => {
+        fetchAuditorAssignments();
+    }, [fetchAuditorAssignments]);
+
+    // Restaurar seleção de empresa do sessionStorage
+    useEffect(() => {
+        const savedCompanyId = sessionStorage.getItem('auditor_viewing_company_id');
+        const savedCompanyName = sessionStorage.getItem('auditor_viewing_company_name');
+        if (savedCompanyId) {
+            setViewingAsCompanyId(savedCompanyId);
+            setViewingAsCompanyName(savedCompanyName);
+        }
+    }, []);
+
+    // Função para trocar empresa visualizada como auditor
+    const setViewingAsCompany = useCallback((companyId: string | null, companyName?: string | null) => {
+        setViewingAsCompanyId(companyId);
+        setViewingAsCompanyName(companyName || null);
+
+        if (companyId) {
+            sessionStorage.setItem('auditor_viewing_company_id', companyId);
+            if (companyName) {
+                sessionStorage.setItem('auditor_viewing_company_name', companyName);
+            }
+        } else {
+            sessionStorage.removeItem('auditor_viewing_company_id');
+            sessionStorage.removeItem('auditor_viewing_company_name');
+        }
+    }, []);
+
     const signOut = async () => {
         try {
             await supabase.auth.signOut();
@@ -119,9 +210,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsSuperAdmin(false);
         setLoading(false);
         setLoadingCompany(false);
+        setAuditorAssignments([]);
+        setViewingAsCompanyId(null);
+        setViewingAsCompanyName(null);
+        sessionStorage.removeItem('auditor_viewing_company_id');
+        sessionStorage.removeItem('auditor_viewing_company_name');
         // Redirect to login page
         navigate('/login', { replace: true });
     };
+
+    // Computar valores derivados
+    const isAuditorMode = viewingAsCompanyId !== null;
+    const effectiveCompanyId = isAuditorMode ? viewingAsCompanyId : (company?.id || null);
 
     const value = {
         session,
@@ -131,7 +231,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         loadingCompany,
         signOut,
-        refreshCompany: fetchCompany
+        refreshCompany: fetchCompany,
+        // Auditor Externo
+        auditorAssignments,
+        viewingAsCompanyId,
+        viewingAsCompanyName,
+        isAuditorMode,
+        setViewingAsCompany,
+        effectiveCompanyId
     };
 
     return (

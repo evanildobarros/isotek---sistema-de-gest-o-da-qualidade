@@ -41,8 +41,11 @@ const COLORS = {
   background: '#F0F9FA'
 };
 
+import { useAuthContext } from '../../contexts/AuthContext';
+
 export const SectionDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { effectiveCompanyId } = useAuthContext();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     npsScore: 0,
@@ -59,23 +62,17 @@ export const SectionDashboard: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (effectiveCompanyId) {
+      fetchDashboardData();
+    }
+  }, [effectiveCompanyId]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!effectiveCompanyId) return;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) return;
-      const companyId = profile.company_id;
+      const companyId = effectiveCompanyId;
 
       // Parallel Fetching
       const [

@@ -5,3 +5,4 @@ export { CompanyProfilePage } from './CompanyProfilePage';
 export { SuperAdminPage } from './SuperAdminPage';
 export { DocumentationPage } from './DocumentationPage';
 export { SupportPage } from './SupportPage';
+export { AuditAssignmentsPage } from './AuditAssignmentsPage';

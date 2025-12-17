@@ -46,6 +46,22 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Slide-in animation (para painéis laterais) */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
 @media print {
   @page {
     size: A4;

@@ -31,6 +31,7 @@ export enum IsoSection {
   // 9.0 Avaliação
   PERFORMANCE_INDICATORS = 'Indicadores de Desempenho',
   INTERNAL_AUDITS = 'Auditorias Internas',
+  EXTERNAL_AUDITS = 'Auditorias Externas',
   MANAGEMENT_REVIEW = 'Análise Crítica',
 
   // 10.0 Melhoria
@@ -460,4 +461,94 @@ export interface Notification {
   link?: string;
   read: boolean;
   created_at: string;
+}
+
+// Audit Assignment Types (External Auditor)
+export type AuditAssignmentStatus = 'agendada' | 'em_andamento' | 'concluida' | 'cancelada';
+
+export interface AuditAssignment {
+  id: string;
+  auditor_id: string;
+  company_id: string;
+  start_date: string;
+  end_date?: string | null;
+  status: AuditAssignmentStatus;
+  notes?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields
+  auditor_name?: string;
+  auditor_email?: string;
+  company_name?: string;
+}
+
+// Audit Findings Types (Constatações de Auditoria)
+export type AuditFindingEntityType =
+  | 'document'
+  | 'risk'
+  | 'rnc'
+  | 'supplier'
+  | 'process'
+  | 'objective'
+  | 'training'
+  | 'audit'
+  | 'general';
+
+export type AuditFindingSeverity =
+  | 'conforme'
+  | 'oportunidade'
+  | 'nao_conformidade_menor'
+  | 'nao_conformidade_maior';
+
+export type AuditFindingWorkflowStatus =
+  | 'open'           // Auditor criou a constatação
+  | 'waiting_validation' // Empresa respondeu, aguardando validação
+  | 'closed';        // Auditor aceitou a resposta
+
+export interface AuditFinding {
+  id: string;
+  audit_assignment_id: string;
+  entity_type: AuditFindingEntityType;
+  entity_id?: string | null;
+
+  // Severidade da constatação
+  severity: AuditFindingSeverity;
+
+  // Notas do auditor
+  auditor_notes: string;
+
+  // Resposta da empresa
+  company_response?: string | null;
+
+  // Status do fluxo de trabalho
+  status: AuditFindingWorkflowStatus;
+
+  // Cláusula ISO relacionada (opcional)
+  iso_clause?: string;
+
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields
+  entity_name?: string; // Nome do documento, risco, etc.
+}
+
+// Audit Findings Summary (View)
+export interface AuditFindingsSummary {
+  audit_assignment_id: string;
+  company_id: string;
+  auditor_id: string;
+  audit_status: AuditAssignmentStatus;
+  total_findings: number;
+  // Por severidade
+  conformes: number;
+  nao_conformes_maiores: number;
+  nao_conformes_menores: number;
+  oportunidades: number;
+  // Por status do workflow
+  pendentes: number;
+  aguardando_validacao: number;
+  resolvidas: number;
 }

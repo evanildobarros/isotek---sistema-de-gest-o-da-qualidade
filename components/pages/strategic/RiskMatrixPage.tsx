@@ -20,6 +20,9 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { RiskTask } from '../../../types';
+import { useAuditFindings } from '../../../hooks/useAuditFindings';
+import { AuditIndicator } from '../../common/AuditIndicator';
+
 
 type RiskType = 'risk' | 'opportunity';
 
@@ -41,11 +44,11 @@ interface SwotItem {
 }
 
 export const RiskMatrixPage: React.FC = () => {
-    const { user } = useAuthContext();
+    const { user, effectiveCompanyId } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [risks, setRisks] = useState<RiskItem[]>([]);
     const [swotItems, setSwotItems] = useState<SwotItem[]>([]);
-    const [companyId, setCompanyId] = useState<string | null>(null);
+    // const [companyId, setCompanyId] = useState<string | null>(null); // Removed local state
     const [searchTerm, setSearchTerm] = useState('');
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedSwotItems, setSelectedSwotItems] = useState<string[]>([]);
@@ -77,29 +80,24 @@ export const RiskMatrixPage: React.FC = () => {
     const [selectedTask, setSelectedTask] = useState<RiskTask | null>(null);
     const [users, setUsers] = useState<any[]>([]);
 
+    // Audit findings hook - busca constatações pendentes para riscos
+    const { findingsMap } = useAuditFindings('risk');
+
+
     useEffect(() => {
-        if (user) loadData();
-    }, [user]);
+        if (effectiveCompanyId) loadData();
+    }, [effectiveCompanyId]);
 
     const loadData = async () => {
         try {
             setLoading(true);
 
-            // Get Company
-            const { data: company } = await supabase
-                .from('company_info')
-                .select('id')
-                .eq('owner_id', user?.id)
-                .single();
-
-            if (company) {
-                setCompanyId(company.id);
-
+            if (effectiveCompanyId) {
                 // Get risks from database (including swot_id)
                 const { data: risksData } = await supabase
                     .from('risks_opportunities')
                     .select('*')
-                    .eq('company_id', company.id)
+                    .eq('company_id', effectiveCompanyId)
                     .eq('status', 'active')
                     .order('created_at', { ascending: false });
                 setRisks(risksData || []);
@@ -122,7 +120,7 @@ export const RiskMatrixPage: React.FC = () => {
                 const { data: swotData } = await supabase
                     .from('swot_analysis')
                     .select('id, description, type')
-                    .eq('company_id', company.id)
+                    .eq('company_id', effectiveCompanyId)
                     .eq('is_active', true);
 
                 // Filter out already imported items (by ID or description)
@@ -154,7 +152,7 @@ export const RiskMatrixPage: React.FC = () => {
     };
 
     const handleImportSwot = async () => {
-        if (!companyId) return;
+        if (!effectiveCompanyId) return;
 
         try {
             const newRisks = selectedSwotItems.map(id => {
@@ -162,7 +160,7 @@ export const RiskMatrixPage: React.FC = () => {
                 if (!item) return null;
 
                 return {
-                    company_id: companyId,
+                    company_id: effectiveCompanyId,
                     swot_id: item.id,
                     type: item.type === 'forca' || item.type === 'oportunidade' ? 'opportunity' : 'risk',
                     origin: `SWOT - ${item.type === 'forca' ? 'Força' : item.type === 'fraqueza' ? 'Fraqueza' : item.type === 'oportunidade' ? 'Oportunidade' : 'Ameaça'}`,
@@ -268,12 +266,12 @@ export const RiskMatrixPage: React.FC = () => {
     };
 
     const fetchUsers = async () => {
-        if (!companyId) return;
+        if (!effectiveCompanyId) return;
         try {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('id, full_name')
-                .eq('company_id', companyId);
+                .eq('company_id', effectiveCompanyId);
 
             if (error) throw error;
             setUsers(data || []);
@@ -516,7 +514,10 @@ export const RiskMatrixPage: React.FC = () => {
                                                     <LinkIcon size={10} />
                                                     <span title={risk.origin}>{risk.origin}</span>
                                                 </div>
-                                                <p className="text-sm text-gray-900 font-medium line-clamp-2">{risk.description}</p>
+                                                <div className="flex items-start gap-2">
+                                                    <p className="text-sm text-gray-900 font-medium line-clamp-2 flex-1">{risk.description}</p>
+                                                    <AuditIndicator entityId={risk.id} findingsMap={findingsMap} size="sm" />
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
@@ -581,9 +582,14 @@ export const RiskMatrixPage: React.FC = () => {
                     const isSwot = risk.origin.toLowerCase().includes('swot') || risk.origin.toLowerCase().includes('contexto');
 
                     return (
-                        <div key={risk.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                        <div key={risk.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 relative">
+                            {/* Audit Indicator - Canto superior direito */}
+                            <div className="absolute top-3 right-3">
+                                <AuditIndicator entityId={risk.id} findingsMap={findingsMap} size="md" />
+                            </div>
+
                             {/* Topo: Tipo e Nível */}
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center justify-between mb-3 pr-8">
                                 {risk.type === 'risk' ? (
                                     <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-1 rounded-md">
                                         <AlertTriangle size={14} />
@@ -599,6 +605,7 @@ export const RiskMatrixPage: React.FC = () => {
                                     {level.label} ({severity})
                                 </div>
                             </div>
+
 
                             {/* Origem */}
                             <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border w-fit mb-2 ${isSwot

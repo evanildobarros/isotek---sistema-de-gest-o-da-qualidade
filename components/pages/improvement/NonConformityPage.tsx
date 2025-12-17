@@ -24,7 +24,7 @@ import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
 
 export const NonConformityPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId } = useAuthContext();
     const [ncProducts, setNcProducts] = useState<NonConformityProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -58,12 +58,12 @@ export const NonConformityPage: React.FC = () => {
     const fetchNonConformities = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('non_conformities_with_responsible')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('date_occurred', { ascending: false });
 
             if (error) throw error;
@@ -77,7 +77,7 @@ export const NonConformityPage: React.FC = () => {
 
     const handleCreateNC = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!company) return;
+        if (!effectiveCompanyId) return;
 
         try {
             let photoUrl = '';
@@ -104,7 +104,7 @@ export const NonConformityPage: React.FC = () => {
 
             const payload = {
                 ...createForm,
-                company_id: company.id,
+                company_id: effectiveCompanyId,
                 photo_url: photoUrl || null,
                 status: 'open' as const
             };
@@ -632,7 +632,7 @@ export const NonConformityPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="text-center pt-2">
-                                <p className="text-sm font-bold text-gray-900">RNC Nº {selectedNCForReport.code || selectedNCForReport.id.slice(0, 6).toUpperCase()}</p>
+                                <p className="text-sm font-bold text-gray-900">RNC Nº {selectedNCForReport.id.slice(0, 6).toUpperCase()}</p>
                             </div>
                         </div>
 

@@ -2,12 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Shield, Users, DollarSign, Activity, Plus, Search,
-    MoreVertical, Lock, Unlock, ExternalLink, Building2, Mail, Key, AlertCircle
+    MoreVertical, Lock, Unlock, ExternalLink, Building2, Mail, Key, AlertCircle,
+    ClipboardCheck, UserPlus, Link2, Calendar, X, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
-import { Company } from '../../../types';
+import { Company, AuditAssignment } from '../../../types';
+
+// Interface para Auditores
+interface Auditor {
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+    created_at: string;
+    // Status calculado
+    status: 'livre' | 'em_auditoria';
+    active_assignments?: number;
+}
 
 // Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
 const formatCNPJ = (value: string): string => {
@@ -28,6 +41,25 @@ export const SuperAdminPage: React.FC = () => {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [stats, setStats] = useState({ total: 0, revenue: 0, active: 0 });
     const [error, setError] = useState<string | null>(null);
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'empresas' | 'auditores'>('empresas');
+
+    // Auditors State
+    const [auditors, setAuditors] = useState<Auditor[]>([]);
+    const [loadingAuditors, setLoadingAuditors] = useState(false);
+    const [auditorSearch, setAuditorSearch] = useState('');
+
+    // Modal: Novo Auditor
+    const [isNewAuditorModalOpen, setIsNewAuditorModalOpen] = useState(false);
+    const [newAuditorForm, setNewAuditorForm] = useState({ name: '', email: '', password: '' });
+    const [savingAuditor, setSavingAuditor] = useState(false);
+
+    // Modal: Designar Auditor
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [selectedAuditor, setSelectedAuditor] = useState<Auditor | null>(null);
+    const [assignForm, setAssignForm] = useState({ companyId: '', startDate: '', endDate: '', notes: '' });
+    const [savingAssign, setSavingAssign] = useState(false);
 
     // Wizard State
     const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -95,6 +127,144 @@ export const SuperAdminPage: React.FC = () => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    // Fetch auditors when tab changes
+    useEffect(() => {
+        if (activeTab === 'auditores' && auditors.length === 0) {
+            fetchAuditors();
+        }
+    }, [activeTab]);
+
+    // Fetch Auditors
+    const fetchAuditors = async () => {
+        setLoadingAuditors(true);
+        try {
+            // Buscar usuários com role = auditor
+            const { data: profiles, error: profilesError } = await supabase
+                .from('profiles')
+                .select('id, full_name, role, created_at')
+                .eq('role', 'auditor')
+                .order('created_at', { ascending: false });
+
+            if (profilesError) throw profilesError;
+
+            // Buscar emails via RPC
+            const { data: usersWithEmails } = await supabase.rpc('get_users_with_emails');
+            const emailMap = new Map<string, string>(usersWithEmails?.map((u: any) => [u.id, u.email as string]) || []);
+
+            // Buscar assignments ativos para cada auditor
+            const { data: activeAssignments } = await supabase
+                .from('audit_assignments')
+                .select('auditor_id')
+                .in('status', ['agendada', 'em_andamento']);
+
+            const assignmentCount = new Map<string, number>();
+            activeAssignments?.forEach((a: any) => {
+                assignmentCount.set(a.auditor_id, (assignmentCount.get(a.auditor_id) || 0) + 1);
+            });
+
+            const mappedAuditors: Auditor[] = (profiles || []).map((p: any) => ({
+                id: p.id,
+                full_name: p.full_name || 'Sem nome',
+                email: emailMap.get(p.id) || 'N/A',
+                role: p.role,
+                created_at: p.created_at,
+                status: assignmentCount.get(p.id) ? 'em_auditoria' : 'livre',
+                active_assignments: assignmentCount.get(p.id) || 0
+            }));
+
+            setAuditors(mappedAuditors);
+        } catch (error: any) {
+            console.error('Erro ao buscar auditores:', error);
+            toast.error('Erro ao carregar auditores');
+        } finally {
+            setLoadingAuditors(false);
+        }
+    };
+
+    // Create new auditor
+    const handleCreateAuditor = async () => {
+        if (!newAuditorForm.name || !newAuditorForm.email || !newAuditorForm.password) {
+            toast.error('Preencha todos os campos');
+            return;
+        }
+
+        setSavingAuditor(true);
+        try {
+            console.log('Chamando Edge Function admin-create-user...');
+            const { data, error } = await supabase.functions.invoke('admin-create-user', {
+                body: {
+                    email: newAuditorForm.email,
+                    password: newAuditorForm.password,
+                    fullName: newAuditorForm.name,
+                    role: 'auditor'
+                }
+            });
+
+            console.log('Resposta da Edge Function:', { data, error });
+
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+
+            toast.success(`Auditor ${newAuditorForm.name} criado com sucesso!\nSenha: ${newAuditorForm.password}`);
+            setIsNewAuditorModalOpen(false);
+            setNewAuditorForm({ name: '', email: '', password: '' });
+            fetchAuditors();
+        } catch (error: any) {
+            console.error('Erro completo:', error);
+            toast.error('Erro ao criar auditor: ' + (error.message || JSON.stringify(error)));
+        } finally {
+            setSavingAuditor(false);
+        }
+    };
+
+    // Assign auditor to company
+    const handleAssignAuditor = async () => {
+        if (!selectedAuditor || !assignForm.companyId || !assignForm.startDate) {
+            toast.error('Preencha empresa e data de início');
+            return;
+        }
+
+        setSavingAssign(true);
+        try {
+            const { error } = await supabase
+                .from('audit_assignments')
+                .insert([{
+                    auditor_id: selectedAuditor.id,
+                    company_id: assignForm.companyId,
+                    start_date: assignForm.startDate,
+                    end_date: assignForm.endDate || null,
+                    notes: assignForm.notes || null,
+                    status: 'agendada',
+                    created_by: user?.id
+                }]);
+
+            if (error) throw error;
+
+            toast.success('Auditor designado com sucesso!');
+            setIsAssignModalOpen(false);
+            setSelectedAuditor(null);
+            setAssignForm({ companyId: '', startDate: '', endDate: '', notes: '' });
+            fetchAuditors();
+        } catch (error: any) {
+            console.error('Erro ao designar auditor:', error);
+            toast.error('Erro ao designar: ' + error.message);
+        } finally {
+            setSavingAssign(false);
+        }
+    };
+
+    // Open assign modal
+    const openAssignModal = (auditor: Auditor) => {
+        setSelectedAuditor(auditor);
+        setAssignForm({
+            companyId: '',
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: '',
+            notes: ''
+        });
+        setIsAssignModalOpen(true);
+    };
 
     // Helper function to get avatar color based on company name
     const getAvatarColor = (name: string) => {
@@ -408,6 +578,30 @@ export const SuperAdminPage: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('empresas')}
+                        className={`flex items-center gap-2 px-6 py-3 font-medium text-sm border-b-2 transition-colors ${activeTab === 'empresas'
+                            ? 'border-emerald-600 text-emerald-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        <Building2 className="w-4 h-4" />
+                        Empresas
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('auditores')}
+                        className={`flex items-center gap-2 px-6 py-3 font-medium text-sm border-b-2 transition-colors ${activeTab === 'auditores'
+                            ? 'border-amber-600 text-amber-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        <ClipboardCheck className="w-4 h-4" />
+                        Auditores
+                    </button>
+                </div>
+
                 {/* Error Message */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
@@ -416,134 +610,241 @@ export const SuperAdminPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Actions Bar */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="relative w-full sm:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Buscar empresa..."
-                            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none"
-                        />
-                    </div>
-                    <button
-                        onClick={handleOpenWizard}
-                        className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Cadastrar Novo Cliente
-                    </button>
-                </div>
+                {/* ========== ABA: EMPRESAS ========== */}
+                {activeTab === 'empresas' && (
+                    <>
 
-                {/* Clients Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px]">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-200">
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plano</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pagamento</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Receita</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Criado em</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {companies.map((company) => (
-                                <tr key={company.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            {company.logo_url ? (
-                                                <img
-                                                    src={company.logo_url}
-                                                    alt={company.name}
-                                                    className="w-10 h-10 rounded-full object-contain bg-white border border-gray-100 shadow-sm"
-                                                />
-                                            ) : (
-                                                <div className={`w-10 h-10 rounded-full ${getAvatarColor(company.name)} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                                                    {company.name.substring(0, 2).toUpperCase()}
+                        {/* Actions Bar */}
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="relative w-full sm:w-96">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar empresa..."
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none"
+                                />
+                            </div>
+                            <button
+                                onClick={handleOpenWizard}
+                                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Cadastrar Novo Cliente
+                            </button>
+                        </div>
+
+                        {/* Clients Table */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px]">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plano</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pagamento</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Receita</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Criado em</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {companies.map((company) => (
+                                        <tr key={company.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {company.logo_url ? (
+                                                        <img
+                                                            src={company.logo_url}
+                                                            alt={company.name}
+                                                            className="w-10 h-10 rounded-full object-contain bg-white border border-gray-100 shadow-sm"
+                                                        />
+                                                    ) : (
+                                                        <div className={`w-10 h-10 rounded-full ${getAvatarColor(company.name)} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                                                            {company.name.substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{company.name}</p>
+                                                        <p className="text-xs text-gray-500">{company.cnpj ? formatCNPJ(company.cnpj) : 'Sem CNPJ'}</p>
+                                                    </div>
                                                 </div>
-                                            )}
-                                            <div>
-                                                <p className="font-medium text-gray-900">{company.name}</p>
-                                                <p className="text-xs text-gray-500">{company.cnpj ? formatCNPJ(company.cnpj) : 'Sem CNPJ'}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-gray-900">{company.owner_name || 'N/A'}</span>
-                                            <span className="text-xs text-gray-500">{company.owner_email || '-'}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${company.status === 'active'
-                                            ? 'bg-green-100 text-green-800 border border-green-200'
-                                            : 'bg-red-100 text-red-800 border border-red-200'
-                                            }`}>
-                                            {company.status === 'active' ? 'Ativo' : 'Bloqueado'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`capitalize text-sm px-2 py-1 rounded border ${getPlanBadgeStyle(company.plan)}`}>
-                                            {company.plan || 'Start'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {getSubscriptionBadge(company.subscription_status)}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {(Number(company.monthly_revenue) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {company.created_at ? new Date(company.created_at).toLocaleDateString('pt-BR') : '-'}
-                                    </td>
-                                    <td className="px-6 py-4 text-right relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setOpenMenuId(openMenuId === company.id ? null : company.id);
-                                            }}
-                                            className="text-gray-400 hover:text-slate-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                                        >
-                                            <MoreVertical className="w-5 h-5" />
-                                        </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-gray-900">{company.owner_name || 'N/A'}</span>
+                                                    <span className="text-xs text-gray-500">{company.owner_email || '-'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${company.status === 'active'
+                                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                                    : 'bg-red-100 text-red-800 border border-red-200'
+                                                    }`}>
+                                                    {company.status === 'active' ? 'Ativo' : 'Bloqueado'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`capitalize text-sm px-2 py-1 rounded border ${getPlanBadgeStyle(company.plan)}`}>
+                                                    {company.plan || 'Start'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {getSubscriptionBadge(company.subscription_status)}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {(Number(company.monthly_revenue) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                {company.created_at ? new Date(company.created_at).toLocaleDateString('pt-BR') : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 text-right relative">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenMenuId(openMenuId === company.id ? null : company.id);
+                                                    }}
+                                                    className="text-gray-400 hover:text-slate-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <MoreVertical className="w-5 h-5" />
+                                                </button>
 
-                                        {/* Dropdown Menu */}
-                                        {openMenuId === company.id && (
-                                            <div className="absolute right-8 top-8 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                                                <button
-                                                    onClick={() => handleEdit(company)}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                >
-                                                    <span>✏️</span> Editar
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleStatus(company)}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                >
-                                                    <span>{company.status === 'active' ? '🚫' : '✅'}</span>
-                                                    {company.status === 'active' ? 'Bloqueiar' : 'Ativar'}
-                                                </button>
-                                                <div className="h-px bg-gray-100 my-1" />
-                                                <button
-                                                    onClick={() => handleDelete(company)}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                >
-                                                    <span>🗑️</span> Excluir
-                                                </button>
-                                            </div>
+                                                {/* Dropdown Menu */}
+                                                {openMenuId === company.id && (
+                                                    <div className="absolute right-8 top-8 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                                        <button
+                                                            onClick={() => handleEdit(company)}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            <span>✏️</span> Editar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleToggleStatus(company)}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            <span>{company.status === 'active' ? '🚫' : '✅'}</span>
+                                                            {company.status === 'active' ? 'Bloqueiar' : 'Ativar'}
+                                                        </button>
+                                                        <div className="h-px bg-gray-100 my-1" />
+                                                        <button
+                                                            onClick={() => handleDelete(company)}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                        >
+                                                            <span>🗑️</span> Excluir
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {/* ========== ABA: AUDITORES ========== */}
+                {activeTab === 'auditores' && (
+                    <>
+                        {/* Actions Bar Auditores */}
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="relative w-full sm:w-96">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar auditor..."
+                                    value={auditorSearch}
+                                    onChange={(e) => setAuditorSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                                />
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setNewAuditorForm({ name: '', email: '', password: Math.random().toString(36).slice(-8) });
+                                    setIsNewAuditorModalOpen(true);
+                                }}
+                                className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                Novo Auditor
+                            </button>
+                        </div>
+
+                        {/* Auditors Table */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px]">
+                            {loadingAuditors ? (
+                                <div className="flex items-center justify-center h-96">
+                                    <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                                </div>
+                            ) : (
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-amber-50 border-b border-amber-200">
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Auditor</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">E-mail</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Auditorias Ativas</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Cadastrado em</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {auditors
+                                            .filter(a =>
+                                                a.full_name.toLowerCase().includes(auditorSearch.toLowerCase()) ||
+                                                a.email.toLowerCase().includes(auditorSearch.toLowerCase())
+                                            )
+                                            .map((auditor) => (
+                                                <tr key={auditor.id} className="hover:bg-amber-50/50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">
+                                                                {auditor.full_name.substring(0, 2).toUpperCase()}
+                                                            </div>
+                                                            <span className="font-medium text-gray-900">{auditor.full_name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600">{auditor.email}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${auditor.status === 'livre'
+                                                            ? 'bg-green-100 text-green-800 border border-green-200'
+                                                            : 'bg-orange-100 text-orange-800 border border-orange-200'
+                                                            }`}>
+                                                            {auditor.status === 'livre' ? '✅ Livre' : '🔶 Em Auditoria'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600 text-center">
+                                                        {auditor.active_assignments || 0}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                                        {new Date(auditor.created_at).toLocaleDateString('pt-BR')}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <button
+                                                            onClick={() => openAssignModal(auditor)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                                                        >
+                                                            <Link2 className="w-4 h-4" />
+                                                            Designar
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        {auditors.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                                    Nenhum auditor cadastrado. Clique em "Novo Auditor" para começar.
+                                                </td>
+                                            </tr>
                                         )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </main>
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </>
+                )}
 
+            </main>
             {/* Wizard Modal */}
             {isWizardOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -763,6 +1064,171 @@ export const SuperAdminPage: React.FC = () => {
                                 className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50"
                             >
                                 {editLoading ? 'Salvando...' : 'Salvar Alterações'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Novo Auditor */}
+            {isNewAuditorModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-amber-50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-amber-900 flex items-center gap-2">
+                                <UserPlus className="w-5 h-5" />
+                                Cadastrar Novo Auditor
+                            </h2>
+                            <button onClick={() => setIsNewAuditorModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                                <div className="relative">
+                                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                    <input
+                                        type="text"
+                                        value={newAuditorForm.name}
+                                        onChange={e => setNewAuditorForm({ ...newAuditorForm, name: e.target.value })}
+                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                        placeholder="Ex: Maria Auditora"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                    <input
+                                        type="email"
+                                        value={newAuditorForm.email}
+                                        onChange={e => setNewAuditorForm({ ...newAuditorForm, email: e.target.value })}
+                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                        placeholder="auditor@email.com"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Provisória</label>
+                                <div className="relative">
+                                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                    <input
+                                        type="text"
+                                        value={newAuditorForm.password}
+                                        onChange={e => setNewAuditorForm({ ...newAuditorForm, password: e.target.value })}
+                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none font-mono"
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Copie esta senha para enviar ao auditor.</p>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsNewAuditorModalOpen(false)}
+                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleCreateAuditor}
+                                disabled={savingAuditor || !newAuditorForm.name || !newAuditorForm.email}
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingAuditor ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                                {savingAuditor ? 'Criando...' : 'Criar Auditor'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Designar Auditor */}
+            {isAssignModalOpen && selectedAuditor && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-amber-50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-amber-900 flex items-center gap-2">
+                                <Link2 className="w-5 h-5" />
+                                Designar Auditor
+                            </h2>
+                            <button onClick={() => setIsAssignModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div className="bg-amber-50 p-4 rounded-lg">
+                                <p className="text-sm text-amber-800">
+                                    <strong>Auditor:</strong> {selectedAuditor.full_name}
+                                </p>
+                                <p className="text-xs text-amber-600">{selectedAuditor.email}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa Cliente</label>
+                                <select
+                                    value={assignForm.companyId}
+                                    onChange={e => setAssignForm({ ...assignForm, companyId: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                >
+                                    <option value="">Selecione a empresa...</option>
+                                    {companies.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                                    <input
+                                        type="date"
+                                        value={assignForm.startDate}
+                                        onChange={e => setAssignForm({ ...assignForm, startDate: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                                    <input
+                                        type="date"
+                                        value={assignForm.endDate}
+                                        onChange={e => setAssignForm({ ...assignForm, endDate: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                                <textarea
+                                    value={assignForm.notes}
+                                    onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                    rows={2}
+                                    placeholder="Ex: Auditoria ISO 9001:2015"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsAssignModalOpen(false)}
+                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleAssignAuditor}
+                                disabled={savingAssign || !assignForm.companyId || !assignForm.startDate}
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingAssign ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                                {savingAssign ? 'Salvando...' : 'Designar'}
                             </button>
                         </div>
                     </div>

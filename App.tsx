@@ -38,13 +38,17 @@ import {
   DocumentationPage
 } from './components/pages';
 
+import { AuditorPortal } from './components/pages/auditor/AuditorPortal';
+
 // Page components - Improvement
 import {
   NonConformityPage,
   CorrectiveActionsPage,
   IndicatorsPage,
   AuditsPage,
-  ManagementReviewPage
+  ManagementReviewPage,
+  ExternalAuditsPage,
+  ExternalAuditDetailsPage
 } from './components/pages/improvement';
 
 // Page components - Settings
@@ -53,88 +57,103 @@ import {
   UnitsPage,
   CompanyProfilePage,
   SuperAdminPage,
-  SupportPage
+  SupportPage,
+  AuditAssignmentsPage
 } from './components/pages/settings';
+
+import { AuditorProvider } from './contexts/AuditorContext';
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ThemeProvider>
-          <Toaster position="top-right" richColors closeButton />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/super-admin" element={<SuperAdminPage />} />
+        <AuditorProvider>
+          <ThemeProvider>
+            <Toaster position="top-right" richColors closeButton />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/super-admin" element={<SuperAdminPage />} />
 
-            {/* Protected Routes */}
-            <Route path="/app" element={<ProtectedRoute />}>
-              <Route element={<DashboardLayout />}>
-                <Route index element={<Navigate to="/app/dashboard" replace />} />
-                <Route path="dashboard" element={<SectionDashboard />} />
-                <Route path="perfil" element={<SectionPerfil />} />
+              {/* Auditor Portal - Protected but without DashboardLayout */}
+              <Route path="/auditor-portal" element={
+                <ProtectedRoute>
+                  <AuditorPortal />
+                </ProtectedRoute>
+              } />
 
-                {/* Grupo A: Estratégia (Plan) */}
-                <Route path="contexto-analise" element={<SwotAnalysis />} />
-                <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
-                <Route path="partes-interessadas" element={<StakeholdersPage />} />
-                <Route path="processos-escopo" element={<ScopePage />} />
+              {/* Protected Routes */}
+              <Route path="/app" element={<ProtectedRoute />}>
+                <Route element={<DashboardLayout />}>
+                  <Route index element={<Navigate to="/app/dashboard" replace />} />
+                  <Route path="dashboard" element={<SectionDashboard />} />
+                  <Route path="perfil" element={<SectionPerfil />} />
 
-                {/* Grupo A: Estratégia (Plan) - 5.0 Liderança */}
-                <Route path="politica-qualidade" element={<LeadershipPage />} />
-                <Route path="responsabilidades" element={<LeadershipPage />} />
+                  {/* Grupo A: Estratégia (Plan) */}
+                  <Route path="contexto-analise" element={<SwotAnalysis />} />
+                  <Route path="definicao-estrategica" element={<StrategicDefinitionPage />} />
+                  <Route path="partes-interessadas" element={<StakeholdersPage />} />
+                  <Route path="processos-escopo" element={<ScopePage />} />
 
-                {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}
-                <Route path="matriz-riscos" element={<RiskMatrixPage />} />
-                <Route path="planos-de-acao" element={<ActionPlansPage />} />
-                <Route path="objetivos-qualidade" element={<QualityObjectivesPage />} />
+                  {/* Grupo A: Estratégia (Plan) - 5.0 Liderança */}
+                  <Route path="politica-qualidade" element={<LeadershipPage />} />
+                  <Route path="responsabilidades" element={<LeadershipPage />} />
 
-                {/* Grupo B: Execução (Do) */}
-                {/* 7.0 Apoio */}
-                <Route path="documentos" element={<DocumentsPage />} />
-                <Route path="treinamentos" element={<CompetenciesPage />} />
+                  {/* Grupo A: Estratégia (Plan) - 6.0 Planejamento */}
+                  <Route path="matriz-riscos" element={<RiskMatrixPage />} />
+                  <Route path="planos-de-acao" element={<ActionPlansPage />} />
+                  <Route path="objetivos-qualidade" element={<QualityObjectivesPage />} />
 
-                {/* 8.0 Operação */}
-                <Route path="comercial" element={<SalesRequirementsPage />} />
-                <Route path="fornecedores" element={<SuppliersPage />} />
-                <Route path="producao" element={<ProductionControlPage />} />
-                <Route path="saidas-nao-conformes" element={<NonConformityPage />} />
+                  {/* Grupo B: Execução (Do) */}
+                  {/* 7.0 Apoio */}
+                  <Route path="documentos" element={<DocumentsPage />} />
+                  <Route path="treinamentos" element={<CompetenciesPage />} />
 
-                {/* Grupo C: Checagem (Check/Act) */}
-                {/* 9.0 Avaliação */}
-                <Route path="indicadores" element={<IndicatorsPage />} />
-                <Route path="auditorias" element={<AuditsPage />} />
-                <Route path="analise-critica" element={<ManagementReviewPage />} />
+                  {/* 8.0 Operação */}
+                  <Route path="comercial" element={<SalesRequirementsPage />} />
+                  <Route path="fornecedores" element={<SuppliersPage />} />
+                  <Route path="producao" element={<ProductionControlPage />} />
+                  <Route path="saidas-nao-conformes" element={<NonConformityPage />} />
 
-                {/* 10.0 Melhoria */}
-                <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
-                <Route path="nao-conformidades" element={<Navigate to="/app/acoes-corretivas" replace />} />
+                  {/* Grupo C: Checagem (Check/Act) */}
+                  {/* 9.0 Avaliação */}
+                  <Route path="indicadores" element={<IndicatorsPage />} />
+                  <Route path="auditorias" element={<AuditsPage />} />
+                  <Route path="auditorias-externas" element={<ExternalAuditsPage />} />
+                  <Route path="auditorias-externas/:id" element={<ExternalAuditDetailsPage />} />
+                  <Route path="analise-critica" element={<ManagementReviewPage />} />
 
-                {/* Configurações */}
-                <Route path="usuarios" element={<UsersPage />} />
-                <Route path="unidades" element={<UnitsPage />} />
-                <Route path="ajuda" element={<DocumentationPage />} />
-                <Route path="configuracoes" element={<CompanyProfilePage />} />
-                <Route path="suporte" element={<SupportPage />} />
-                <Route path="sistema" element={<Navigate to="/app/configuracoes" replace />} />
+                  {/* 10.0 Melhoria */}
+                  <Route path="acoes-corretivas" element={<CorrectiveActionsPage />} />
+                  <Route path="nao-conformidades" element={<Navigate to="/app/acoes-corretivas" replace />} />
 
-                {/* Legacy Routes Redirects (Optional, or keep for compatibility) */}
-                <Route path="contexto" element={<Navigate to="/app/contexto-analise" replace />} />
-                <Route path="oportunidades" element={<Navigate to="/app/matriz-riscos" replace />} />
-                <Route path="sistema-infraestrutura" element={<Navigate to="/app/sistema" replace />} />
-                <Route path="sistema-recursos" element={<Navigate to="/app/sistema" replace />} />
-                <Route path="operacao-controle" element={<Navigate to="/app/producao" replace />} />
+                  {/* Configurações */}
+                  <Route path="usuarios" element={<UsersPage />} />
+                  <Route path="unidades" element={<UnitsPage />} />
+                  <Route path="auditores" element={<AuditAssignmentsPage />} />
+                  <Route path="ajuda" element={<DocumentationPage />} />
+                  <Route path="configuracoes" element={<CompanyProfilePage />} />
+                  <Route path="suporte" element={<SupportPage />} />
+                  <Route path="sistema" element={<Navigate to="/app/configuracoes" replace />} />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+                  {/* Legacy Routes Redirects (Optional, or keep for compatibility) */}
+                  <Route path="contexto" element={<Navigate to="/app/contexto-analise" replace />} />
+                  <Route path="oportunidades" element={<Navigate to="/app/matriz-riscos" replace />} />
+                  <Route path="sistema-infraestrutura" element={<Navigate to="/app/sistema" replace />} />
+                  <Route path="sistema-recursos" element={<Navigate to="/app/sistema" replace />} />
+                  <Route path="operacao-controle" element={<Navigate to="/app/producao" replace />} />
+
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ThemeProvider>
+              {/* Catch all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ThemeProvider>
+        </AuditorProvider>
       </AuthProvider>
     </BrowserRouter>
   );

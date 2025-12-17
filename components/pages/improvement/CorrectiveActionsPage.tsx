@@ -28,7 +28,7 @@ import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
 
 export const CorrectiveActionsPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId } = useAuthContext();
     const [actions, setActions] = useState<CorrectiveAction[]>([]);
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export const CorrectiveActionsPage: React.FC = () => {
     useEffect(() => {
         fetchActions();
         fetchProfiles();
-    }, [company]);
+    }, [effectiveCompanyId]);
 
     // Fechar menu ao clicar fora
     useEffect(() => {
@@ -91,12 +91,12 @@ export const CorrectiveActionsPage: React.FC = () => {
     const fetchActions = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('corrective_actions_with_details')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -110,12 +110,12 @@ export const CorrectiveActionsPage: React.FC = () => {
 
     const fetchProfiles = async () => {
         try {
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('profiles')
                 .select('id, full_name')
-                .eq('company_id', company.id);
+                .eq('company_id', effectiveCompanyId);
 
             if (error) throw error;
             setProfiles(data || []);
@@ -125,10 +125,10 @@ export const CorrectiveActionsPage: React.FC = () => {
     };
 
     const fetchNextCode = async () => {
-        if (!company) return '';
+        if (!effectiveCompanyId) return '';
         try {
             const { data, error } = await supabase
-                .rpc('generate_next_rnc_code', { p_company_id: company.id });
+                .rpc('generate_next_rnc_code', { p_company_id: effectiveCompanyId });
 
             if (error) throw error;
             return data || '';
@@ -231,11 +231,11 @@ export const CorrectiveActionsPage: React.FC = () => {
     };
 
     const handleSaveStep = async () => {
-        if (!company) return;
+        if (!effectiveCompanyId) return;
 
         try {
             const payload: any = {
-                company_id: company.id,
+                company_id: effectiveCompanyId,
                 ...form
             };
 
@@ -373,7 +373,7 @@ export const CorrectiveActionsPage: React.FC = () => {
             const nextCode = await fetchNextCode();
 
             const payload = {
-                company_id: company?.id,
+                company_id: effectiveCompanyId,
                 code: nextCode,
                 origin: action.origin,
                 description: `[CÓPIA] ${action.description}`,

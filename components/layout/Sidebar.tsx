@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Building2,
   Users,
-  FileSpreadsheet,
   FileText,
   GraduationCap,
   Factory,
@@ -13,7 +12,6 @@ import {
   FileBarChart,
   Settings,
   UserCog,
-  Database,
   ChevronDown,
   ChevronRight,
   Target,
@@ -27,10 +25,14 @@ import {
   CheckCircle2,
   HelpingHand,
   LayoutDashboard,
-  Lock
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../../types';
 import { usePlanLimits } from '../../hooks/usePlanLimits';
+import { useAuditor } from '../../contexts/AuditorContext';
+import { useAuthContext } from '../../contexts/AuthContext';
+import { CompanySwitcher } from '../common/CompanySwitcher';
 
 // --- Interfaces ---
 
@@ -69,7 +71,7 @@ const menuGroups: MenuGroup[] = [
         items: [
           {
             label: 'Definição Estratégica',
-            section: IsoSection.CONTEXT_ANALYSIS, // Using same section enum for now or create new one
+            section: IsoSection.CONTEXT_ANALYSIS,
             path: '/app/definicao-estrategica',
             icon: Target
           },
@@ -125,7 +127,7 @@ const menuGroups: MenuGroup[] = [
           },
           {
             label: 'Planos de Ação',
-            section: IsoSection.RISK_MATRIX, // Using same section or create new one
+            section: IsoSection.RISK_MATRIX,
             path: '/app/planos-de-acao',
             icon: CheckCircle2
           },
@@ -209,6 +211,12 @@ const menuGroups: MenuGroup[] = [
             icon: ClipboardCheck
           },
           {
+            label: 'Auditorias Externas',
+            section: IsoSection.EXTERNAL_AUDITS,
+            path: '/app/auditorias-externas',
+            icon: ShieldCheck
+          },
+          {
             label: 'Análise Crítica',
             section: IsoSection.MANAGEMENT_REVIEW,
             path: '/app/analise-critica',
@@ -264,6 +272,12 @@ const settingsGroup: MenuSection = {
       icon: Users
     },
     {
+      label: 'Auditores Externos',
+      section: IsoSection.INTERNAL_AUDITS,
+      path: '/app/auditores',
+      icon: ClipboardCheck
+    },
+    {
       label: 'Perfil da Empresa',
       section: IsoSection.COMPANY_PROFILE,
       path: '/app/configuracoes',
@@ -277,6 +291,118 @@ const settingsGroup: MenuSection = {
     }
   ]
 };
+
+// --- Menu Groups for Auditors ---
+
+const auditorPortalGroups: MenuGroup[] = [
+  {
+    groupTitle: 'Portal do Auditor',
+    sections: [
+      {
+        sectionNumber: '',
+        sectionTitle: 'Menu Principal',
+        icon: LayoutDashboard,
+        items: [
+          {
+            label: 'Meus Clientes',
+            section: IsoSection.CONTEXT_ANALYSIS,
+            path: '/app/portal-auditor',
+            icon: Briefcase
+          },
+          {
+            label: 'Consultar ISO 9001',
+            section: IsoSection.SUPPORT,
+            path: '/app/ajuda',
+            icon: BookOpen
+          },
+          {
+            label: 'Meu Perfil',
+            section: IsoSection.SUPPORT,
+            path: '/app/perfil',
+            icon: UserCog
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const auditorClientGroups: MenuGroup[] = [
+  {
+    groupTitle: 'Auditoria em Andamento',
+    sections: [
+      {
+        sectionNumber: '',
+        sectionTitle: 'Visão Geral',
+        icon: LayoutDashboard,
+        items: [
+          {
+            label: 'Dashboard da Empresa',
+            section: IsoSection.CONTEXT_ANALYSIS,
+            path: '/app/dashboard',
+            icon: BarChart3
+          }
+        ]
+      },
+      {
+        sectionNumber: 'EXEC.',
+        sectionTitle: 'Auditar',
+        icon: ClipboardCheck,
+        items: [
+          {
+            label: 'Documentação (GED)',
+            section: IsoSection.DOCUMENTS,
+            path: '/app/documentos',
+            icon: FileText
+          },
+          {
+            label: 'Matriz de Riscos',
+            section: IsoSection.RISK_MATRIX,
+            path: '/app/matriz-riscos',
+            icon: AlertTriangle
+          },
+          {
+            label: 'Processos e Escopo',
+            section: IsoSection.PROCESSES_SCOPE,
+            path: '/app/processos-escopo',
+            icon: Factory
+          },
+          {
+            label: 'RNCs e Ações',
+            section: IsoSection.NON_CONFORMANCES,
+            path: '/app/acoes-corretivas',
+            icon: AlertOctagon
+          },
+          {
+            label: 'Auditorias Internas',
+            section: IsoSection.INTERNAL_AUDITS,
+            path: '/app/auditorias',
+            icon: CheckCircle2
+          },
+          {
+            label: 'Auditorias Externas',
+            section: IsoSection.EXTERNAL_AUDITS,
+            path: '/app/auditorias-externas',
+            icon: ShieldCheck
+          }
+        ]
+      },
+      {
+        sectionNumber: 'FINAL',
+        sectionTitle: 'Conclusão',
+        icon: GraduationCap,
+        items: [
+          {
+            label: 'Análise Crítica',
+            section: IsoSection.MANAGEMENT_REVIEW,
+            path: '/app/analise-critica',
+            icon: FileBarChart
+          }
+        ]
+      }
+    ]
+  }
+];
 
 // --- Components ---
 
@@ -333,6 +459,31 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
   );
 };
 
+const NavigationItemComponent = ({ item, isActive }: { item: NavigationItem; isActive: boolean }) => {
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate(item.path)}
+      className={`
+        w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
+        ${isActive
+          ? 'bg-[#3F858C] text-white shadow-sm font-medium'
+          : 'text-gray-600 hover:text-[#025159] hover:bg-gray-50'
+        }
+      `}
+    >
+      <div className={`
+        w-1.5 h-1.5 rounded-full transition-colors
+        ${isActive ? 'bg-white' : 'bg-transparent group-hover:bg-[#67B7BF]'}
+      `} />
+      <span className="truncate">{item.label}</span>
+      {isActive && <ChevronRight className="w-3 h-3 ml-auto opacity-50" />}
+    </button>
+  );
+};
+
+// --- Main Sidebar Component ---
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -341,228 +492,250 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const { canAccessModule, planName } = usePlanLimits();
+  const [openGroups, setOpenGroups] = useState<string[]>(['4.0']);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const planLimits = usePlanLimits();
+  const { canAccessModule } = planLimits;
 
-  // Load and sync avatar
+  // Auditor Context
+  const { isAuditorMode, targetCompany, exitAuditorMode } = useAuditor();
+  const { auditorAssignments } = useAuthContext(); // Removed unused 'user'
+
+  const isAuditorUser = auditorAssignments?.length > 0;
+
+  // Determine which menu to show
+  let displayedGroups = menuGroups; // Default (Company Owner)
+
+  if (isAuditorUser) {
+    if (isAuditorMode) {
+      displayedGroups = auditorClientGroups;
+    } else {
+      displayedGroups = auditorPortalGroups;
+    }
+  }
+
+  // Effect to close mobile sidebar on navigation
   useEffect(() => {
-    const loadAvatar = () => {
-      const savedAvatar = localStorage.getItem('isotek_avatar');
-      setAvatarUrl(savedAvatar);
-    };
+    setIsMobileOpen(false);
+  }, [location.pathname]);
 
-    loadAvatar();
-    window.addEventListener('avatarUpdated', loadAvatar);
-    return () => window.removeEventListener('avatarUpdated', loadAvatar);
-  }, []);
-
-  // Auto-expand group if child is active
+  // Effect to auto-expand groups
   useEffect(() => {
     const currentPath = location.pathname;
 
-    // Check main menu groups
-    menuGroups.forEach(group => {
+    displayedGroups.forEach(group => {
       group.sections.forEach(section => {
-        const hasActiveItem = section.items.some(item =>
-          item.path === currentPath ||
-          (item.children && item.children.some(child => child.path === currentPath))
-        );
-
-        if (hasActiveItem && !expandedGroups.includes(section.sectionTitle)) {
-          setExpandedGroups(prev => [...prev, section.sectionTitle]);
+        const hasActiveItem = section.items.some(item => item.path === currentPath);
+        if (hasActiveItem && !openGroups.includes(section.sectionTitle)) {
+          setOpenGroups(prev => [...prev, section.sectionTitle]);
         }
       });
     });
+  }, [location.pathname, displayedGroups, openGroups]);
 
-    // Check settings group
-    const hasActiveSettings = settingsGroup.items.some(item => item.path === currentPath);
-    if (hasActiveSettings && !expandedGroups.includes(settingsGroup.sectionTitle)) {
-      setExpandedGroups(prev => [...prev, settingsGroup.sectionTitle]);
-    }
-  }, [location.pathname]);
-
-  const toggleGroup = (label: string) => {
-    setExpandedGroups(prev =>
-      prev.includes(label)
-        ? prev.filter(item => item !== label)
-        : [...prev, label]
+  const toggleGroup = (title: string) => {
+    setOpenGroups(prev =>
+      prev.includes(title)
+        ? prev.filter(t => t !== title)
+        : [...prev, title]
     );
   };
 
+  const handleExitAuditorMode = () => {
+    exitAuditorMode();
+    navigate('/app/portal-auditor');
+  };
+
   const renderMenuItem = (item: NavigationItem) => {
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedGroups.includes(item.label);
-    const isActive = item.path === location.pathname;
-    const isChildActive = hasChildren && item.children?.some(child => child.path === location.pathname);
-
-    // Special highlighting for "Gestão de Documentos (GED)" as requested
-    const isGed = item.section === IsoSection.DOCUMENTS;
-
-    // Check if module is restricted by plan
+    // Check if module is restricted by plan (Only for Company Owner, Auditor usually has unrestricted view or specific)
     const moduleKey = item.path?.split('/').pop() || '';
-    const isRestricted = !canAccessModule(moduleKey);
+    const isRestricted = !isAuditorUser && !canAccessModule(moduleKey);
 
-    // Special modules that require Pro plan
     const isAuditModule = item.section === IsoSection.INTERNAL_AUDITS;
     const isSupplierModule = item.section === IsoSection.SUPPLIER_MANAGEMENT;
     const needsUpgrade = isAuditModule || isSupplierModule;
 
+    const isActive = location.pathname === item.path;
+
     const handleClick = () => {
-      if (isRestricted && needsUpgrade) {
-        // Redirect to company profile for upgrade
-        navigate('/app/settings/company-profile');
+      if (isRestricted && needsUpgrade && !isAuditorUser) {
+        navigate('/app/configuracoes');
         return;
       }
-      if (item.path) {
-        navigate(item.path);
-      }
+      if (item.path) navigate(item.path);
     };
-
-    if (hasChildren) {
-      return (
-        <div key={item.label} className="mb-1">
-          <button
-            onClick={() => toggleGroup(item.label)}
-            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isChildActive ? 'text-[#025159] bg-[#025159]/10 dark:bg-[#025159]/20' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
-              }`}
-          >
-            <div className="flex items-center gap-3">
-              {item.icon && <item.icon size={18} className={isChildActive ? 'text-[#025159]' : 'text-gray-400'} />}
-              <span>{item.label}</span>
-            </div>
-            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button>
-
-          {isExpanded && (
-            <div className="ml-4 pl-3 border-l border-gray-100 dark:border-gray-800 mt-1 space-y-1">
-              {item.children!.map(child => renderMenuItem(child))}
-            </div>
-          )}
-        </div>
-      );
-    }
 
     return (
       <button
         key={item.label}
         onClick={handleClick}
-        title={isRestricted && needsUpgrade ? `Disponível no plano PRO` : undefined}
-        className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${isActive
-          ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
-          : isGed
-            ? 'text-gray-700 font-semibold hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-            : isRestricted && needsUpgrade
-              ? 'text-gray-400 hover:bg-purple-50 dark:text-gray-600 dark:hover:bg-purple-900/10 opacity-60 cursor-pointer'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
-          }`}
+        className={`
+            w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200
+            ${isActive
+            ? 'bg-[#025159]/10 text-[#025159] dark:bg-[#025159]/20'
+            : 'text-gray-600 hover:text-[#025159] hover:bg-gray-50'
+          }
+          `}
       >
         <div className="flex items-center gap-3">
-          {item.icon && (
-            <item.icon
-              size={18}
-              className={
-                isActive
-                  ? 'text-[#025159]'
-                  : isGed
-                    ? 'text-[#025159]'
-                    : isRestricted && needsUpgrade
-                      ? 'text-gray-400'
-                      : 'text-gray-400'
-              }
-            />
-          )}
+          {item.icon && <item.icon size={18} className={isActive ? 'text-[#025159]' : 'text-gray-400'} />}
           <span>{item.label}</span>
         </div>
-        {isRestricted && needsUpgrade && (
-          <Lock size={14} className="text-purple-500" />
-        )}
+        {isRestricted && needsUpgrade && !isAuditorUser && <Lock size={14} className="text-purple-500" />}
       </button>
-    );
-  };
-
-  const renderSection = (section: MenuSection) => {
-    const isActive = section.items.some(item =>
-      item.path === location.pathname ||
-      (item.children && item.children.some(child => child.path === location.pathname))
-    );
-
-    return (
-      <SidebarGroup
-        key={section.sectionTitle}
-        title={section.sectionTitle}
-        sectionNumber={section.sectionNumber}
-        icon={section.icon}
-        isOpen={expandedGroups.includes(section.sectionTitle)}
-        onToggle={() => toggleGroup(section.sectionTitle)}
-        isActive={isActive}
-      >
-        {section.items.map(item => renderMenuItem(item))}
-      </SidebarGroup>
     );
   };
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && (
+      {/* Mobile Trigger */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md md:hidden"
+      >
+        <LayoutDashboard className="w-6 h-6 text-[#025159]" />
+      </button>
+
+      {/* Backdrop */}
+      {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300"
-          onClick={onClose}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <aside className={`
-        w-72 bg-white dark:bg-gray-900 h-screen border-r border-gray-200 dark:border-gray-800 
-        flex flex-col fixed left-0 top-0 z-50 transition-all duration-300
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        fixed top-0 left-0 z-40 h-screen w-72 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out flex flex-col
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-3">
-            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
-              <path d="M15 40 H45 V85 C45 93.2843 38.2843 100 30 100 C21.7157 100 15 93.2843 15 85 V40 Z" fill="#2dd4bf" />
-              <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
-              <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
-            </svg>
-            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Isotek</span>
-          </div>
+
+        {/* Header */}
+        <div className="p-6 border-b border-gray-100">
+          {auditorAssignments?.length > 0 ? (
+            <div className="w-full space-y-3">
+              <CompanySwitcher fullWidth variant="sidebar" />
+              {isAuditorMode && (
+                <button
+                  onClick={() => {
+                    exitAuditorMode();
+                    navigate('/auditor-portal');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors font-medium"
+                >
+                  <ArrowLeft size={16} />
+                  Voltar aos Meus Projetos
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#025159] rounded-lg">
+                <Building2 className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Isotek</h1>
+                <p className="text-xs text-[#025159]">Gestão da Qualidade</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        <nav className="flex-1 flex flex-col py-4 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-          <div className="mb-2">
-            <button
-              onClick={() => navigate('/app/dashboard')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === '/app/dashboard'
-                ? 'bg-[#025159] text-white shadow-md shadow-[#025159]/20'
-                : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-                }`}
-            >
-              <LayoutDashboard size={20} />
-              <span className="font-semibold">Dashboard</span>
-            </button>
-          </div>
-
-          {menuGroups.map((group, index) => (
-            <div key={group.groupTitle} className="mb-6">
-              <h3 className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          {displayedGroups.map((group) => (
+            <div key={group.groupTitle} className="space-y-2">
+              <h3 className="px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 {group.groupTitle}
               </h3>
-              {group.sections.map(section => renderSection(section))}
+
+              <div className="space-y-1">
+                {group.sections.map((section) => (
+                  <SidebarGroup
+                    key={section.sectionTitle}
+                    title={section.sectionTitle}
+                    sectionNumber={section.sectionNumber}
+                    icon={section.icon}
+                    isActive={section.items.some(item => location.pathname === item.path)}
+                    isOpen={openGroups.includes(section.sectionTitle)}
+                    onToggle={() => toggleGroup(section.sectionTitle)}
+                  >
+                    {section.items.map((item) => renderMenuItem(item))}
+                  </SidebarGroup>
+                ))}
+              </div>
             </div>
           ))}
 
-          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
-            {renderSection(settingsGroup)}
-          </div>
-        </nav>
+          {/* Settings Section (Only for Company Owner) */}
+          {!isAuditorUser && (
+            <div className="space-y-2 pt-4 border-t border-gray-100">
+              <h3 className="px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                {settingsGroup.sectionTitle}
+              </h3>
+              <SidebarGroup
+                title={settingsGroup.sectionTitle}
+                icon={settingsGroup.icon}
+                isOpen={openGroups.includes(settingsGroup.sectionTitle)}
+                onToggle={() => toggleGroup(settingsGroup.sectionTitle)}
+                isActive={settingsGroup.items.some(item => location.pathname === item.path)}
+              >
+                {settingsGroup.items.map(item => renderMenuItem(item))}
+              </SidebarGroup>
+            </div>
+          )}
+        </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-          <div className="flex items-center gap-2 text-xs text-gray-500 justify-center">
-            <CheckCircle2 size={12} className="text-[#025159]" />
-            <span>Metodologia <strong>PROCEM</strong></span>
-          </div>
+        {/* Footer/Actions */}
+        <div className="p-4 border-t border-gray-100 bg-gray-50">
+          {isAuditorMode ? (
+            <button
+              onClick={handleExitAuditorMode}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl transition-all shadow-sm group"
+            >
+              <BookOpen className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+              <span className="font-medium">Sair da Auditoria</span>
+            </button>
+          ) : isAuditorUser ? (
+            <div className="px-4 py-3 bg-white border border-gray-200 rounded-xl flex items-center gap-3 shadow-sm">
+              <div className="p-2 bg-amber-50 rounded-lg">
+                <UserCog className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Perfil Auditor</p>
+                <p className="text-xs text-gray-500">Acesso Externo</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Plan Status */}
+              <div className="px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-600">Plano {planLimits.planId === 'enterprise' ? 'Empresa' : planLimits.planId === 'pro' ? 'Pro' : 'Start'}</span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                    ATIVO
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-gray-500">
+                    <span>Usuários</span>
+                    <span>{planLimits.usage.usersUsed}/{planLimits.usage.usersLimit}</span>
+                  </div>
+                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#025159] rounded-full"
+                      style={{ width: `${Math.min((planLimits.usage.usersUsed / planLimits.usage.usersLimit) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-500 hover:text-[#025159] transition-colors">
+                <HelpingHand className="w-4 h-4" />
+                Precisa de ajuda?
+              </button>
+            </div>
+          )}
         </div>
       </aside>
     </>

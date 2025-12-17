@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, ChevronRight, Sun, Moon, X, ExternalLink, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check } from 'lucide-react';
+import { Bell, Search, ChevronRight, Sun, Moon, X, ExternalLink, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserDropdown } from './UserDropdown';
+import { CompanySwitcher } from '../common/CompanySwitcher';
 import { IsoSection, Notification, NotificationType } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuditor } from '../../contexts/AuditorContext';
 import { supabase } from '../../lib/supabase';
 
 interface HeaderProps {
@@ -21,7 +23,8 @@ interface SearchResult {
 
 export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
-  const { company, user } = useAuthContext();
+  const { company, user, viewingAsCompanyName, auditorAssignments } = useAuthContext();
+  const { isAuditorMode, exitAuditorMode } = useAuditor();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -207,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 lg:left-72 left-0 z-10 px-4 md:px-8 flex items-center justify-between transition-colors duration-200">
+    <header className={`h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed ${isAuditorMode ? 'top-10 md:top-12' : 'top-0'} right-0 lg:left-72 left-0 z-40 px-4 md:px-8 flex items-center justify-between transition-all duration-200`}>
       {/* Mobile Menu Button */}
       <button
         onClick={onMenuClick}
@@ -223,8 +226,11 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
         <span className="font-medium text-gray-900 dark:text-white">{activeSection}</span>
       </div>
 
+
+
       {/* Actions */}
       <div className="flex items-center gap-2 md:gap-4">
+
         {/* Search */}
         <div className="relative hidden md:block" ref={searchRef}>
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

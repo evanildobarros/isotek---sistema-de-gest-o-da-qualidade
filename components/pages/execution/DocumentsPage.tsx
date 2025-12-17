@@ -5,6 +5,10 @@ import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import ReactMarkdown from 'react-markdown';
+import { useAuditFindings } from '../../../hooks/useAuditFindings';
+import { AuditIndicator } from '../../common/AuditIndicator';
+import { AuditActionPanel } from '../../auditor/AuditActionPanel';
+import { useAuditor } from '../../../contexts/AuditorContext';
 
 type DocumentStatus = 'vigente' | 'rascunho' | 'obsoleto' | 'em_aprovacao';
 
@@ -28,7 +32,7 @@ interface Document {
 }
 
 export const DocumentsPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode, viewingAsCompanyName } = useAuthContext();
     const location = useLocation();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
@@ -66,6 +70,38 @@ export const DocumentsPage: React.FC = () => {
     const [loadingEditContent, setLoadingEditContent] = useState(false);
     const [savingEdit, setSavingEdit] = useState(false);
     const [editPreviewMode, setEditPreviewMode] = useState(false);
+
+    // Audit findings hook - busca constatações pendentes para documentos
+    const { findingsMap, loading: loadingFindings } = useAuditFindings('document');
+
+    // Auditor context para painel de ações
+    const { isAuditorMode: auditorModeActive, targetCompany } = useAuditor();
+
+    // Estado para armazenar o ID do audit_assignment ativo (quando em modo auditor)
+    const [activeAuditAssignmentId, setActiveAuditAssignmentId] = useState<string | null>(null);
+
+    // Buscar assignment ativo quando em modo auditor
+    useEffect(() => {
+        const fetchActiveAssignment = async () => {
+            if (auditorModeActive && targetCompany && user) {
+                const { data } = await supabase
+                    .from('audit_assignments')
+                    .select('id')
+                    .eq('auditor_id', user.id)
+                    .eq('company_id', targetCompany.id)
+                    .in('status', ['active', 'em_andamento', 'agendada'])
+                    .single();
+
+                if (data) {
+                    setActiveAuditAssignmentId(data.id);
+                }
+            } else {
+                setActiveAuditAssignmentId(null);
+            }
+        };
+        fetchActiveAssignment();
+    }, [auditorModeActive, targetCompany, user]);
+
 
     useEffect(() => {
         fetchDocuments();
@@ -105,8 +141,8 @@ export const DocumentsPage: React.FC = () => {
     const fetchDocuments = async () => {
         setLoading(true);
         try {
-            if (!company) {
-                console.warn('Usuário não vinculado a uma empresa');
+            if (!effectiveCompanyId) {
+                // console.warn('Usuário não vinculado a uma empresa');
                 setDocuments([]);
                 return;
             }
@@ -114,7 +150,7 @@ export const DocumentsPage: React.FC = () => {
             const { data, error } = await supabase
                 .from('documents_with_responsibles')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('uploaded_at', { ascending: false });
 
             if (error) throw error;
@@ -235,8 +271,8 @@ export const DocumentsPage: React.FC = () => {
                 throw new Error('Erro ao gerar URL pública do arquivo');
             }
 
-            if (!company) {
-                throw new Error('Usuário não vinculado a uma empresa');
+            if (!effectiveCompanyId) {
+                throw new Error('Empresa não encontrada');
             }
 
             // Verifica se já existe documento com mesmo código (para log)
@@ -244,7 +280,7 @@ export const DocumentsPage: React.FC = () => {
                 const { data: existingDocs } = await supabase
                     .from('documents')
                     .select('id, version')
-                    .eq('company_id', company.id)
+                    .eq('company_id', effectiveCompanyId)
                     .eq('code', uploadCode);
 
                 if (existingDocs && existingDocs.length > 0) {
@@ -265,7 +301,7 @@ export const DocumentsPage: React.FC = () => {
                         file_name: selectedFile.name,
                         file_size: selectedFile.size,
                         owner_id: user.id,
-                        company_id: company.id,
+                        company_id: effectiveCompanyId, // Use effectiveCompanyId
                         elaborated_by: user.id
                     }
                 ]);
@@ -355,8 +391,8 @@ export const DocumentsPage: React.FC = () => {
                 throw new Error('Documento não encontrado');
             }
 
-            if (!company) {
-                throw new Error('Usuário não vinculado a uma empresa');
+            if (!effectiveCompanyId) {
+                throw new Error('Empresa não encontrada');
             }
 
             // 2. Se o documento tem código, obsoletear versões antigas do mesmo código
@@ -366,7 +402,7 @@ export const DocumentsPage: React.FC = () => {
                 const { error: obsoleteError } = await supabase
                     .from('documents')
                     .update({ status: 'obsoleto' })
-                    .eq('company_id', company.id)
+                    .eq('company_id', effectiveCompanyId) // Use effectiveCompanyId
                     .eq('code', docToApprove.code)
                     .neq('id', docId); // Não atualizar o documento atual
 
@@ -460,10 +496,13 @@ export const DocumentsPage: React.FC = () => {
 
     // AI Document Generator
     const handleGenerateDocument = async () => {
-        if (!company) {
+        if (!effectiveCompanyId) {
             toast.error('Empresa não encontrada');
             return;
         }
+
+        const targetCompanyName = isAuditorMode ? (viewingAsCompanyName || 'Empresa Cliente') : company?.name;
+        const targetCnpj = isAuditorMode ? '' : (company?.cnpj || ''); // Auditors rarely need CNPJ for generation content?
 
         setGeneratingDocument(true);
         setGeneratedContent('');
@@ -471,8 +510,8 @@ export const DocumentsPage: React.FC = () => {
         try {
             const { data, error } = await supabase.functions.invoke('generate-manual', {
                 body: {
-                    companyName: company.name,
-                    cnpj: company.cnpj || '',
+                    companyName: targetCompanyName,
+                    cnpj: targetCnpj,
                     documentType: selectedDocType
                 }
             });
@@ -495,7 +534,7 @@ export const DocumentsPage: React.FC = () => {
     };
 
     const handleSaveGeneratedDocument = async () => {
-        if (!generatedContent || !user || !company) return;
+        if (!generatedContent || !user || !effectiveCompanyId) return;
 
         try {
             const docTitles: Record<string, { title: string; code: string }> = {
@@ -505,6 +544,7 @@ export const DocumentsPage: React.FC = () => {
             };
 
             const docInfo = docTitles[selectedDocType];
+            const targetCompanyName = isAuditorMode ? (viewingAsCompanyName || '') : (company?.name || '');
 
             // Criar um Blob com o conteúdo Markdown
             const blob = new Blob([generatedContent], { type: 'text/markdown' });
@@ -526,7 +566,7 @@ export const DocumentsPage: React.FC = () => {
             const { error: insertError } = await supabase
                 .from('documents')
                 .insert([{
-                    title: `${docInfo.title} - ${company.name}`,
+                    title: `${docInfo.title} - ${targetCompanyName}`,
                     code: docInfo.code,
                     version: '1.0',
                     status: 'rascunho',
@@ -534,7 +574,7 @@ export const DocumentsPage: React.FC = () => {
                     file_name: fileName,
                     file_size: blob.size,
                     owner_id: user.id,
-                    company_id: company.id,
+                    company_id: effectiveCompanyId, // Use effectiveCompanyId
                     elaborated_by: user.id
                 }]);
 
@@ -582,7 +622,7 @@ export const DocumentsPage: React.FC = () => {
 
     // Função para salvar edição
     const handleSaveEdit = async () => {
-        if (!editingDocument || !user || !company) return;
+        if (!editingDocument || !user || !effectiveCompanyId) return;
 
         setSavingEdit(true);
 
@@ -640,22 +680,25 @@ export const DocumentsPage: React.FC = () => {
                     </div>
                     <p className="text-gray-500 text-sm">Controle da Informação Documentada (ISO 9001: 7.5)</p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                    <button
-                        onClick={() => setIsGeneratorModalOpen(true)}
-                        className="group flex items-center gap-3 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-xl hover:bg-[#3F858C] hover:shadow-lg hover:scale-[1.02] transition-all duration-200 w-full md:w-auto"
-                    >
-                        <Sparkles size={20} className="group-hover:animate-pulse" />
-                        <span>Gerar com IA</span>
-                    </button>
-                    <button
-                        onClick={() => setIsUploadModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors w-full md:w-auto"
-                    >
-                        <Plus size={20} />
-                        <span>Novo Documento</span>
-                    </button>
-                </div>
+                {/* Botões ocultos para auditores */}
+                {!auditorModeActive && (
+                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                        <button
+                            onClick={() => setIsGeneratorModalOpen(true)}
+                            className="group flex items-center gap-3 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-xl hover:bg-[#3F858C] hover:shadow-lg hover:scale-[1.02] transition-all duration-200 w-full md:w-auto"
+                        >
+                            <Sparkles size={20} className="group-hover:animate-pulse" />
+                            <span>Gerar com IA</span>
+                        </button>
+                        <button
+                            onClick={() => setIsUploadModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white font-medium rounded-lg hover:bg-[#025159]/90 transition-colors w-full md:w-auto"
+                        >
+                            <Plus size={20} />
+                            <span>Novo Documento</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Status Filters */}
@@ -740,15 +783,36 @@ export const DocumentsPage: React.FC = () => {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {filteredDocuments.map((doc) => {
                         const { icon: Icon, colorClass, bgClass } = getFileIcon(doc.file_name);
                         const canCreateVersion = doc.status === 'vigente' || doc.status === 'obsoleto';
 
+                        const finding = findingsMap[doc.id];
+                        let borderClass = 'border-gray-100';
+
+                        // Define cor da borda baseada na severidade da constatação
+                        if (finding) {
+                            switch (finding.severity) {
+                                case 'nao_conformidade_maior':
+                                    borderClass = 'border-red-400 ring-1 ring-red-400';
+                                    break;
+                                case 'nao_conformidade_menor':
+                                    borderClass = 'border-orange-400 ring-1 ring-orange-400';
+                                    break;
+                                case 'oportunidade':
+                                    borderClass = 'border-blue-400 ring-1 ring-blue-400';
+                                    break;
+                                case 'conforme':
+                                    borderClass = 'border-green-400 ring-1 ring-green-400';
+                                    break;
+                            }
+                        }
+
                         return (
                             <div
                                 key={doc.id}
-                                className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition-all overflow-hidden group"
+                                className={`bg-white rounded-xl shadow-sm hover:shadow-md border transition-all overflow-hidden group ${borderClass}`}
                             >
                                 {/* Icon Area */}
                                 <div className={`${bgClass} py-8 flex items-center justify-center`}>
@@ -769,10 +833,13 @@ export const DocumentsPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Title */}
-                                    <h3 className="font-medium text-gray-900 mt-1 mb-3 line-clamp-2" title={doc.title}>
-                                        {doc.title}
-                                    </h3>
+                                    {/* Title with Audit Indicator */}
+                                    <div className="flex items-start gap-2 mt-1 mb-3">
+                                        <h3 className="font-medium text-gray-900 line-clamp-2 flex-1" title={doc.title}>
+                                            {doc.title}
+                                        </h3>
+                                        <AuditIndicator entityId={doc.id} findingsMap={findingsMap} size="sm" />
+                                    </div>
 
                                     {/* Footer */}
                                     <div className="flex items-center justify-between">
@@ -817,8 +884,8 @@ export const DocumentsPage: React.FC = () => {
                                             </button>
                                         )}
 
-                                        {/* RASCUNHO: Editar + Solicitar Aprovação */}
-                                        {doc.status === 'rascunho' && (
+                                        {/* RASCUNHO: Editar + Solicitar Aprovação (Apenas Empresa) */}
+                                        {!auditorModeActive && doc.status === 'rascunho' && (
                                             <>
                                                 {doc.file_name.endsWith('.md') && (
                                                     <button
@@ -841,8 +908,8 @@ export const DocumentsPage: React.FC = () => {
                                             </>
                                         )}
 
-                                        {/* EM APROVAÇÃO: Aprovar + Rejeitar */}
-                                        {doc.status === 'em_aprovacao' && (
+                                        {/* EM APROVAÇÃO: Aprovar + Rejeitar (Apenas Empresa) */}
+                                        {!auditorModeActive && doc.status === 'em_aprovacao' && (
                                             <>
                                                 <button
                                                     onClick={() => handleApprove(doc.id)}
@@ -863,8 +930,8 @@ export const DocumentsPage: React.FC = () => {
                                             </>
                                         )}
 
-                                        {/* VIGENTE/OBSOLETO: Nova Versão */}
-                                        {canCreateVersion && (
+                                        {/* VIGENTE/OBSOLETO: Nova Versão (Apenas Empresa) */}
+                                        {!auditorModeActive && canCreateVersion && (
                                             <button
                                                 onClick={() => handleCreateNewVersion(doc)}
                                                 className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
@@ -888,6 +955,22 @@ export const DocumentsPage: React.FC = () => {
                                             </a>
                                         )}
                                     </div>
+
+                                    {/* Painel de Ações do Auditor */}
+                                    {auditorModeActive && activeAuditAssignmentId && (
+                                        <AuditActionPanel
+                                            entityId={doc.id}
+                                            entityType="document"
+                                            entityName={doc.title}
+                                            auditAssignmentId={activeAuditAssignmentId}
+                                            existingFinding={findingsMap[doc.id] ? {
+                                                id: findingsMap[doc.id].id,
+                                                severity: findingsMap[doc.id].severity as any,
+                                                auditor_notes: findingsMap[doc.id].auditor_notes,
+                                                status: findingsMap[doc.id].status
+                                            } : null}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         );
