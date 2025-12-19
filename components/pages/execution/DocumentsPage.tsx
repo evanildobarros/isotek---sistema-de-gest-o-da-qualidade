@@ -1011,7 +1011,7 @@ export const DocumentsPage: React.FC = () => {
                                     </div>
 
                                     {/* Content */}
-                                    <div className="p-4 flex-1">
+                                    <div className={`p-4 flex-1 ${auditorModeActive ? 'border-r border-gray-100' : ''}`}>
                                         {/* Code */}
                                         {doc.code && (
                                             <div className="flex items-center gap-1 mb-1">
@@ -1168,9 +1168,9 @@ export const DocumentsPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Bloco 2: Painel de Ações do Auditor - Separado visualmente como bloco horizontal */}
+                                    {/* Bloco 2: Painel de Ações do Auditor - Posicionado à direita no modo horizontal */}
                                     {auditorModeActive && activeAuditAssignmentId && (
-                                        <div className="border-t border-amber-200">
+                                        <div className="md:w-1/2 lg:w-[600px] flex flex-col border-l border-amber-100 bg-amber-50/10">
                                             <AuditActionPanel
                                                 entityId={doc.id}
                                                 entityType="document"
