@@ -971,7 +971,7 @@ export const DocumentsPage: React.FC = () => {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className={auditorModeActive ? "flex flex-col gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"}>
                     {filteredDocuments.map((doc) => {
                         const { icon: Icon, colorClass, bgClass } = getFileIcon(doc.file_name);
                         const canCreateVersion = doc.status === 'vigente' || doc.status === 'obsoleto';
@@ -1002,184 +1002,188 @@ export const DocumentsPage: React.FC = () => {
                                 key={doc.id}
                                 className={`bg-white rounded-xl shadow-sm hover:shadow-md border transition-all overflow-hidden group ${borderClass}`}
                             >
-                                {/* Icon Area */}
-                                <div className={`${bgClass} py-8 flex items-center justify-center`}>
-                                    <div className={`${bgClass} rounded-full p-4`}>
-                                        <Icon size={48} className={colorClass} />
+                                <div className={`flex flex-col ${auditorModeActive ? 'md:flex-row' : ''}`}>
+                                    {/* Icon Area */}
+                                    <div className={`${bgClass} ${auditorModeActive ? 'md:w-48 py-4 md:py-0' : 'py-8'} flex items-center justify-center transition-all border-r border-gray-50`}>
+                                        <div className={`${bgClass} rounded-full p-4`}>
+                                            <Icon size={auditorModeActive ? 40 : 48} className={colorClass} />
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Content */}
-                                <div className="p-4">
-                                    {/* Code */}
-                                    {doc.code && (
-                                        <div className="flex items-center gap-1 mb-1">
-                                            <GitBranch size={12} className="text-gray-400" />
-                                            <span className="text-xs text-gray-500 font-mono">
-                                                {doc.code}
+                                    {/* Content */}
+                                    <div className="p-4 flex-1">
+                                        {/* Code */}
+                                        {doc.code && (
+                                            <div className="flex items-center gap-1 mb-1">
+                                                <GitBranch size={12} className="text-gray-400" />
+                                                <span className="text-xs text-gray-500 font-mono">
+                                                    {doc.code}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Title with Audit Indicator */}
+                                        <div className="flex items-start gap-2 mt-1 mb-3">
+                                            <h3 className="font-medium text-gray-900 line-clamp-2 flex-1" title={doc.title}>
+                                                {doc.title}
+                                            </h3>
+                                            <AuditIndicator entityId={doc.id} findingsMap={findingsMap} size="sm" />
+                                        </div>
+
+                                        {/* Footer */}
+                                        <div className="flex items-center justify-between">
+                                            {getStatusBadge(doc.status)}
+                                            <span
+                                                className={`text-xs ${doc.status === 'obsoleto'
+                                                    ? 'text-gray-400 line-through'
+                                                    : 'text-gray-500'
+                                                    }`}
+                                            >
+                                                v{doc.version}
                                             </span>
                                         </div>
-                                    )}
 
-                                    {/* Title with Audit Indicator */}
-                                    <div className="flex items-start gap-2 mt-1 mb-3">
-                                        <h3 className="font-medium text-gray-900 line-clamp-2 flex-1" title={doc.title}>
-                                            {doc.title}
-                                        </h3>
-                                        <AuditIndicator entityId={doc.id} findingsMap={findingsMap} size="sm" />
-                                    </div>
-
-                                    {/* Footer */}
-                                    <div className="flex items-center justify-between">
-                                        {getStatusBadge(doc.status)}
-                                        <span
-                                            className={`text-xs ${doc.status === 'obsoleto'
-                                                ? 'text-gray-400 line-through'
-                                                : 'text-gray-500'
-                                                }`}
-                                        >
-                                            v{doc.version}
-                                        </span>
-                                    </div>
-
-                                    {/* Responsáveis */}
-                                    {(doc.elaborated_by_name || doc.approved_by_name) && (
-                                        <div className="text-xs text-gray-500 mt-2 space-y-1">
-                                            {doc.elaborated_by_name && (
-                                                <p>📝 Elaborado: <span className="font-medium">{doc.elaborated_by_name}</span></p>
-                                            )}
-                                            {doc.approved_by_name && (
-                                                <p>✅ Aprovado: <span className="font-medium">{doc.approved_by_name}</span></p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Actions */}
-                                    <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
-                                        {/* Sempre mostrar Visualizar (se aplicável) */}
-                                        {canPreviewFile(doc.file_name) && (
-                                            <button
-                                                onClick={() => {
-                                                    if (!doc.file_url) return toast.error('Arquivo não disponível');
-                                                    setPreviewDocument(doc);
-                                                    setIsPreviewModalOpen(true);
-                                                }}
-                                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                                                title="Visualizar"
-                                            >
-                                                <Eye size={16} />
-                                                <span>Ver</span>
-                                            </button>
-                                        )}
-
-                                        {/* RASCUNHO: Editar + Solicitar Aprovação (Apenas Empresa) */}
-                                        {!auditorModeActive && doc.status === 'rascunho' && (
-                                            <>
-                                                {doc.file_name.endsWith('.md') && (
-                                                    <button
-                                                        onClick={() => handleOpenEditModal(doc)}
-                                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
-                                                        title="Editar Documento"
-                                                    >
-                                                        <Pencil size={16} />
-                                                        <span>Editar</span>
-                                                    </button>
+                                        {/* Responsáveis */}
+                                        {(doc.elaborated_by_name || doc.approved_by_name) && (
+                                            <div className="text-xs text-gray-500 mt-2 space-y-1">
+                                                {doc.elaborated_by_name && (
+                                                    <p>📝 Elaborado: <span className="font-medium">{doc.elaborated_by_name}</span></p>
                                                 )}
-                                                <button
-                                                    onClick={() => handleRequestApproval(doc.id)}
-                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                                                    title="Solicitar Aprovação"
-                                                >
-                                                    <Send size={16} />
-                                                    <span>Solicitar Aprovação</span>
-                                                </button>
-                                            </>
+                                                {doc.approved_by_name && (
+                                                    <p>✅ Aprovado: <span className="font-medium">{doc.approved_by_name}</span></p>
+                                                )}
+                                            </div>
                                         )}
 
-                                        {/* EM APROVAÇÃO: Aprovar + Rejeitar (Apenas Empresa) */}
-                                        {!auditorModeActive && doc.status === 'em_aprovacao' && (
-                                            <>
+                                        {/* Actions */}
+                                        <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
+                                            {/* Sempre mostrar Visualizar (se aplicável) */}
+                                            {canPreviewFile(doc.file_name) && (
                                                 <button
-                                                    onClick={() => handleApprove(doc.id)}
-                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
-                                                    title="Aprovar Documento"
+                                                    onClick={() => {
+                                                        if (!doc.file_url) return toast.error('Arquivo não disponível');
+                                                        setPreviewDocument(doc);
+                                                        setIsPreviewModalOpen(true);
+                                                    }}
+                                                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                                                    title="Visualizar"
                                                 >
-                                                    <CheckCircle size={16} />
-                                                    <span>Aprovar</span>
+                                                    <Eye size={16} />
+                                                    <span>Ver</span>
                                                 </button>
-                                                <button
-                                                    onClick={() => handleReject(doc.id)}
-                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-                                                    title="Rejeitar Documento"
-                                                >
-                                                    <XCircle size={16} />
-                                                    <span>Rejeitar</span>
-                                                </button>
-                                            </>
-                                        )}
+                                            )}
 
-                                        {/* VIGENTE/OBSOLETO: Nova Versão (Apenas Empresa) */}
-                                        {!auditorModeActive && canCreateVersion && (
-                                            <button
-                                                onClick={() => handleCreateNewVersion(doc)}
-                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                                                title="Criar Nova Versão"
-                                            >
-                                                <GitBranch size={16} />
-                                                <span>Nova Versão</span>
-                                            </button>
-                                        )}
-
-                                        {/* Sempre mostrar Download */}
-                                        {doc.file_url && (
-                                            <>
-                                                {/* Se for Markdown, oferece opção de gerar PDF via Print e Profissional */}
-                                                {doc.file_name.endsWith('.md') ? (
-                                                    <div className="flex gap-1">
+                                            {/* RASCUNHO: Editar + Solicitar Aprovação (Apenas Empresa) */}
+                                            {!auditorModeActive && doc.status === 'rascunho' && (
+                                                <>
+                                                    {doc.file_name.endsWith('.md') && (
                                                         <button
-                                                            onClick={() => handlePrintDocument(doc)}
-                                                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Visualizar para Impressão"
+                                                            onClick={() => handleOpenEditModal(doc)}
+                                                            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                                                            title="Editar Documento"
                                                         >
-                                                            <FileText size={18} />
+                                                            <Pencil size={16} />
+                                                            <span>Editar</span>
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDownloadProfessionalPDF(doc)}
-                                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Baixar PDF Profissional"
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleRequestApproval(doc.id)}
+                                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                                                        title="Solicitar Aprovação"
+                                                    >
+                                                        <Send size={16} />
+                                                        <span>Solicitar Aprovação</span>
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* EM APROVAÇÃO: Aprovar + Rejeitar (Apenas Empresa) */}
+                                            {!auditorModeActive && doc.status === 'em_aprovacao' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleApprove(doc.id)}
+                                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                                                        title="Aprovar Documento"
+                                                    >
+                                                        <CheckCircle size={16} />
+                                                        <span>Aprovar</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleReject(doc.id)}
+                                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                                                        title="Rejeitar Documento"
+                                                    >
+                                                        <XCircle size={16} />
+                                                        <span>Rejeitar</span>
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* VIGENTE/OBSOLETO: Nova Versão (Apenas Empresa) */}
+                                            {!auditorModeActive && canCreateVersion && (
+                                                <button
+                                                    onClick={() => handleCreateNewVersion(doc)}
+                                                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                                                    title="Criar Nova Versão"
+                                                >
+                                                    <GitBranch size={16} />
+                                                    <span>Nova Versão</span>
+                                                </button>
+                                            )}
+
+                                            {/* Sempre mostrar Download */}
+                                            {doc.file_url && (
+                                                <>
+                                                    {/* Se for Markdown, oferece opção de gerar PDF via Print e Profissional */}
+                                                    {doc.file_name.endsWith('.md') ? (
+                                                        <div className="flex gap-1">
+                                                            <button
+                                                                onClick={() => handlePrintDocument(doc)}
+                                                                className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Visualizar para Impressão"
+                                                            >
+                                                                <FileText size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDownloadProfessionalPDF(doc)}
+                                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Baixar PDF Profissional"
+                                                            >
+                                                                <Download size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <a
+                                                            href={doc.file_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
+                                                            title="Download Original"
                                                         >
                                                             <Download size={18} />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <a
-                                                        href={doc.file_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
-                                                        title="Download Original"
-                                                    >
-                                                        <Download size={18} />
-                                                    </a>
-                                                )}
-                                            </>
-                                        )}
+                                                        </a>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {/* Painel de Ações do Auditor */}
+                                    {/* Bloco 2: Painel de Ações do Auditor - Separado visualmente como bloco horizontal */}
                                     {auditorModeActive && activeAuditAssignmentId && (
-                                        <AuditActionPanel
-                                            entityId={doc.id}
-                                            entityType="document"
-                                            entityName={doc.title}
-                                            auditAssignmentId={activeAuditAssignmentId}
-                                            existingFinding={findingsMap[doc.id] ? {
-                                                id: findingsMap[doc.id].id,
-                                                severity: findingsMap[doc.id].severity as any,
-                                                auditor_notes: findingsMap[doc.id].auditor_notes,
-                                                status: findingsMap[doc.id].status
-                                            } : null}
-                                        />
+                                        <div className="border-t border-amber-200">
+                                            <AuditActionPanel
+                                                entityId={doc.id}
+                                                entityType="document"
+                                                entityName={doc.title}
+                                                auditAssignmentId={activeAuditAssignmentId}
+                                                existingFinding={findingsMap[doc.id] ? {
+                                                    id: findingsMap[doc.id].id,
+                                                    severity: findingsMap[doc.id].severity as any,
+                                                    auditor_notes: findingsMap[doc.id].auditor_notes,
+                                                    status: findingsMap[doc.id].status
+                                                } : null}
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             </div>

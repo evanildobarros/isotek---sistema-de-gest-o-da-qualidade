@@ -157,8 +157,8 @@ export const AuditActionPanel: React.FC<AuditActionPanelProps> = ({
                                 setIsExpanded(true);
                             }}
                             className={`p-1.5 rounded-lg border transition-all ${isSelected
-                                    ? `${config.bgColor} ${config.borderColor} ${config.textColor} ring-2 ring-offset-1 ring-${key === 'conforme' ? 'green' : key === 'oportunidade' ? 'blue' : key === 'nao_conformidade_menor' ? 'orange' : 'red'}-300`
-                                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                                ? `${config.bgColor} ${config.borderColor} ${config.textColor} ring-2 ring-offset-1 ring-${key === 'conforme' ? 'green' : key === 'oportunidade' ? 'blue' : key === 'nao_conformidade_menor' ? 'orange' : 'red'}-300`
+                                : 'border-gray-200 text-gray-400 hover:border-gray-300'
                                 }`}
                             title={config.label}
                         >
@@ -180,67 +180,71 @@ export const AuditActionPanel: React.FC<AuditActionPanelProps> = ({
         );
     }
 
-    // Versão expandida padrão
+    // Versão expandida padrão - Organizada em blocos horizontais
     return (
-        <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
+        <div className="bg-amber-50 rounded-xl overflow-hidden">
+            {/* Bloco 1: Cabeçalho - Identificação da classificação */}
+            <div className="flex items-center justify-between px-4 py-3 bg-amber-100 border-b border-amber-200">
                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-amber-100 rounded-lg">
-                        <CheckCircle size={16} className="text-amber-600" />
+                    <div className="p-1.5 bg-amber-200 rounded-lg">
+                        <CheckCircle size={16} className="text-amber-700" />
                     </div>
                     <span className="text-sm font-semibold text-amber-800">
                         Classificação do Auditor
                     </span>
                 </div>
-                <span className="text-xs text-amber-600">
+                <span className="text-xs text-amber-600 truncate max-w-[150px]" title={entityName}>
                     {entityName}
                 </span>
             </div>
 
-            {/* Botões de Severidade */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                {Object.entries(severityConfig).map(([key, config]) => {
-                    const Icon = config.icon;
-                    const isSelected = selectedSeverity === key;
-                    return (
-                        <button
-                            key={key}
-                            onClick={() => setSelectedSeverity(key as AuditSeverity)}
-                            className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${isSelected
+            {/* Bloco 2: Área de Classificação - Botões e Observações */}
+            <div className="p-4 border-b border-amber-200">
+                {/* Botões de Severidade em linha horizontal */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    {Object.entries(severityConfig).map(([key, config]) => {
+                        const Icon = config.icon;
+                        const isSelected = selectedSeverity === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setSelectedSeverity(key as AuditSeverity)}
+                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl border-2 transition-all flex-1 min-w-[70px] ${isSelected
                                     ? `${config.bgColor} ${config.borderColor} ${config.textColor} ring-2 ring-offset-1`
                                     : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
-                                }`}
-                        >
-                            <Icon size={20} />
-                            <span className="text-xs font-medium">{config.label}</span>
-                        </button>
-                    );
-                })}
+                                    }`}
+                            >
+                                <Icon size={18} />
+                                <span className="text-xs font-medium whitespace-nowrap">{config.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Campo de Observações */}
+                <div>
+                    <label className="block text-xs font-medium text-amber-700 mb-1.5">
+                        Observações do Auditor
+                    </label>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Descreva as evidências, referência à cláusula ISO, etc..."
+                        className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300 bg-white resize-none"
+                        rows={2}
+                    />
+                </div>
             </div>
 
-            {/* Campo de Observações */}
-            <div className="mb-4">
-                <label className="block text-xs font-medium text-amber-700 mb-1.5">
-                    Observações do Auditor
-                </label>
-                <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Descreva as evidências, referência à cláusula ISO, etc..."
-                    className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300 bg-white resize-none"
-                    rows={3}
-                />
-            </div>
-
-            {/* Botões de Ação */}
-            <div className="flex items-center justify-end gap-2">
+            {/* Bloco 3: Botões de Ação */}
+            <div className="flex items-center justify-end gap-2 px-4 py-3 bg-amber-50">
                 <button
                     onClick={() => {
                         setSelectedSeverity(existingFinding?.severity || null);
                         setNotes(existingFinding?.auditor_notes || '');
                         setIsExpanded(false);
                     }}
-                    className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 bg-white"
                 >
                     Cancelar
                 </button>
