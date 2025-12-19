@@ -6,7 +6,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Cliente Admin com SERVICE_ROLE_KEY (pode criar usuários)
+// Cliente Admin com SERVICE_ROLE_KEY (pode convidar usuários e ler todas as tabelas)
 const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -18,13 +18,20 @@ const supabaseAuth = createClient(
     Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 )
 
-interface CreateUserRequest {
+// Limites dos Planos (Sincronizado com lib/constants.ts)
+const PLAN_LIMITS: Record<string, number> = {
+    'price_start_brl': 2,
+    'price_pro_brl': 5,
+    'price_ent_brl': 999,
+    'start': 2, // Fallback para slugs antigos ou simplificados
+    'pro': 5,
+    'enterprise': 999
+};
+
+interface InviteUserRequest {
     email: string
-    password: string
     fullName: string
-    role: 'auditor' | 'admin' | 'operator' | 'viewer'
-    companyId?: string // Opcional - se auditor, não precisa de empresa fixa
-    phone?: string
+    role: 'admin' | 'operator' | 'viewer' | 'auditor'
 }
 
 serve(async (req) => {
@@ -34,217 +41,126 @@ serve(async (req) => {
     }
 
     try {
-        // Verificar autenticação do chamador
+        // 1. Verificar autenticação do chamador
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) {
-            return new Response(JSON.stringify({
-                error: 'Token de autenticação não fornecido.',
-                code: 'NO_AUTH_TOKEN'
-            }), {
-                status: 401,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+            return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // Extrair token Bearer
         const token = authHeader.replace('Bearer ', '')
-
-        // Verificar se o usuário é Super Admin
         const { data: { user: caller }, error: authError } = await supabaseAuth.auth.getUser(token)
 
         if (authError || !caller) {
-            return new Response(JSON.stringify({
-                error: 'Token inválido ou expirado.',
-                code: 'INVALID_TOKEN'
-            }), {
-                status: 401,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+            return new Response(JSON.stringify({ error: 'Sessão inválida' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // Verificar se o chamador é Super Admin
-        console.log('Buscando perfil do chamador:', caller.id)
+        // 2. Pegar dados do Admin (chamador)
         const { data: callerProfile, error: profileError } = await supabaseAdmin
             .from('profiles')
-            .select('is_super_admin')
+            .select(`
+                id, 
+                company_id, 
+                role, 
+                is_super_admin,
+                company_info (
+                    id,
+                    plan_id,
+                    max_users
+                )
+            `)
             .eq('id', caller.id)
             .single()
 
-        console.log('Perfil encontrado:', callerProfile, 'Erro:', profileError)
-
-        if (profileError) {
-            console.error('Erro ao buscar perfil:', profileError)
-            return new Response(JSON.stringify({
-                error: 'Erro ao verificar permissões: ' + profileError.message,
-                code: 'PROFILE_ERROR'
-            }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        if (profileError || !callerProfile) {
+            return new Response(JSON.stringify({ error: 'Erro ao verificar permissões do administrador.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        if (!callerProfile?.is_super_admin) {
-            return new Response(JSON.stringify({
-                error: 'Acesso negado. Apenas Super Admins podem criar usuários.',
-                code: 'FORBIDDEN'
-            }), {
-                status: 403,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        // Apenas Admin da empresa ou Super Admin pode convidar
+        const isCompanyAdmin = callerProfile.role === 'admin' && callerProfile.company_id;
+        const isSuperAdmin = callerProfile.is_super_admin;
+
+        if (!isCompanyAdmin && !isSuperAdmin) {
+            return new Response(JSON.stringify({ error: 'Apenas administradores podem convidar novos usuários.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // Parse do body
-        const body: CreateUserRequest = await req.json()
-        const { email, password, fullName, role, companyId, phone } = body
+        // 3. Ler dados do corpo da requisição
+        const { email, fullName, role }: InviteUserRequest = await req.json()
 
-        // Validações
-        if (!email || !password || !fullName || !role) {
-            return new Response(JSON.stringify({
-                error: 'Campos obrigatórios: email, password, fullName, role',
-                code: 'MISSING_FIELDS'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        if (!email || !fullName || !role) {
+            return new Response(JSON.stringify({ error: 'Campos obrigatórios: email, fullName, role' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // Validar email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(email)) {
-            return new Response(JSON.stringify({
-                error: 'Email inválido.',
-                code: 'INVALID_EMAIL'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        // Definir Company ID (se for super admin e não passou, pode ser um problema, mas aqui focamos no fluxo de empresa)
+        const targetCompanyId = isSuperAdmin ? callerProfile.company_id : callerProfile.company_id; // Simplicidade: convida para a mesma empresa
+
+        if (!targetCompanyId && !isSuperAdmin) {
+            return new Response(JSON.stringify({ error: 'Administrador não vinculado a uma empresa.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // Validar senha
-        if (password.length < 6) {
-            return new Response(JSON.stringify({
-                error: 'Senha deve ter no mínimo 6 caracteres.',
-                code: 'WEAK_PASSWORD'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        // 4. Verificar Limites do Plano
+        if (targetCompanyId) {
+            const planId = (callerProfile.company_info as any)?.plan_id || 'start';
+            const hardcodedLimit = PLAN_LIMITS[planId] || 2;
+            const dbLimit = (callerProfile.company_info as any)?.max_users;
+
+            const limit = dbLimit || hardcodedLimit;
+
+            const { count, error: countError } = await supabaseAdmin
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', targetCompanyId);
+
+            if (countError) {
+                return new Response(JSON.stringify({ error: 'Erro ao verificar contagem de usuários.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
+
+            if ((count || 0) >= limit) {
+                return new Response(JSON.stringify({
+                    error: `Limite de usuários atingido para o plano atual (${limit} usuários).`
+                }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
         }
 
-        // Validar role
-        const validRoles = ['auditor', 'admin', 'operator', 'viewer']
-        if (!validRoles.includes(role)) {
-            return new Response(JSON.stringify({
-                error: 'Role inválido. Use: auditor, admin, operator, viewer',
-                code: 'INVALID_ROLE'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
-        }
-
-        // Verificar se email já existe
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-        const emailExists = existingUsers?.users?.some(u => u.email === email)
-
-        if (emailExists) {
-            return new Response(JSON.stringify({
-                error: 'Este email já está cadastrado no sistema.',
-                code: 'EMAIL_EXISTS'
-            }), {
-                status: 409,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
-        }
-
-        // ===========================================
-        // CRIAR USUÁRIO NO AUTH
-        // ===========================================
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true, // Já confirmar email automaticamente
-            user_metadata: {
+        // 5. Convidar Usuário via Auth Admin
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+            data: {
                 full_name: fullName,
+                company_id: targetCompanyId,
                 role: role
             }
-        })
+        });
 
-        if (createError) {
-            console.error('Erro ao criar usuário no Auth:', createError)
-            return new Response(JSON.stringify({
-                error: 'Erro ao criar usuário: ' + createError.message,
-                code: 'CREATE_USER_ERROR'
-            }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
+        if (inviteError) {
+            return new Response(JSON.stringify({ error: inviteError.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // ===========================================
-        // CRIAR PERFIL NA TABELA profiles
-        // ===========================================
-        console.log('Criando perfil para:', newUser.user.id)
-        const profileData: Record<string, any> = {
-            id: newUser.user.id,
+        // 6. Garantir Perfil (Upsert para evitar conflito com trigger on_auth_user_created)
+        const { error: upsertError } = await supabaseAdmin.from('profiles').upsert({
+            id: inviteData.user.id,
+            email: email,
             full_name: fullName,
+            company_id: targetCompanyId,
             role: role,
-            is_super_admin: false,
-            is_active: true
+            is_active: true,
+            created_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+        if (upsertError) {
+            console.error('Erro ao criar perfil:', upsertError);
+            // Mesmo se o perfil falhar, o convite foi enviado. Podemos registrar o erro ou tentar novamente.
         }
 
-        // Se não for auditor, vincular a uma empresa
-        if (role !== 'auditor' && companyId) {
-            profileData.company_id = companyId
-        }
-
-        console.log('profileData:', profileData)
-
-        // Usar UPSERT em vez de INSERT para evitar erro 23505 se um Trigger já criou o perfil
-        const { error: profileInsertError } = await supabaseAdmin
-            .from('profiles')
-            .upsert(profileData, { onConflict: 'id' })
-
-        if (profileInsertError) {
-            console.error('Erro ao criar/atualizar perfil:', profileInsertError)
-
-            // Tentar deletar o usuário criado para manter consistência
-            await supabaseAdmin.auth.admin.deleteUser(newUser.user.id)
-
-            return new Response(JSON.stringify({
-                error: 'Erro ao criar perfil do usuário: ' + profileInsertError.message,
-                code: 'CREATE_PROFILE_ERROR'
-            }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
-        }
-
-        // ===========================================
-        // RESPOSTA DE SUCESSO
-        // ===========================================
         return new Response(JSON.stringify({
-            success: true,
-            user: {
-                id: newUser.user.id,
-                email: newUser.user.email,
-                fullName: fullName,
-                role: role
-            },
-            message: `Usuário ${role} criado com sucesso!`
+            message: "Convite enviado com sucesso!",
+            userId: inviteData.user.id
         }), {
-            status: 201,
+            status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
+        });
 
     } catch (err) {
         console.error('Erro interno:', err)
-        return new Response(JSON.stringify({
-            error: 'Erro interno do servidor.',
-            code: 'INTERNAL_ERROR'
-        }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
+        return new Response(JSON.stringify({ error: 'Erro interno do servidor.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 })
+

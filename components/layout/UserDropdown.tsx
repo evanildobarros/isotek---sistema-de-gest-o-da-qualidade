@@ -11,6 +11,8 @@ export const UserDropdown: React.FC = () => {
     const [profile, setProfile] = useState<{ full_name: string | null; role: string | null; avatar_url: string | null; is_super_admin?: boolean } | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const isEvanildo = user?.email?.toLowerCase().trim() === 'evanildobarros@gmail.com';
+
     // Fetch profile from Supabase
     useEffect(() => {
         if (!user) return;
@@ -80,7 +82,7 @@ export const UserDropdown: React.FC = () => {
                 <div className="hidden md:block text-left">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{profile?.full_name || user?.email || 'Usuário'}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {profile?.is_super_admin ? 'Super Admin' : (profile?.role || 'Colaborador')}
+                        {(profile?.is_super_admin || isEvanildo) ? 'Super Admin' : (profile?.role || 'Colaborador')}
                     </p>
                 </div>
 

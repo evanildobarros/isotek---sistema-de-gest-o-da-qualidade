@@ -57,14 +57,20 @@ export const SectionPerfil: React.FC = () => {
         const fetchProfile = async () => {
             setLoading(true);
 
-            // Check Super Admin Status
-            const isEvanildo = user.email === 'evanildobarros@gmail.com';
+            // Check Super Admin Status (Robust Check)
+            const userEmail = user.email?.toLowerCase().trim() || '';
+            const isEvanildo = userEmail === 'evanildobarros@gmail.com';
 
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', user.id)
                 .single();
+
+            // Always check hardcoded super admin independently of DB result
+            if (isEvanildo) {
+                setIsSuperAdmin(true);
+            }
 
             if (!error && data) {
                 setProfileData(data as ProfileData);
@@ -75,13 +81,15 @@ export const SectionPerfil: React.FC = () => {
                     setPreferences(data.preferences);
                 }
 
-                // Set Super Admin flag
-                // @ts-ignore - is_super_admin might not be in the type definition yet
-                if (isEvanildo || data.is_super_admin) {
+                // Set Super Admin flag from DB if not already set by hardcode
+                if (data.is_super_admin) {
                     setIsSuperAdmin(true);
                 }
             } else {
                 console.error('Error fetching profile:', error);
+                // Even on error, if it's evanildo, we handle it above. 
+                // However, we might want manual mock data if DB fails completely, 
+                // but let's at least respect the flag.
             }
             setLoading(false);
         };

@@ -95,7 +95,7 @@ export async function isSuperAdmin(): Promise<boolean> {
 // SUBSCRIPTION MANAGEMENT
 // ============================================
 
-import { PLANS } from '../../types';
+import { PLANS, type Plan, type PlanId } from '../../types';
 
 /**
  * Definições dos planos disponíveis
@@ -105,7 +105,7 @@ export function getAvailablePlans(): Plan[] {
         {
             id: 'start',
             ...PLANS.start,
-            billingPeriod: 'monthly',
+            period: 'mês',
             description: 'Perfeito para começar',
             features: [
                 ...PLANS.start.features,
@@ -117,9 +117,9 @@ export function getAvailablePlans(): Plan[] {
         {
             id: 'pro',
             ...PLANS.pro,
-            billingPeriod: 'monthly',
+            period: 'mês',
             description: 'Para empresas em crescimento',
-            popular: true,
+            isPopular: true,
             features: [
                 ...PLANS.pro.features,
                 'Auditores Nível Ouro (ISO 9001)',
@@ -130,7 +130,7 @@ export function getAvailablePlans(): Plan[] {
         {
             id: 'enterprise',
             ...PLANS.enterprise,
-            billingPeriod: 'monthly',
+            period: 'mês',
             description: 'Para grandes organizações',
             features: [
                 ...PLANS.enterprise.features,
@@ -163,8 +163,8 @@ export async function upgradePlan(companyId: string, newPlanId: PlanId): Promise
             .update({
                 plan_id: newPlanId,
                 subscription_status: 'active',
-                max_users: newPlan.limits.maxUsers,
-                max_storage_gb: newPlan.limits.maxStorageGb,
+                max_users: newPlan.limits.users,
+                max_storage_gb: newPlan.limits.storage_gb,
                 current_period_end: currentPeriodEnd.toISOString()
             })
             .eq('id', companyId);
@@ -195,8 +195,8 @@ export async function downgradePlan(companyId: string, newPlanId: PlanId): Promi
             .from('company_info')
             .update({
                 plan_id: newPlanId,
-                max_users: newPlan.limits.maxUsers,
-                max_storage_gb: newPlan.limits.maxStorageGb
+                max_users: newPlan.limits.users,
+                max_storage_gb: newPlan.limits.storage_gb
             })
             .eq('id', companyId);
 
@@ -221,12 +221,15 @@ export async function checkPlanLimits(companyId: string): Promise<{
     withinLimits: boolean;
 }> {
     try {
-        // Buscar informações da empresa
+        // Buscar informações da empresa e do plano
         const { data: company } = await supabase
             .from('company_info')
-            .select('max_users, max_storage_gb')
+            .select('plan_id, max_users, max_storage_gb')
             .eq('id', companyId)
             .single();
+
+        const planId = (company?.plan_id || 'start') as PlanId;
+        const planData = PLANS[planId] || PLANS.start;
 
         // Contar usuários ativos
         const { count: userCount } = await supabase
@@ -235,12 +238,11 @@ export async function checkPlanLimits(companyId: string): Promise<{
             .eq('company_id', companyId);
 
         const currentUsers = userCount || 0;
-        const maxUsers = company?.max_users || 5;
-        const maxStorage = company?.max_storage_gb || 5;
+        const maxUsers = Math.max(company?.max_users || 0, planData.limits.users);
+        const maxStorage = Math.max(company?.max_storage_gb || 0, planData.limits.storage_gb);
 
         // Para storage, seria necessário calcular o tamanho real dos arquivos
-        // Por enquanto, retornamos um valor estimado
-        const currentStorage = 0; // Implementar lógica de cálculo real
+        const currentStorage = 0;
 
         return {
             currentUsers,

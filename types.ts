@@ -1,4 +1,5 @@
 import React from 'react';
+import { PLANS as PLANS_CONST } from './lib/constants';
 
 export enum IsoSection {
   // Grupo A: Estratégia (Plan)
@@ -239,72 +240,27 @@ export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'trialing'
 export type PlanId = 'start' | 'pro' | 'enterprise';
 
 export interface PlanLimits {
-  maxUsers: number;
-  maxStorageGb: number;
-  hasAdvancedReports: boolean;
-  hasApiAccess: boolean;
-  hasPrioritySupport: boolean;
+  users: number;
+  storage_gb: number;
   ai_prompts: number;
-  audit_marketplace: boolean;
+  has_marketplace: boolean;
+  has_risk_matrix: boolean;
+  hasAdvancedReports?: boolean;
+  hasApiAccess?: boolean;
+  hasPrioritySupport?: boolean;
 }
 
-export const PLANS = {
-  start: {
-    id: 'price_start_brl', // ID do Stripe
-    name: 'Start',
-    price: 297,
-    features: ['Gestão de Documentos', 'RNC Básico', 'IA Limitada (50 prompts)', '1 Usuário'],
-    limits: {
-      maxUsers: 1,
-      maxStorageGb: 5,
-      ai_prompts: 50,
-      audit_marketplace: false,
-      hasAdvancedReports: false,
-      hasApiAccess: false,
-      hasPrioritySupport: false
-    }
-  },
-  pro: {
-    id: 'price_pro_brl',
-    name: 'Pro',
-    price: 697,
-    features: ['IA Ilimitada', 'Matriz de Riscos', 'Marketplace de Auditores', '5 Usuários'],
-    limits: {
-      maxUsers: 5,
-      maxStorageGb: 20,
-      ai_prompts: 9999,
-      audit_marketplace: true,
-      hasAdvancedReports: true,
-      hasApiAccess: true,
-      hasPrioritySupport: true
-    }
-  },
-  enterprise: {
-    id: 'price_ent_brl',
-    name: 'Enterprise',
-    price: 1497,
-    features: ['Múltiplas Unidades', 'API', 'Gestor Dedicado', 'Usuários Ilimitados'],
-    limits: {
-      maxUsers: 999,
-      maxStorageGb: 100,
-      ai_prompts: 9999,
-      audit_marketplace: true,
-      hasAdvancedReports: true,
-      hasApiAccess: true,
-      hasPrioritySupport: true
-    }
-  }
-};
+export const PLANS = PLANS_CONST;
 
 export interface Plan {
   id: PlanId;
-  name: string;
+  label: string;
   price: number;
-  billingPeriod: 'monthly' | 'annual';
+  period: string;
   description: string;
   features: string[];
   limits: PlanLimits;
-  popular?: boolean;
+  isPopular?: boolean;
 }
 
 export interface Company {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Search, Mail, Shield, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Users, Plus, Search, Mail, Shield, Trash2, Edit2, X, Check, AlertCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { PageHeader } from '../../common/PageHeader';
+import { usePlanLimits } from '../../../hooks/usePlanLimits';
 
 interface UserProfile {
   id: string;
@@ -17,17 +18,19 @@ interface UserProfile {
 }
 
 export const UsersPage: React.FC = () => {
-  const { user, company, isSuperAdmin } = useAuthContext();
+  const { user: currentUser, company, isSuperAdmin } = useAuthContext();
+  const { usage, canAddUser, refresh: refreshLimits, planName } = usePlanLimits();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     email: '',
     fullName: '',
-    role: 'user'
+    role: 'operator' as 'admin' | 'operator' | 'viewer' | 'auditor'
   });
 
   useEffect(() => {
@@ -37,74 +40,30 @@ export const UsersPage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      console.log('[UsersPage] Iniciando fetchUsers...');
-      console.log('[UsersPage] isSuperAdmin:', isSuperAdmin);
-      console.log('[UsersPage] company:', company);
-
-      // Primeiro tenta a RPC
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_users_with_emails');
-
-      if (!rpcError && rpcData && rpcData.length > 0) {
-        console.log('[UsersPage] RPC sucesso! Dados:', rpcData);
-        let mappedUsers = rpcData.map((u: any) => ({
-          id: u.id,
-          email: u.email,
-          full_name: u.full_name,
-          role: u.role,
-          created_at: u.created_at,
-          last_sign_in_at: u.last_sign_in_at,
-          company_id: u.company_id,
-          company_name: u.company_name
-        }));
-
-        // Se não for Super Admin, filtra apenas usuários da mesma empresa
-        if (!isSuperAdmin && company?.id) {
-          console.log('[UsersPage] Filtrando por company_id:', company.id);
-          mappedUsers = mappedUsers.filter((u: UserProfile) => u.company_id === company.id);
-        }
-
-        setUsers(mappedUsers);
-        return;
-      }
-
-      console.warn('[UsersPage] RPC falhou ou vazio, tentando fallback. Erro:', rpcError);
-
-      // Fallback: Query direta na tabela profiles
+      // Busca usuários diretamente por profiles (mais confiável com RLS configurado)
       let query = supabase
         .from('profiles')
-        .select('id, full_name, role, created_at, company_id')
+        .select(`
+          id, 
+          email, 
+          full_name, 
+          role, 
+          created_at, 
+          company_id
+        `)
         .order('created_at', { ascending: false });
 
-      // Se não for Super Admin, filtra por company_id diretamente na query
       if (!isSuperAdmin && company?.id) {
         query = query.eq('company_id', company.id);
       }
 
-      const { data: profilesData, error: profilesError } = await query;
+      const { data, error } = await query;
 
-      console.log('[UsersPage] Fallback profiles. Dados:', profilesData, 'Erro:', profilesError);
-
-      if (profilesError) {
-        console.error('[UsersPage] Erro no fallback:', profilesError);
-        return;
-      }
-
-      // Mapear dados do fallback (sem email, pois profiles não tem essa coluna)
-      const usersFromProfiles = (profilesData || []).map((u: any) => ({
-        id: u.id,
-        email: 'Email via RPC', // Placeholder
-        full_name: u.full_name || 'Sem nome',
-        role: u.role || 'user',
-        created_at: u.created_at,
-        company_id: u.company_id,
-        company_name: ''
-      }));
-
-      console.log('[UsersPage] Usuários mapeados:', usersFromProfiles);
-      setUsers(usersFromProfiles);
-
-    } catch (error) {
-      console.error('[UsersPage] Erro geral:', error);
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast.error('Não foi possível carregar a lista de usuários.');
     } finally {
       setLoading(false);
     }
@@ -112,69 +71,59 @@ export const UsersPage: React.FC = () => {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canAddUser) {
+      toast.error('Limite de usuários do seu plano atingido.');
+      return;
+    }
+
     setInviteLoading(true);
 
     try {
-      // Primeiro tentamos chamar o RPC padrão (requer backend configurado).
-      // Se o RPC não existir, fazemos um fallback inserindo um registro em `profiles`.
-      try {
-        const { data, error } = await supabase.rpc('invite_user_to_company', {
-          p_email: formData.email,
-          p_full_name: formData.fullName,
-          p_role: formData.role,
-          p_company_id: company?.id
-        });
-
-        if (error) throw error;
-
-        toast.success('Usuário convidado com sucesso!');
-        setShowModal(false);
-        setFormData({ email: '', fullName: '', role: 'user' });
-        fetchUsers();
-      } catch (rpcError: any) {
-        console.warn('RPC invite failed, attempting fallback insert into profiles:', rpcError?.message || rpcError);
-
-        // Fallback: tentar inserir na tabela `profiles` (caso o projeto permita).
-        // Primeiro tentamos incluir o campo `invited: true` (se existir). Se falhar por coluna desconhecida, tentamos sem ele.
-        try {
-          // tentativa com invited
-          const insertPayload: any = { email: formData.email, full_name: formData.fullName, role: formData.role, company_id: company?.id, invited: true };
-          let { data: insertData, error: insertError } = await supabase
-            .from('profiles')
-            .insert([insertPayload]);
-
-          if (insertError) {
-            // Se o erro indicar coluna desconhecida (fallback), refazer sem `invited`
-            const msg = (insertError?.message || '').toString().toLowerCase();
-            if (msg.includes('column') && msg.includes('invited')) {
-              console.warn('Column `invited` not found in profiles, retrying insert without it.');
-              const { data: insertData2, error: insertError2 } = await supabase
-                .from('profiles')
-                .insert([{ email: formData.email, full_name: formData.fullName, role: formData.role, company_id: company?.id }]);
-
-              if (insertError2) throw insertError2;
-              insertData = insertData2;
-            } else {
-              throw insertError;
-            }
-          }
-
-          toast.success('Usuário registrado! Configure o envio de convite por backend.');
-          setShowModal(false);
-          setFormData({ email: '', fullName: '', role: 'user' });
-          fetchUsers();
-        } catch (insertErr: any) {
-          console.error('Fallback insert into profiles failed:', insertErr);
-          // Mantemos mensagem original para indicar que o RPC precisa ser configurado
-          toast.error('Erro ao convidar usuário: ' + (rpcError?.message || insertErr?.message || 'Erro desconhecido'));
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          email: formData.email,
+          fullName: formData.fullName,
+          role: formData.role
         }
+      });
+
+      if (error) {
+        const errorMsg = error.message || 'Erro ao enviar convite.';
+        throw new Error(errorMsg);
       }
 
+      toast.success('Convite enviado com sucesso!');
+      setShowModal(false);
+      setFormData({ email: '', fullName: '', role: 'operator' });
+      fetchUsers();
+      refreshLimits();
     } catch (error: any) {
       console.error('Error inviting user:', error);
-      toast.error('Erro ao convidar usuário: ' + error.message);
+      toast.error(error.message || 'Erro ao convidar usuário.');
     } finally {
       setInviteLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita.')) return;
+
+    setDeletingId(id);
+    try {
+      // Nota: Apenas um Super Admin ou uma Edge Function segura deve deletar do Auth.
+      // Aqui, como exemplo, removemos apenas o perfil se o RLS permitir, 
+      // mas o ideal é ter uma Edge Function 'admin-delete-user'.
+      const { error } = await supabase.from('profiles').delete().eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Usuário removido da organização.');
+      fetchUsers();
+      refreshLimits();
+    } catch (error: any) {
+      toast.error('Erro ao remover usuário.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -183,201 +132,235 @@ export const UsersPage: React.FC = () => {
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-100 text-purple-700 border border-purple-200">Administrador</span>;
+      case 'operator':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 border border-blue-200">Operador</span>;
+      case 'viewer':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">Visualizador</span>;
+      case 'auditor':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200">Auditor</span>;
+      default:
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">{role}</span>;
+    }
+  };
+
+  const usersPercentage = Math.min((usage.usersUsed / usage.usersLimit) * 100, 100);
+
   return (
     <div className="space-y-6">
       <PageHeader
         icon={Users}
-        title="Gerenciamento de Usuários"
-        subtitle="Gerencie os membros da sua equipe e suas permissões de acesso."
+        title="Gerenciamento de Equipe"
+        subtitle="Gerencie seus colaboradores, permissões e convites."
         iconColor="blue"
       />
 
+      {/* KPI Card - Plan Limits */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">Usuários da Empresa</p>
+              <h3 className="text-2xl font-bold text-gray-800">{usage.usersUsed} <span className="text-gray-300 font-normal">/ {usage.usersLimit}</span></h3>
+            </div>
+            <div className={`p-2 rounded-xl ${usage.usersUsed >= usage.usersLimit ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full transition-all duration-500 ${usage.usersUsed >= usage.usersLimit ? 'bg-red-500' : 'bg-blue-500'}`}
+              style={{ width: `${usersPercentage}%` }}
+            />
+          </div>
+          <p className="mt-3 text-[11px] text-gray-500 flex items-center gap-1">
+            <Info className="w-3 h-3" />
+            Plano atual: <span className="font-bold text-gray-700">{planName}</span>
+          </p>
+        </div>
+
+        {/* Placeholder for other KPIs if needed */}
+        <div className="md:col-span-2 bg-gradient-to-br from-[#025159] to-[#037380] p-6 rounded-2xl text-white flex items-center justify-between overflow-hidden relative">
+          <div className="relative z-10">
+            <h4 className="font-bold text-lg mb-1">Aumente sua produtividade hoje</h4>
+            <p className="text-blue-100 text-sm max-w-sm">Dúvidas sobre permissões? Nossa IA Consultora pode te ajudar a configurar os acessos da sua equipe.</p>
+          </div>
+          <Shield className="w-24 h-24 text-white/10 absolute -right-4 -bottom-4 rotate-12" />
+        </div>
+      </div>
+
+      {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
             placeholder="Buscar por nome ou e-mail..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
           />
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Convidar Usuário
-        </button>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {!canAddUser && (
+            <div className="hidden lg:flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-xs font-medium">Limite atingido</span>
+            </div>
+          )}
+          <button
+            onClick={() => setShowModal(true)}
+            disabled={!canAddUser}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-all font-semibold shadow-sm hover:shadow-md disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+          >
+            <Plus className="w-4 h-4" />
+            Convidar Usuário
+          </button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-500">Carregando usuários...</p>
+        <div className="text-center py-20 flex flex-col items-center">
+          <div className="animate-spin w-10 h-10 border-[3px] border-[#025159] border-t-transparent rounded-full mb-4"></div>
+          <p className="text-gray-400 font-medium">Sincronizando equipe...</p>
         </div>
       ) : (
-        <>
-          {/* Desktop Table View - Hidden on mobile */}
-          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuário</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Função</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Entrada</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Empresa</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((userProfile) => (
-                      <tr key={userProfile.id} className="hover:bg-gray-50 transition-colors">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100">
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Colaborador</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Permissão</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Acesso desde</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((profile) => {
+                    const isSelf = profile.id === currentUser?.id;
+                    const canDelete = !isSelf && (isSuperAdmin || (company?.id === profile.company_id && currentUser?.id !== profile.id));
+
+                    return (
+                      <tr key={profile.id} className="hover:bg-gray-50/50 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                              {userProfile.full_name?.charAt(0).toUpperCase() || userProfile.email?.charAt(0).toUpperCase()}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 uppercase">
+                              {profile.full_name?.charAt(0) || profile.email?.charAt(0)}
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{userProfile.full_name || 'Sem nome'}</p>
-                              <p className="text-xs text-gray-500">{userProfile.email}</p>
+                              <p className="font-bold text-gray-800 text-sm">{profile.full_name || 'Usuário em Convite'}</p>
+                              <p className="text-xs text-gray-400 font-medium">{profile.email}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-gray-100 text-gray-800'
-                            }`}>
-                            {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
-                          </span>
+                          {getRoleBadge(profile.role)}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(userProfile.created_at).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Ativo
-                          </span>
+                        <td className="px-6 py-4 text-xs font-medium text-gray-500">
+                          {new Date(profile.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="text-sm text-gray-900">{userProfile.company_name || company?.name || '-'}</div>
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDeleteUser(profile.id)}
+                                disabled={deletingId === profile.id}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                title="Remover usuário"
+                              >
+                                {deletingId === profile.id ? <div className="animate-spin w-4 h-4 border-2 border-red-200 border-t-red-600 rounded-full" /> : <Trash2 className="w-4 h-4" />}
+                              </button>
+                            )}
+                            <button className="p-2 text-gray-400 hover:text-[#025159] hover:bg-teal-50 rounded-lg transition-all" title="Editar permissões">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                        Nenhum usuário encontrado.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Mobile Card View - Hidden on desktop */}
-          <div className="md:hidden space-y-3">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((userProfile) => (
-                <div key={userProfile.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
-                        {userProfile.full_name?.charAt(0).toUpperCase() || userProfile.email?.charAt(0).toUpperCase()}
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-20 text-center">
+                      <div className="max-w-[180px] mx-auto opacity-40 mb-3">
+                        <Users className="w-12 h-12 mx-auto text-gray-300" />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 truncate">{userProfile.full_name || 'Sem nome'}</p>
-                        <p className="text-sm text-gray-500 truncate">{userProfile.email}</p>
-                      </div>
-                    </div>
-                    {/* Empresa vinculada (substitui botão de edição) */}
-                    <div className="text-sm text-gray-900 flex-shrink-0 -mr-2">{userProfile.company_name || company?.name || '-'}</div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Função:</span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${userProfile.role === 'admin' || userProfile.role === 'owner'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-gray-100 text-gray-800'
-                        }`}>
-                        {userProfile.role === 'owner' ? 'Proprietário' : userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Data de Entrada:</span>
-                      <span className="text-gray-900">{new Date(userProfile.created_at).toLocaleDateString('pt-BR')}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Status:</span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Ativo
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500">
-                Nenhum usuário encontrado.
-              </div>
-            )}
+                      <p className="text-gray-400 font-medium">Nenhum colaborador encontrado.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </>
+        </div>
       )}
 
       {/* Invite Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-gray-900">Convidar Novo Usuário</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Novo Convite</h3>
+                  <p className="text-xs text-gray-500">Envie um convite para o e-mail do colaborador.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleInvite} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.fullName}
-                  onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Ex: Maria Silva"
-                />
+            <form onSubmit={handleInvite} className="p-8 space-y-5">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Nome Completo</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all placeholder:text-gray-300 font-medium"
+                    placeholder="Ex: Pedro Henrique"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">E-mail Corporativo</label>
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="maria@empresa.com"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all placeholder:text-gray-300 font-medium"
+                  placeholder="pedro.henrique@isotek.com"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Função</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Cargo / Permissão</label>
                 <select
                   value={formData.role}
-                  onChange={e => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  onChange={e => setFormData({ ...formData, role: e.target.value as any })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-medium appearance-none cursor-pointer"
                 >
-                  <option value="user">Usuário (Acesso Padrão)</option>
-                  <option value="admin">Administrador (Acesso Total)</option>
+                  <option value="operator">Operador (Uso Padrão)</option>
+                  <option value="admin">Administrador (Total)</option>
+                  <option value="viewer">Visualizador (Apenas Leitura)</option>
+                  <option value="auditor">Auditor (Especial)</option>
                 </select>
               </div>
 
@@ -385,16 +368,26 @@ export const UsersPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                  className="flex-1 px-4 py-3 text-gray-500 rounded-xl hover:bg-gray-100 font-bold transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={inviteLoading}
-                  className="flex-1 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+                  className="flex-[2] px-4 py-3 bg-[#025159] text-white rounded-xl hover:bg-[#3F858C] font-bold shadow-lg shadow-teal-900/10 disabled:opacity-70 disabled:shadow-none flex items-center justify-center gap-2 transition-all"
                 >
-                  {inviteLoading ? 'Enviando...' : 'Enviar Convite'}
+                  {inviteLoading ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                      <span>Enviando Convite...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Enviar Agora</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -404,3 +397,4 @@ export const UsersPage: React.FC = () => {
     </div>
   );
 };
+

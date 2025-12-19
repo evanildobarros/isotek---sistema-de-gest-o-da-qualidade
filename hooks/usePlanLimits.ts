@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { PLANS, type PlanId } from '../types';
+import { supabase } from '../lib/supabase';
 
 export interface PlanLimits {
     planId: PlanId;
@@ -15,6 +16,7 @@ export interface PlanLimits {
         storageUsed: number;
         storageLimit: number;
     };
+    refresh: () => void;
 }
 
 // Module access rules by plan
@@ -52,17 +54,38 @@ const PLAN_ACCESS_RULES: Record<PlanId, string[]> = {
  */
 export function usePlanLimits(): PlanLimits {
     const { company } = useAuthContext();
+    const [usersCount, setUsersCount] = useState(0);
+    const [storageCount, setStorageCount] = useState(0);
+
+    const fetchUsage = async () => {
+        if (!company?.id) return;
+
+        try {
+            // Count users in profiles
+            const { count, error: userError } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', company.id);
+
+            if (!userError) setUsersCount(count || 0);
+
+            // TODO: Calculate storage usage from documents
+            setStorageCount(0);
+        } catch (error) {
+            console.error('Error fetching plan usage:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsage();
+    }, [company?.id]);
 
     return useMemo(() => {
         const planId = (company?.plan_id || 'start') as PlanId;
         const planData = PLANS[planId] || PLANS.start;
 
-        const maxUsers = company?.max_users || planData.limits.maxUsers;
-        const maxStorage = company?.max_storage_gb || planData.limits.maxStorageGb;
-
-        // TODO: Get actual current usage from database
-        const currentUsers = 0;
-        const currentStorage = 0;
+        const maxUsers = Math.max(company?.max_users || 0, planData.limits.users);
+        const maxStorage = Math.max(company?.max_storage_gb || 0, planData.limits.storage_gb);
 
         const planNames: Record<PlanId, string> = {
             start: 'Start',
@@ -70,10 +93,10 @@ export function usePlanLimits(): PlanLimits {
             enterprise: 'Enterprise'
         };
 
-        const canAddUser = currentUsers < maxUsers;
+        const canAddUser = usersCount < maxUsers;
 
         const canAccessModule = (moduleName: string): boolean => {
-            const allowedModules = PLAN_ACCESS_RULES[planId];
+            const allowedModules = PLAN_ACCESS_RULES[planId] || PLAN_ACCESS_RULES.start;
             if (allowedModules.includes('*')) return true;
             return allowedModules.includes(moduleName.toLowerCase());
         };
@@ -83,14 +106,16 @@ export function usePlanLimits(): PlanLimits {
             planName: planNames[planId],
             canAddUser,
             canAccessModule,
-            hasAuditMarketplace: planData.limits.audit_marketplace,
+            hasAuditMarketplace: planData.limits.has_marketplace,
             aiPromptsLimit: planData.limits.ai_prompts,
             usage: {
-                usersUsed: currentUsers,
+                usersUsed: usersCount,
                 usersLimit: maxUsers,
-                storageUsed: currentStorage,
+                storageUsed: storageCount,
                 storageLimit: maxStorage
-            }
+            },
+            refresh: fetchUsage
         };
-    }, [company]);
+    }, [company, usersCount, storageCount]);
 }
+

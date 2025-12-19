@@ -149,7 +149,7 @@ export const CompanyProfilePage: React.FC = () => {
             if (result.success) {
                 await refreshCompany();
                 await loadPlanLimits();
-                toast.success(`Plano alterado para ${selectedPlan.name} com sucesso!`);
+                toast.success(`Plano alterado para ${selectedPlan.label} com sucesso!`);
             } else {
                 toast.error(`Erro ao alterar plano: ${result.error}`);
             }
@@ -409,7 +409,7 @@ export const CompanyProfilePage: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900">
-                                            Plano {getAvailablePlans().find(p => p.id === (company?.plan_id || 'start'))?.name || 'Start'}
+                                            Plano {getAvailablePlans().find(p => p.id === (company?.plan_id || 'start'))?.label || 'Start'}
                                         </h3>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(company?.subscription_status || 'active') === 'active'
@@ -658,12 +658,12 @@ export const CompanyProfilePage: React.FC = () => {
                                             key={plan.id}
                                             className={`relative rounded-xl border-2 p-6 transition-all ${isCurrentPlan
                                                 ? 'border-blue-500 bg-blue-50/50'
-                                                : plan.popular
+                                                : plan.isPopular
                                                     ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50'
                                                     : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
-                                            {plan.popular && !isCurrentPlan && (
+                                            {plan.isPopular && !isCurrentPlan && (
                                                 <div className="absolute -top-3 right-4 z-10">
                                                     <span className="bg-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
                                                         ⭐ MAIS POPULAR
@@ -679,7 +679,7 @@ export const CompanyProfilePage: React.FC = () => {
                                             )}
 
                                             <div className="text-center mb-6">
-                                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.label}</h3>
                                                 <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
                                                 <div className="mb-4">
                                                     {plan.price === 0 && plan.id !== 'start' ? (
@@ -712,11 +712,11 @@ export const CompanyProfilePage: React.FC = () => {
                                             <div className="space-y-2 text-xs text-gray-600 mb-6">
                                                 <div className="flex justify-between">
                                                     <span>Usuários:</span>
-                                                    <span className="font-medium">{plan.limits.maxUsers === 999999 ? 'Ilimitado' : plan.limits.maxUsers}</span>
+                                                    <span className="font-medium">{plan.limits.users === 999 ? 'Ilimitado' : plan.limits.users}</span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span>Armazenamento:</span>
-                                                    <span className="font-medium">{plan.limits.maxStorageGb === 999999 ? 'Ilimitado' : `${plan.limits.maxStorageGb} GB`}</span>
+                                                    <span className="font-medium">{plan.limits.storage_gb === 999999 ? 'Ilimitado' : `${plan.limits.storage_gb} GB`}</span>
                                                 </div>
                                             </div>
 
@@ -725,7 +725,7 @@ export const CompanyProfilePage: React.FC = () => {
                                                 disabled={isCurrentPlan}
                                                 style={
                                                     isCurrentPlan ? {} :
-                                                        plan.popular ? { backgroundColor: '#9333ea' } :
+                                                        plan.isPopular ? { backgroundColor: '#9333ea' } :
                                                             plan.id === 'enterprise' ? { backgroundColor: '#6366f1' } :
                                                                 { backgroundColor: '#3b82f6' }
                                                 }
@@ -756,7 +756,7 @@ export const CompanyProfilePage: React.FC = () => {
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirmar Mudança de Plano</h3>
                             <p className="text-gray-600">
-                                Você está prestes a alterar para o plano <span className="font-bold text-blue-600">{selectedPlan.name}</span>
+                                Você está prestes a alterar para o plano <span className="font-bold text-blue-600">{selectedPlan.label}</span>
                             </p>
                         </div>
 
@@ -764,11 +764,11 @@ export const CompanyProfilePage: React.FC = () => {
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Novo limite de usuários:</span>
-                                    <span className="font-medium">{selectedPlan.limits.maxUsers === 999999 ? 'Ilimitado' : selectedPlan.limits.maxUsers}</span>
+                                    <span className="font-medium">{selectedPlan.limits.users === 999 ? 'Ilimitado' : selectedPlan.limits.users}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Novo armazenamento:</span>
-                                    <span className="font-medium">{selectedPlan.limits.maxStorageGb === 999999 ? 'Ilimitado' : `${selectedPlan.limits.maxStorageGb} GB`}</span>
+                                    <span className="font-medium">{selectedPlan.limits.storage_gb === 999999 ? 'Ilimitado' : `${selectedPlan.limits.storage_gb} GB`}</span>
                                 </div>
                                 {selectedPlan.price > 0 && (
                                     <div className="flex justify-between pt-2 border-t border-gray-200">
