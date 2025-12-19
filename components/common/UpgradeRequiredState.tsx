@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { Crown, Zap, Check, ArrowRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 interface UpgradeRequiredStateProps {
     featureName: string;
     requiredPlan?: 'pro' | 'enterprise';
     description?: string;
+    whatsappLink?: string;
 }
 
 export const UpgradeRequiredState: React.FC<UpgradeRequiredStateProps> = ({
     featureName,
     requiredPlan = 'pro',
-    description
+    description,
+    whatsappLink = 'https://wa.me/5527999806456' // Número padrão para o WhatsApp
 }) => {
     const navigate = useNavigate();
+    const { company } = useAuthContext();
 
     const defaultDescription = requiredPlan === 'enterprise'
         ? 'Este recurso está disponível apenas para clientes Enterprise com necessidades avançadas.'
@@ -80,7 +84,11 @@ export const UpgradeRequiredState: React.FC<UpgradeRequiredStateProps> = ({
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
-                        onClick={() => navigate('/app/settings/company-profile')}
+                        onClick={() => {
+                            const companyName = company?.name || 'sua empresa';
+                            const message = `Olá, sou da empresa ${companyName} e quero fazer upgrade para o Plano PRO da Isotek.`;
+                            window.open(`${whatsappLink}?text=${encodeURIComponent(message)}`, '_blank');
+                        }}
                         className="flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                     >
                         <Crown className="w-5 h-5" />
@@ -88,7 +96,7 @@ export const UpgradeRequiredState: React.FC<UpgradeRequiredStateProps> = ({
                         <ArrowRight className="w-5 h-5" />
                     </button>
                     <button
-                        onClick={() => window.open('https://wa.me/5511999999999', '_blank')}
+                        onClick={() => window.open(whatsappLink, '_blank')}
                         className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold border-2 border-gray-200 hover:border-purple-300 transition-all"
                     >
                         Falar com Vendas
