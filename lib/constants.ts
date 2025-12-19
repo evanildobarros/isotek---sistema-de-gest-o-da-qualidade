@@ -67,11 +67,11 @@ export const PLANS = {
 };
 
 // Regras de Comissionamento do Marketplace (Auditor recebe X%)
-export const AUDITOR_COMMISSION_RATES = {
-    bronze: 0.70, // Isotek fica com 30%
-    silver: 0.75, // Isotek fica com 25%
-    gold: 0.80,   // Isotek fica com 20%
-    diamond: 0.85 // Isotek fica com 15%
+export const AUDITOR_RATES = {
+    bronze: { label: 'Bronze', rate: 0.70, next: 'silver' }, // 70%
+    silver: { label: 'Prata', rate: 0.75, next: 'gold' },
+    gold: { label: 'Ouro', rate: 0.80, next: 'diamond' },
+    diamond: { label: 'Diamante', rate: 0.85, next: null }
 };
 
 export const AUDIT_BASE_PRICE = 1200; // Preço base diária sugerida

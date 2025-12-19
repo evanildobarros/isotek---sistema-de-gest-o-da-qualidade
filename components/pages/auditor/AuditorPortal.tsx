@@ -30,6 +30,8 @@ interface Assignment {
         cnpj: string;
         logo_url?: string;
     };
+    template_id?: string | null;
+    progress?: number;
 }
 
 interface KPIStats {
@@ -65,7 +67,9 @@ export const AuditorPortal: React.FC = () => {
                         name,
                         cnpj,
                         logo_url
-                    )
+                    ),
+                    template_id,
+                    progress
                 `)
                 .eq('auditor_id', user?.id)
                 .order('start_date', { ascending: true });
@@ -100,8 +104,15 @@ export const AuditorPortal: React.FC = () => {
         navigate('/login');
     };
 
-    const getProgressPercent = (status: string) => {
-        switch (status) {
+    const getProgressDisplay = (assignment: Assignment) => {
+        // Se temos um progresso calculado (vincular ao checklist real futuramente ou via campo progress)
+        // Por enquanto, usamos a coluna 'progress' que será atualizada pelo Checklist
+        if (assignment.template_id) {
+            return assignment.progress || 0;
+        }
+
+        // Fallback para estático se não houver template (vínculos antigos)
+        switch (assignment.status) {
             case 'agendada': return 10;
             case 'em_andamento': return 50;
             case 'concluida': return 100;
@@ -221,7 +232,7 @@ export const AuditorPortal: React.FC = () => {
                                     <div className="mb-4">
                                         <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                                             <span>Progresso</span>
-                                            <span>{getProgressPercent(assignment.status)}%</span>
+                                            <span>{getProgressDisplay(assignment)}%</span>
                                         </div>
                                         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                                             <div
@@ -229,7 +240,7 @@ export const AuditorPortal: React.FC = () => {
                                                     ? 'bg-blue-500'
                                                     : 'bg-yellow-500'
                                                     }`}
-                                                style={{ width: `${getProgressPercent(assignment.status)}%` }}
+                                                style={{ width: `${getProgressDisplay(assignment)}%` }}
                                             />
                                         </div>
                                     </div>

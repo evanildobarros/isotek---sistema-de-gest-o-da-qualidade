@@ -635,6 +635,8 @@ export interface AuditAssignment {
   id: string;
   auditor_id: string;
   company_id: string;
+  template_id?: string | null;
+  progress?: number;
   start_date: string;
   end_date?: string | null;
   status: AuditAssignmentStatus;

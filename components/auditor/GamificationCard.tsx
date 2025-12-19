@@ -19,6 +19,8 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Badge, UserBadge, GamificationLevel } from '../../types';
+import { AUDITOR_RATES } from '../../lib/constants';
+import { Percent } from 'lucide-react';
 
 // Mapeamento de ícones por slug
 const badgeIcons: Record<string, React.ElementType> = {
@@ -67,20 +69,11 @@ const levelConfigs: Record<GamificationLevel, LevelConfig> = {
     gold: {
         name: 'Ouro',
         minXp: 1000,
-        maxXp: 2500,
+        maxXp: 5000,
         color: 'text-yellow-700',
         progressColor: 'bg-yellow-500',
         borderColor: 'border-yellow-200',
         bgStyle: 'bg-gradient-to-br from-yellow-50 to-white'
-    },
-    platinum: {
-        name: 'Platina',
-        minXp: 2500,
-        maxXp: 5000,
-        color: 'text-cyan-700',
-        progressColor: 'bg-cyan-600',
-        borderColor: 'border-cyan-200',
-        bgStyle: 'bg-gradient-to-br from-cyan-50 to-white'
     },
     diamond: {
         name: 'Diamante',
@@ -94,7 +87,7 @@ const levelConfigs: Record<GamificationLevel, LevelConfig> = {
 };
 
 const getNextLevel = (current: GamificationLevel): GamificationLevel | null => {
-    const levels: GamificationLevel[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
+    const levels: GamificationLevel[] = ['bronze', 'silver', 'gold', 'diamond'];
     const idx = levels.indexOf(current);
     return idx < levels.length - 1 ? levels[idx + 1] : null;
 };
@@ -310,8 +303,21 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
                                 </div>
                             </div>
 
+                            {/* Auditoria Taxa de Repasse */}
+                            <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                                <div className="p-1.5 bg-blue-100 rounded-lg">
+                                    <Percent className="w-4 h-4 text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-base font-bold text-gray-900 leading-tight">
+                                        {(AUDITOR_RATES[level as keyof typeof AUDITOR_RATES]?.rate * 100 || 70)}%
+                                    </p>
+                                    <p className="text-[10px] text-gray-500">Taxa de Repasse</p>
+                                </div>
+                            </div>
+
                             {/* Financeiro (Novo) */}
-                            <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-gray-100 col-span-2 lg:col-span-1">
+                            <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-gray-100">
                                 <div className="p-1.5 bg-emerald-100 rounded-lg">
                                     <Wallet className="w-4 h-4 text-emerald-600" />
                                 </div>

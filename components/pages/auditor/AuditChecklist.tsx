@@ -25,7 +25,8 @@ import {
 } from '../../../types';
 
 interface AuditChecklistProps {
-    audit: Audit;
+    audit?: Audit;
+    assignmentId?: string;
     onClose: () => void;
     onComplete?: () => void;
 }
@@ -34,7 +35,7 @@ interface GroupedItems {
     [category: string]: AuditChecklistItem[];
 }
 
-export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, onComplete }) => {
+export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, assignmentId, onClose, onComplete }) => {
     const { user } = useAuthContext();
     const [items, setItems] = useState<AuditChecklistItem[]>([]);
     const [responses, setResponses] = useState<Map<string, AuditChecklistResponse>>(new Map());
@@ -50,15 +51,39 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
 
     // Carregar itens do checklist e respostas existentes
     useEffect(() => {
-        if (audit.template_id) {
-            fetchChecklistData();
+        if (audit?.template_id) {
+            fetchChecklistData(audit.template_id, audit.id, audit.company_id);
+        } else if (assignmentId) {
+            fetchAssignmentData();
         } else {
             setLoading(false);
             toast.warning('Esta auditoria não possui um template de checklist vinculado.');
         }
-    }, [audit]);
+    }, [audit, assignmentId]);
 
-    const fetchChecklistData = async () => {
+    const fetchAssignmentData = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('audit_assignments')
+                .select('template_id, company_id')
+                .eq('id', assignmentId)
+                .single();
+
+            if (error) throw error;
+            if (data.template_id) {
+                await fetchChecklistData(data.template_id, assignmentId, data.company_id);
+            } else {
+                toast.warning('Esta designação não possui um template de checklist vinculado.');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar assignment:', error);
+            setLoading(false);
+        }
+    };
+
+    const fetchChecklistData = async (templateId: string, currentAuditId: string, companyId: string) => {
         try {
             setLoading(true);
 
@@ -66,7 +91,7 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
             const { data: itemsData, error: itemsError } = await supabase
                 .from('audit_checklist_items')
                 .select('id, category, question, iso_clause, help_text, order_index, is_required, template_id')
-                .eq('template_id', audit.template_id)
+                .eq('template_id', templateId)
                 .order('order_index', { ascending: true });
 
             if (itemsError) throw itemsError;
@@ -80,7 +105,7 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
             const { data: responsesData, error: responsesError } = await supabase
                 .from('audit_checklist_responses')
                 .select('id, item_id, status, evidence_text, evidence_url, verified_by, verified_at, audit_id')
-                .eq('audit_id', audit.id);
+                .eq('audit_id', currentAuditId);
 
             if (responsesError) throw responsesError;
 
@@ -95,7 +120,7 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
             const { data: qmsData } = await supabase
                 .from('quality_manual')
                 .select('scope')
-                .eq('company_id', audit.company_id)
+                .eq('company_id', companyId)
                 .maybeSingle();
 
             if (qmsData) setQmsScope(qmsData.scope);
@@ -153,10 +178,13 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
         try {
             setSaving(true);
 
+            const activeAuditId = audit?.id || assignmentId;
+            if (!activeAuditId) throw new Error('ID de auditoria não encontrado');
+
             const existingResponse = responses.get(itemId);
 
             const responseData = {
-                audit_id: audit.id,
+                audit_id: activeAuditId,
                 item_id: itemId,
                 status,
                 evidence_text: evidenceText || null,
@@ -189,6 +217,18 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
             const newResponses = new Map(responses);
             newResponses.set(itemId, result.data);
             setResponses(newResponses);
+
+            // Atualizar progresso se for assignment
+            if (assignmentId) {
+                const total = items.length;
+                const answered = newResponses.size;
+                const progress = total > 0 ? Math.round((answered / total) * 100) : 0;
+
+                await supabase
+                    .from('audit_assignments')
+                    .update({ progress })
+                    .eq('id', assignmentId);
+            }
 
             toast.success('Resposta registrada!');
 
@@ -265,8 +305,8 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
                                     Execução de Auditoria
                                 </h2>
                                 <p className="text-sm text-gray-500 flex items-center gap-2">
-                                    {audit.scope}
-                                    {qmsScope && audit.scope !== qmsScope && (
+                                    {audit?.scope || 'Auditoria Externa'}
+                                    {qmsScope && audit?.scope && audit.scope !== qmsScope && (
                                         <div className="group relative">
                                             <AlertTriangle size={14} className="text-amber-500 cursor-help" />
                                             <div className="absolute left-0 top-full mt-1 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-[10px] rounded shadow-lg z-[70]">

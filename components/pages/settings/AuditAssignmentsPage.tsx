@@ -18,6 +18,11 @@ interface CompanyOption {
     name: string;
 }
 
+interface TemplateOption {
+    id: string;
+    name: string;
+}
+
 export const AuditAssignmentsPage: React.FC = () => {
     const { user, company, isSuperAdmin } = useAuthContext();
     const [assignments, setAssignments] = useState<AuditAssignment[]>([]);
@@ -29,11 +34,13 @@ export const AuditAssignmentsPage: React.FC = () => {
     // Opções para selects
     const [users, setUsers] = useState<UserOption[]>([]);
     const [companies, setCompanies] = useState<CompanyOption[]>([]);
+    const [templates, setTemplates] = useState<TemplateOption[]>([]);
 
     // Formulário
     const [formData, setFormData] = useState({
         auditor_id: '',
         company_id: '',
+        template_id: '',
         start_date: new Date().toISOString().split('T')[0],
         end_date: '',
         notes: ''
@@ -50,6 +57,7 @@ export const AuditAssignmentsPage: React.FC = () => {
         if (isSuperAdmin) {
             fetchUsers();
             fetchCompanies();
+            fetchTemplates();
         }
     }, [isSuperAdmin]);
 
@@ -95,6 +103,8 @@ export const AuditAssignmentsPage: React.FC = () => {
                 id: item.id,
                 auditor_id: item.auditor_id,
                 company_id: item.company_id,
+                template_id: item.template_id,
+                progress: item.progress || 0,
                 start_date: item.start_date,
                 end_date: item.end_date,
                 status: item.status,
@@ -144,6 +154,22 @@ export const AuditAssignmentsPage: React.FC = () => {
         }
     };
 
+    const fetchTemplates = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('audit_checklist_templates')
+                .select('id, name')
+                .eq('is_active', true)
+                .order('name');
+
+            if (!error && data) {
+                setTemplates(data);
+            }
+        } catch (e) {
+            console.error('Erro ao buscar templates:', e);
+        }
+    };
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -154,6 +180,7 @@ export const AuditAssignmentsPage: React.FC = () => {
                 .insert([{
                     auditor_id: formData.auditor_id,
                     company_id: formData.company_id,
+                    template_id: formData.template_id || null,
                     start_date: formData.start_date,
                     end_date: formData.end_date || null,
                     notes: formData.notes || null,
@@ -172,6 +199,7 @@ export const AuditAssignmentsPage: React.FC = () => {
             setFormData({
                 auditor_id: '',
                 company_id: '',
+                template_id: '',
                 start_date: new Date().toISOString().split('T')[0],
                 end_date: '',
                 notes: ''
@@ -308,6 +336,7 @@ export const AuditAssignmentsPage: React.FC = () => {
                                     <tr className="bg-gray-50 border-b border-gray-200">
                                         <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Auditor</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa Cliente</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Checklist</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Período</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
@@ -329,6 +358,21 @@ export const AuditAssignmentsPage: React.FC = () => {
                                                     <div className="flex items-center gap-2">
                                                         <Building2 className="w-4 h-4 text-gray-400" />
                                                         <span className="text-gray-700">{assignment.company_name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-gray-900">
+                                                            {templates.find(t => t.id === assignment.template_id)?.name || 'Nenhum'}
+                                                        </span>
+                                                        {assignment.template_id && (
+                                                            <div className="mt-1 w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                                <div
+                                                                    className="bg-[#025159] h-full transition-all duration-500"
+                                                                    style={{ width: `${assignment.progress}%` }}
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-500">
@@ -381,6 +425,18 @@ export const AuditAssignmentsPage: React.FC = () => {
                                             <div>
                                                 <p className="font-medium text-gray-900">{assignment.auditor_name}</p>
                                                 <p className="text-sm text-gray-500">{assignment.company_name}</p>
+                                                {assignment.template_id && (
+                                                    <div className="mt-1 flex items-center gap-2">
+                                                        <span className="text-[10px] text-gray-400 uppercase font-bold">Progresso:</span>
+                                                        <div className="w-16 bg-gray-100 rounded-full h-1 overflow-hidden">
+                                                            <div
+                                                                className="bg-[#025159] h-full transition-all duration-500"
+                                                                style={{ width: `${assignment.progress}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-500 font-bold">{assignment.progress}%</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         {getStatusBadge(assignment.status)}
@@ -455,6 +511,20 @@ export const AuditAssignmentsPage: React.FC = () => {
                                     <option value="">Selecione a empresa...</option>
                                     {companies.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Template de Checklist (opcional)</label>
+                                <select
+                                    value={formData.template_id}
+                                    onChange={e => setFormData({ ...formData, template_id: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
+                                >
+                                    <option value="">Nenhum template...</option>
+                                    {templates.map(t => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
                                     ))}
                                 </select>
                             </div>
