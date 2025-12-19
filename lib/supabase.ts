@@ -41,7 +41,7 @@ export const supabase = createClient(
 // Log de status (apenas em desenvolvimento)
 if (import.meta.env.DEV) {
     if (isSupabaseConfigured) {
-        console.log('✅ Supabase configurado corretamente');
+
     } else {
         console.warn('⚠️ Supabase em modo offline (sem persistência de dados)');
     }

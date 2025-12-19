@@ -46,7 +46,7 @@ export const StakeholdersPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('stakeholders')
-                .select('*')
+                .select('id, name, type, needs, expectations, monitor_frequency, company_id, created_at')
                 .eq('company_id', company.id)
                 .order('created_at', { ascending: false });
 

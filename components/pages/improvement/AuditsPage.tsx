@@ -204,12 +204,6 @@ const AuditsPageContent: React.FC = () => {
         }
 
         try {
-            /* console.log('Tentando salvar auditoria:', {
-                isCreating,
-                company_id: company.id,
-                data: selectedAudit
-            }); */
-
             if (isCreating) {
                 // Insert new audit
                 const { data, error } = await supabase
@@ -235,7 +229,6 @@ const AuditsPageContent: React.FC = () => {
                     throw error;
                 }
 
-                console.log('Auditoria criada com sucesso:', data);
                 toast.success('Auditoria criada com sucesso!');
             } else {
                 // Update existing audit
@@ -261,7 +254,6 @@ const AuditsPageContent: React.FC = () => {
                     throw error;
                 }
 
-                console.log('Auditoria atualizada com sucesso:', data);
                 toast.success('Auditoria atualizada com sucesso!');
             }
 

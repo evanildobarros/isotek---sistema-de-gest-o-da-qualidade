@@ -56,7 +56,7 @@ export const ScopePage: React.FC = () => {
             // Fetch Scope
             const { data: manualData, error: manualError } = await supabase
                 .from('quality_manual')
-                .select('*')
+                .select('id, scope, company_id')
                 .eq('company_id', effectiveCompanyId)
                 .limit(1)
                 .maybeSingle();
@@ -73,7 +73,7 @@ export const ScopePage: React.FC = () => {
             // Fetch Processes
             const { data: processesData, error: processesError } = await supabase
                 .from('processes')
-                .select('*')
+                .select('id, name, owner, inputs, outputs, resources, company_id, created_at')
                 .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: true });
 

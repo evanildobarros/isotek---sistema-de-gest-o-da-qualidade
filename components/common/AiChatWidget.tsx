@@ -202,7 +202,7 @@ export const AiChatWidget: React.FC = () => {
         setLastFailedImage(null);
 
         try {
-            console.log('📡 Enviando requisição para Edge Function...', { hasImage: !!imageToSend });
+
 
             // Chamar a Edge Function do Supabase com histórico e imagem
             const response = await supabase.functions.invoke('ai-advisor', {

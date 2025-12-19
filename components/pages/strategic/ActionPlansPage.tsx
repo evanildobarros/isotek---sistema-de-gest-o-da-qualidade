@@ -72,7 +72,7 @@ export const ActionPlansPage: React.FC = () => {
             const [tasksRes, risksRes, usersRes] = await Promise.all([
                 supabase
                     .from('risk_tasks_with_responsible')
-                    .select('*')
+                    .select('id, risk_id, description, responsible_id, deadline, status, responsible_name, created_at')
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('risks_opportunities')

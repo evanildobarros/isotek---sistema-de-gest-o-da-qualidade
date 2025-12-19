@@ -76,7 +76,7 @@ export const ManagementReviewPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('management_reviews')
-                .select('*')
+                .select('id, company_id, date, period_analyzed, participants, inputs_json, outputs_decisions, status, created_at')
                 .eq('company_id', effectiveCompanyId)
                 .order('date', { ascending: false });
 
@@ -106,7 +106,7 @@ export const ManagementReviewPage: React.FC = () => {
                         start = toInputDate(parts[0]);
                         end = toInputDate(parts[1]);
                     } catch (e) {
-                        console.log('Erro ao parsear datas:', e);
+                        console.error('Erro ao parsear datas:', e);
                     }
                 }
             }

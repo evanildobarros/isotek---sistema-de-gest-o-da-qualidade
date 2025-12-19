@@ -86,7 +86,7 @@ export const IndicatorsPage: React.FC = () => {
         // Fetch objectives
         const { data: objs, error: objError } = await supabase
             .from('quality_objectives')
-            .select('*')
+            .select('id, name, target_value, unit, frequency, deadline, status, company_id')
             .eq('company_id', company.id);
 
         if (objError) throw objError;
@@ -96,7 +96,7 @@ export const IndicatorsPage: React.FC = () => {
         if (objs && objs.length > 0) {
             const { data: meas, error: measError } = await supabase
                 .from('kpi_measurements')
-                .select('*')
+                .select('id, objective_id, date, value, notes, company_id')
                 .eq('company_id', company.id)
                 .order('date', { ascending: true });
 
@@ -117,7 +117,7 @@ export const IndicatorsPage: React.FC = () => {
 
         const { data, error } = await supabase
             .from('customer_satisfaction_surveys')
-            .select('*')
+            .select('id, date, score, client_name, feedback, company_id')
             .eq('company_id', company.id)
             .order('date', { ascending: false });
 

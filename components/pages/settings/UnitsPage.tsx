@@ -88,7 +88,7 @@ export const UnitsPage: React.FC = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('units')
-      .select('*')
+      .select('id, company_id, name, code, is_headquarters, cnpj, address, city, state, created_at')
       .eq('company_id', idToUse)
       .order('created_at', { ascending: false });
 

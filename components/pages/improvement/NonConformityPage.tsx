@@ -69,7 +69,7 @@ export const NonConformityPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('non_conformities_with_responsible')
-                .select('*')
+                .select('id, description, origin, severity, quantity_affected, status, disposition, disposition_justification, authorized_by, photo_url, date_occurred, created_at, responsible_id, responsible_name, company_id')
                 .eq('company_id', effectiveCompanyId)
                 .order('date_occurred', { ascending: false });
 

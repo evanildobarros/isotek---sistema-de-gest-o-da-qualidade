@@ -59,8 +59,15 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
         toast.info('Modo auditor encerrado');
     };
 
+    const value = React.useMemo(() => ({
+        isAuditorMode,
+        targetCompany,
+        enterAuditorMode,
+        exitAuditorMode
+    }), [isAuditorMode, targetCompany]);
+
     return (
-        <AuditorContext.Provider value={{ isAuditorMode, targetCompany, enterAuditorMode, exitAuditorMode }}>
+        <AuditorContext.Provider value={value}>
             {children}
         </AuditorContext.Provider>
     );

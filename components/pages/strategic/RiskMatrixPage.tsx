@@ -104,7 +104,7 @@ export const RiskMatrixPage: React.FC = () => {
                 // Get risks from database (including swot_id)
                 const { data: risksData } = await supabase
                     .from('risks_opportunities')
-                    .select('*')
+                    .select('id, type, origin, description, probability, impact, action_plan, company_id, status, swot_id, created_at')
                     .eq('company_id', effectiveCompanyId)
                     .eq('status', 'active')
                     .order('created_at', { ascending: false });
@@ -266,7 +266,7 @@ export const RiskMatrixPage: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('risk_tasks_with_responsible')
-                .select('*')
+                .select('id, risk_id, description, responsible_id, deadline, status, responsible_name, created_at')
                 .eq('risk_id', riskId)
                 .order('created_at', { ascending: false });
 

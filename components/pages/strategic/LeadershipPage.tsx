@@ -94,7 +94,7 @@ export const LeadershipPage: React.FC = () => {
                 // Load Roles
                 const { data: rolesData, error: rolesError } = await supabase
                     .from('job_roles')
-                    .select('*')
+                    .select('id, title, department, responsibilities, authorities, company_id, created_at')
                     .eq('company_id', company.id)
                     .order('created_at', { ascending: false });
 
@@ -162,7 +162,7 @@ export const LeadershipPage: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('policy_versions_with_creator')
-                .select('*')
+                .select('id, company_id, content, version, approval_date, created_by, created_at, created_by_name')
                 .eq('company_id', companyId)
                 .order('created_at', { ascending: false });
 

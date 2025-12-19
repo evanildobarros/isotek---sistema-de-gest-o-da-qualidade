@@ -34,7 +34,6 @@ export const LandingPage: React.FC = () => {
     useEffect(() => {
         const fetchCompanyLogos = async () => {
             try {
-                console.log('🔍 Buscando logos das empresas...');
                 const { data, error } = await supabase
                     .from('company_info')
                     .select('id, name, logo_url')
@@ -42,7 +41,6 @@ export const LandingPage: React.FC = () => {
                     .not('logo_url', 'is', null)
                     .limit(6);
 
-                console.log('📦 Dados retornados:', data);
                 if (error) {
                     console.error('❌ Erro ao buscar logos:', error);
                 } else if (data && data.length > 0) {

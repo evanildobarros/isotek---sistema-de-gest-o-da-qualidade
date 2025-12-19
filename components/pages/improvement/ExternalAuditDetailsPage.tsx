@@ -86,7 +86,7 @@ export const ExternalAuditDetailsPage: React.FC = () => {
             // Fetch Audit Info (sem join quebrado)
             const { data: auditData, error: auditError } = await supabase
                 .from('audit_assignments')
-                .select('*')
+                .select('id, company_id, status, start_date, end_date, notes, auditor_id, audit_type, scope')
                 .eq('id', id)
                 .single();
 
@@ -114,7 +114,7 @@ export const ExternalAuditDetailsPage: React.FC = () => {
             // Fetch Findings
             const { data: findingsData, error: findingsError } = await supabase
                 .from('audit_findings')
-                .select('*')
+                .select('id, entity_type, entity_id, severity, auditor_notes, company_response, status, created_at, audit_assignment_id, iso_clause')
                 .eq('audit_assignment_id', id)
                 .order('created_at', { ascending: false });
 

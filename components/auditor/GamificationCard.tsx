@@ -162,7 +162,7 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
             // Buscar todas as badges
             const { data: badges, error: badgesError } = await supabase
                 .from('badges')
-                .select('*')
+                .select('id, name, description, icon_name, color, category, xp_reward')
                 .order('category', { ascending: true });
 
             if (badgesError) throw badgesError;
@@ -171,7 +171,7 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
             // Buscar badges do usuário
             const { data: earned, error: earnedError } = await supabase
                 .from('user_badges')
-                .select('*, badge:badges(*)')
+                .select('id, user_id, badge_id, awarded_at, badge:badges(id, name, description, icon_name, color, category, xp_reward)')
                 .eq('user_id', user?.id);
 
             if (earnedError) throw earnedError;

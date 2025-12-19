@@ -63,7 +63,7 @@ export const SectionPerfil: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('*')
+                .select('id, full_name, avatar_url, department, role, is_active, is_super_admin, created_at, preferences')
                 .eq('id', user.id)
                 .single();
 
@@ -249,7 +249,7 @@ export const SectionPerfil: React.FC = () => {
             // Refresh profile data
             const { data } = await supabase
                 .from('profiles')
-                .select('*')
+                .select('id, full_name, avatar_url, department, role, is_active, is_super_admin, created_at, preferences')
                 .eq('id', user.id)
                 .single();
 

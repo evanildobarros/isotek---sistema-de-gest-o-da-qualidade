@@ -54,7 +54,7 @@ export const NotificationPanel: React.FC<{ onClose: () => void }> = ({ onClose }
         if (!effectiveCompanyId) return;
         const { data } = await supabase
             .from('notifications')
-            .select('*')
+            .select('id, title, message, type, link, created_at, read, company_id')
             .eq('company_id', effectiveCompanyId)
             .order('created_at', { ascending: false })
             .limit(10);

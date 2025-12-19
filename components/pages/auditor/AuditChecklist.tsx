@@ -64,7 +64,7 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
             // Buscar itens do template
             const { data: itemsData, error: itemsError } = await supabase
                 .from('audit_checklist_items')
-                .select('*')
+                .select('id, category, question, iso_clause, help_text, order_index, is_required, template_id')
                 .eq('template_id', audit.template_id)
                 .order('order_index', { ascending: true });
 
@@ -78,7 +78,7 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
             // Buscar respostas existentes
             const { data: responsesData, error: responsesError } = await supabase
                 .from('audit_checklist_responses')
-                .select('*')
+                .select('id, item_id, status, evidence_text, evidence_url, verified_by, verified_at, audit_id')
                 .eq('audit_id', audit.id);
 
             if (responsesError) throw responsesError;

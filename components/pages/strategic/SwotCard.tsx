@@ -133,7 +133,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
             const { data, error } = await supabase
                 .from('swot_analysis')
-                .select('*')
+                .select('id, description, impact, type, is_active, company_id, created_at')
                 .eq('type', config.dbValue)
                 .eq('company_id', effectiveCompanyId)
                 .eq('is_active', true)
@@ -182,7 +182,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             // Check if item already exists (active or inactive)
             const { data: existingItems, error: searchError } = await supabase
                 .from('swot_analysis')
-                .select('*')
+                .select('id, description, type, is_active, company_id')
                 .eq('company_id', effectiveCompanyId)
                 .eq('type', config.dbValue)
                 .ilike('description', description.trim()); // Case-insensitive match

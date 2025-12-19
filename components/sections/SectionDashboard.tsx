@@ -91,11 +91,11 @@ export const SectionDashboard: React.FC = () => {
         riskTasksRes
       ] = await Promise.all([
         supabase.rpc('get_dashboard_metrics', { p_company_id: companyId }),
-        supabase.from('customer_satisfaction_surveys').select('*').eq('company_id', companyId),
+        supabase.from('customer_satisfaction_surveys').select('id, score').eq('company_id', companyId),
         supabase.from('non_conformities_products').select('created_at, origin').eq('company_id', companyId),
         supabase.from('corrective_actions').select('id, code, status, deadline, created_at, origin').eq('company_id', companyId),
         supabase.from('audits')
-          .select('*')
+          .select('id, type, date')
           .eq('company_id', companyId)
           .eq('status', 'Agendada')
           .gte('date', new Date().toISOString().split('T')[0])

@@ -56,7 +56,7 @@ export const ProductionControlPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('production_orders_with_details')
-                .select('*')
+                .select('id, code, client_name, product_service, current_stage, batch_number, status, notes, company_id, created_at')
                 .eq('company_id', company.id)
                 .order('created_at', { ascending: false });
 
@@ -75,7 +75,7 @@ export const ProductionControlPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('sales_orders')
-                .select('id, code, client_name')
+                .select('id, code, client_name, company_id, description, delivery_deadline, status')
                 .eq('company_id', company.id)
                 .eq('status', 'approved')
                 .order('code');

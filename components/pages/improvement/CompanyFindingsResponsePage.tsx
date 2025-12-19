@@ -64,7 +64,7 @@ export const CompanyFindingsResponsePage: React.FC = () => {
             // Buscar assignments primeiro
             const { data: assignmentsData, error: assignmentsError } = await supabase
                 .from('audit_assignments')
-                .select('*')
+                .select('id, company_id, auditor_id, start_date, end_date, status')
                 .eq('company_id', effectiveCompanyId)
                 .in('status', ['em_andamento', 'concluida'])
                 .order('start_date', { ascending: false });
@@ -113,7 +113,7 @@ export const CompanyFindingsResponsePage: React.FC = () => {
             setLoadingFindings(true);
             const { data, error } = await supabase
                 .from('audit_findings')
-                .select('*')
+                .select('id, audit_assignment_id, entity_type, severity, auditor_notes, company_response, status, iso_clause, created_at')
                 .eq('audit_assignment_id', assignmentId)
                 .order('created_at', { ascending: false });
 

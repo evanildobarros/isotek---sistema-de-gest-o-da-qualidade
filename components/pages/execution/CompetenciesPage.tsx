@@ -78,7 +78,7 @@ export const CompetenciesPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('employees')
-                .select('*')
+                .select('id, name, job_title, department, admission_date, status')
                 .eq('company_id', company.id)
                 .order('name');
 
@@ -100,7 +100,7 @@ export const CompetenciesPage: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('employee_trainings')
-                .select('*')
+                .select('id, employee_id, training_name, date_completed, expiration_date, notes, certificate_url')
                 .eq('employee_id', employeeId)
                 .order('date_completed', { ascending: false });
 

@@ -107,7 +107,7 @@ export const CompanyProfilePage: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('invoices')
-                .select('*')
+                .select('id, company_id, amount, status, created_at, invoice_pdf_url')
                 .eq('company_id', company.id)
                 .order('created_at', { ascending: false });
 

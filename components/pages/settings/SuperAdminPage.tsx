@@ -203,7 +203,6 @@ export const SuperAdminPage: React.FC = () => {
 
         setSavingAuditor(true);
         try {
-            console.log('Chamando Edge Function admin-create-user...');
             const { data, error } = await supabase.functions.invoke('admin-create-user', {
                 body: {
                     email: newAuditorForm.email,

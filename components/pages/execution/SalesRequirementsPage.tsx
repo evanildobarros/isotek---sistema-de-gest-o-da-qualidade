@@ -51,7 +51,7 @@ export const SalesRequirementsPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('sales_orders_with_reviewer')
-                .select('*')
+                .select('id, code, client_name, description, delivery_deadline, status, requirements_defined, has_capacity, risks_considered, review_notes, company_id, created_at')
                 .eq('company_id', company.id)
                 .order('created_at', { ascending: false });
 

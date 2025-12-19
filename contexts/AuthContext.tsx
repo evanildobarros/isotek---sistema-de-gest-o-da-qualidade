@@ -47,7 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 2. Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            // console.log('Auth State Changed:', _event, session?.user?.email);
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -93,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 2. Get company details
             const { data: companyData, error: companyError } = await supabase
                 .from('company_info')
-                .select('*')
+                .select('id, name, logo_url, slogan, owner_id, created_at, status, plan, cnpj, monthly_revenue, owner_name, owner_email, email, phone, address, subscription_status, plan_id, current_period_end, max_users, max_storage_gb, stripe_customer_id, stripe_subscription_id, payment_method_brand, payment_method_last4')
                 .eq('id', profile.company_id)
                 .single();
 
@@ -131,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const { data, error } = await supabase
                 .from('audit_assignments')
                 .select(`
-                    *,
+                    id, auditor_id, company_id, start_date, end_date, status, notes, created_by, created_at, updated_at,
                     company:company_info(id, name)
                 `)
                 .eq('auditor_id', user.id)

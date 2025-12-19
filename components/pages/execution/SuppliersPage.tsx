@@ -93,7 +93,7 @@ const SuppliersPageContent: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('suppliers')
-                .select('*')
+                .select('id, name, cnpj, email, phone, category, status, blocked_reason, iqf_score')
                 .eq('company_id', company.id)
                 .order('name');
 
@@ -113,7 +113,7 @@ const SuppliersPageContent: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('supplier_evaluations_with_details')
-                .select('*')
+                .select('id, supplier_name, evaluation_date, comments, criteria_quality, criteria_deadline, criteria_communication, final_score')
                 .eq('company_id', company.id)
                 .order('evaluation_date', { ascending: false })
                 .limit(20);
