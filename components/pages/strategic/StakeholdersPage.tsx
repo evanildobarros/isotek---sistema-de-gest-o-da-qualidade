@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Stakeholder } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const StakeholdersPage: React.FC = () => {
     const { user, company, loadingCompany } = useAuthContext();
@@ -18,6 +19,12 @@ export const StakeholdersPage: React.FC = () => {
         needs: '',
         expectations: '',
         monitor_frequency: 'Anual'
+    });
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -121,18 +128,24 @@ export const StakeholdersPage: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta parte interessada?')) return;
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('stakeholders')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
             fetchStakeholders();
+            toast.success('Parte interessada excluída com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir:', error);
+            toast.error('Erro ao excluir parte interessada');
         }
     };
 
@@ -149,6 +162,17 @@ export const StakeholdersPage: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Parte Interessada"
+                message="Tem certeza que deseja excluir esta parte interessada?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">

@@ -3,6 +3,7 @@ import { Target, Plus, Edit2, Trash2, Save, Loader2, TrendingUp, Calendar, Check
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 interface Process {
     id: string;
@@ -47,6 +48,12 @@ export const QualityObjectivesPage: React.FC = () => {
     });
 
     const [updateValue, setUpdateValue] = useState('');
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
+    });
 
     useEffect(() => {
         if (user) loadData();
@@ -151,14 +158,19 @@ export const QualityObjectivesPage: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este objetivo?')) return;
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
         try {
             const { error } = await supabase
                 .from('quality_objectives')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteModal.id);
             if (error) throw error;
-            setObjectives(objectives.filter(o => o.id !== id));
+            setObjectives(objectives.filter(o => o.id !== deleteModal.id));
+            toast.success('Objetivo excluído com sucesso!');
         } catch (error: any) {
             toast.error('Erro ao excluir: ' + error.message);
         }
@@ -207,6 +219,17 @@ export const QualityObjectivesPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-200">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Objetivo"
+                message="Tem certeza que deseja excluir este objetivo da qualidade?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             <header className="mb-8 flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2 mb-2">

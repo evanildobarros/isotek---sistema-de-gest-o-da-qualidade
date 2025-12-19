@@ -3,6 +3,7 @@ import { X, Send, Bot, User, Loader2, Minimize2, HelpCircle, RefreshCw, Image, T
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
 
 interface Message {
     id: string;
@@ -111,13 +112,13 @@ export const AiChatWidget: React.FC = () => {
     const processImageFile = async (file: File) => {
         // Validar tipo de arquivo
         if (!file.type.startsWith('image/')) {
-            alert('Por favor, selecione apenas arquivos de imagem.');
+            toast.error('Por favor, selecione apenas arquivos de imagem.');
             return false;
         }
 
         // Validar tamanho
         if (file.size > MAX_IMAGE_SIZE) {
-            alert('A imagem é muito grande. O tamanho máximo é 5MB.');
+            toast.error('A imagem é muito grande. O tamanho máximo é 5MB.');
             return false;
         }
 
@@ -128,7 +129,7 @@ export const AiChatWidget: React.FC = () => {
             return true;
         } catch (error) {
             console.error('Erro ao processar imagem:', error);
-            alert('Erro ao processar a imagem. Tente novamente.');
+            toast.error('Erro ao processar a imagem. Tente novamente.');
             return false;
         }
     };

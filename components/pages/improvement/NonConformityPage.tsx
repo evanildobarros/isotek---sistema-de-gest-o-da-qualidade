@@ -22,6 +22,7 @@ import { NonConformityProduct } from '../../../types';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const NonConformityPage: React.FC = () => {
     const { user, company, effectiveCompanyId } = useAuthContext();
@@ -49,6 +50,12 @@ export const NonConformityPage: React.FC = () => {
         disposition: 'Retrabalho' as NonConformityProduct['disposition'],
         disposition_justification: '',
         authorized_by: ''
+    });
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -179,18 +186,24 @@ export const NonConformityPage: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta RNC?')) return;
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('non_conformities_products')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
             fetchNonConformities();
+            toast.success('Não Conformidade excluída com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir RNC:', error);
+            toast.error('Erro ao excluir Não Conformidade');
         }
     };
 
@@ -282,7 +295,7 @@ export const NonConformityPage: React.FC = () => {
                 <div className="space-y-3">
                     {items.length === 0 ? (
                         <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-                            <p className="text-gray-400 text-sm">Nenhuma RNC neste estágio</p>
+                            <p className="text-gray-400 text-sm">Nenhuma Não Conformidade neste estágio</p>
                         </div>
                     ) : (
                         items.map(nc => (
@@ -333,7 +346,7 @@ export const NonConformityPage: React.FC = () => {
                                     <button
                                         onClick={() => handlePrintReport(nc)}
                                         className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-                                        title="Imprimir RNC"
+                                        title="Imprimir Não Conformidade"
                                     >
                                         <Printer className="w-4 h-4" />
                                     </button>
@@ -366,6 +379,17 @@ export const NonConformityPage: React.FC = () => {
 
     return (
         <div className="p-8 max-w-[1600px] mx-auto">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Não Conformidade"
+                message="Tem certeza que deseja excluir esta Não Conformidade?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             <PageHeader
                 icon={AlertTriangle}
                 title="Controle de Saídas Não Conformes"
@@ -380,7 +404,7 @@ export const NonConformityPage: React.FC = () => {
                         className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
                     >
                         <Plus className="w-5 h-5" />
-                        Nova RNC
+                        Nova Não Conformidade
                     </button>
                 }
             />
@@ -500,7 +524,7 @@ export const NonConformityPage: React.FC = () => {
                             disabled={uploading}
                             className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm font-medium disabled:opacity-50"
                         >
-                            {uploading ? 'Enviando...' : 'Registrar RNC'}
+                            {uploading ? 'Enviando...' : 'Registrar Não Conformidade'}
                         </button>
                     </div>
                 </form>
@@ -632,7 +656,7 @@ export const NonConformityPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="text-center pt-2">
-                                <p className="text-sm font-bold text-gray-900">RNC Nº {selectedNCForReport.id.slice(0, 6).toUpperCase()}</p>
+                                <p className="text-sm font-bold text-gray-900">NÃO CONFORMIDADE Nº {selectedNCForReport.id.slice(0, 6).toUpperCase()}</p>
                             </div>
                         </div>
 

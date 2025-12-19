@@ -26,6 +26,7 @@ import { CorrectiveAction, CorrectiveActionTask } from '../../../types';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const CorrectiveActionsPage: React.FC = () => {
     const { user, company, effectiveCompanyId } = useAuthContext();
@@ -40,6 +41,7 @@ export const CorrectiveActionsPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Filter states
     const [filters, setFilters] = useState({
@@ -67,6 +69,12 @@ export const CorrectiveActionsPage: React.FC = () => {
         description: '',
         responsible_id: '',
         due_date: ''
+    });
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -231,9 +239,11 @@ export const CorrectiveActionsPage: React.FC = () => {
     };
 
     const handleSaveStep = async () => {
-        if (!effectiveCompanyId) return;
+        if (!effectiveCompanyId || isSaving) return;
 
         try {
+            setIsSaving(true);
+            const loadingToast = toast.loading(selectedAction ? 'Atualizando...' : 'Salvando...');
             const payload: any = {
                 company_id: effectiveCompanyId,
                 ...form
@@ -246,7 +256,7 @@ export const CorrectiveActionsPage: React.FC = () => {
             } else if (currentStep === 3) {
                 payload.status = 'implementation';
             } else if (currentStep === 4) {
-                payload.status = form.effectiveness_verified ? 'closed' : 'verificacao_de_eficacia';
+                payload.status = form.effectiveness_verified ? 'closed' : 'effectiveness_check';
             }
 
             if (selectedAction) {
@@ -262,26 +272,53 @@ export const CorrectiveActionsPage: React.FC = () => {
                     await saveTasks(selectedAction.id);
                 }
             } else {
-                const { data, error } = await supabase
-                    .from('corrective_actions')
-                    .insert([payload])
-                    .select();
+                let currentPayload = { ...payload };
+                let retryCount = 0;
+                const maxRetries = 3;
+                let success = false;
+                let lastError = null;
 
-                if (error) throw error;
-                if (currentStep === 3 && data && data[0]) {
-                    await saveTasks(data[0].id);
+                while (retryCount < maxRetries && !success) {
+                    const { data, error } = await supabase
+                        .from('corrective_actions')
+                        .insert([currentPayload])
+                        .select();
+
+                    if (error) {
+                        // Código 23505 é Unique Violation no Postgres
+                        if (error.code === '23505') {
+                            retryCount++;
+                            const nextCode = await fetchNextCode();
+                            currentPayload = { ...currentPayload, code: nextCode };
+                            continue;
+                        }
+                        throw error;
+                    }
+
+                    if (currentStep === 3 && data && data[0]) {
+                        await saveTasks(data[0].id);
+                    }
+                    success = true;
+                }
+
+                if (!success) {
+                    throw new Error('Não foi possível gerar um código único após várias tentativas. Por favor, tente novamente.');
                 }
             }
 
             if (currentStep === 4) {
                 fetchActions();
                 setIsModalOpen(false);
+                toast.success('Ação salva com sucesso!', { id: 'save-rnc' });
             } else {
                 setCurrentStep(currentStep + 1);
+                toast.dismiss();
             }
         } catch (error: any) {
             console.error('Erro ao salvar:', error);
-            toast.error('Erro ao salvar: ' + (error.message || error.error_description || 'Erro desconhecido'));
+            toast.error('Erro ao salvar: ' + (error.message || error.error_description || 'Erro desconhecido'), { id: 'save-rnc' });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -350,13 +387,17 @@ export const CorrectiveActionsPage: React.FC = () => {
     };
 
     const handleDeleteAction = async (actionId: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta ação corretiva?')) return;
+        setDeleteModal({ isOpen: true, id: actionId });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('corrective_actions')
                 .delete()
-                .eq('id', actionId);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
 
@@ -384,12 +425,31 @@ export const CorrectiveActionsPage: React.FC = () => {
                 status: 'open'
             };
 
-            const { data, error } = await supabase
-                .from('corrective_actions')
-                .insert([payload])
-                .select();
+            let currentPayload = { ...payload };
+            let retryCount = 0;
+            const maxRetries = 3;
+            let success = false;
 
-            if (error) throw error;
+            while (retryCount < maxRetries && !success) {
+                const { error } = await supabase
+                    .from('corrective_actions')
+                    .insert([currentPayload]);
+
+                if (error) {
+                    if (error.code === '23505') {
+                        retryCount++;
+                        const freshCode = await fetchNextCode();
+                        currentPayload = { ...currentPayload, code: freshCode };
+                        continue;
+                    }
+                    throw error;
+                }
+                success = true;
+            }
+
+            if (!success) {
+                throw new Error('Não foi possível gerar um código único ao duplicar.');
+            }
 
             fetchActions();
             toast.success('Ação corretiva duplicada com sucesso!');
@@ -436,6 +496,17 @@ export const CorrectiveActionsPage: React.FC = () => {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Ação Corretiva"
+                message="Tem certeza que deseja excluir esta ação corretiva?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             <PageHeader
                 icon={TrendingUp}
                 title="Ações Corretivas e Melhoria"
@@ -474,7 +545,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
                         >
                             <Plus className="w-5 h-5" />
-                            <span>Abrir RNC</span>
+                            <span>Abrir Não Conformidade</span>
                         </button>
                     </div>
                 }
@@ -522,7 +593,7 @@ export const CorrectiveActionsPage: React.FC = () => {
                 <EmptyState
                     icon={AlertTriangle}
                     title="Nenhuma ação corretiva registrada"
-                    description="Comece abrindo uma RNC para registrar problemas e melhorias"
+                    description="Comece abrindo uma Não Conformidade para registrar problemas e melhorias"
                 />
             ) : (
                 <>

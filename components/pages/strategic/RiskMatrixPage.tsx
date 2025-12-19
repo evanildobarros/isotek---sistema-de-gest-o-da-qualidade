@@ -22,6 +22,7 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import { RiskTask } from '../../../types';
 import { useAuditFindings } from '../../../hooks/useAuditFindings';
 import { AuditIndicator } from '../../common/AuditIndicator';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 
 type RiskType = 'risk' | 'opportunity';
@@ -82,6 +83,13 @@ export const RiskMatrixPage: React.FC = () => {
 
     // Audit findings hook - busca constatações pendentes para riscos
     const { findingsMap } = useAuditFindings('risk');
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; type: 'risk' | 'task'; id: string | null }>({
+        isOpen: false,
+        type: 'risk',
+        id: null
+    });
 
 
     useEffect(() => {
@@ -232,18 +240,22 @@ export const RiskMatrixPage: React.FC = () => {
     };
 
     const handleDeleteRisk = async (id: string) => {
-        if (!confirm('Deseja realmente excluir este item?')) return;
+        setDeleteModal({ isOpen: true, type: 'risk', id });
+    };
+
+    const confirmDeleteRisk = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('risks_opportunities')
                 .update({ status: 'archived' })
-                .eq('id', id);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
 
             await loadData();
-            toast.success('Item excluído com sucesso!');
+            toast.success('Item exclué com sucesso!');
         } catch (error: any) {
             toast.error('Erro ao excluir: ' + error.message);
         }
@@ -353,13 +365,17 @@ export const RiskMatrixPage: React.FC = () => {
     };
 
     const handleDeleteTask = async (taskId: string) => {
-        if (!confirm('Deseja realmente excluir esta tarefa?')) return;
+        setDeleteModal({ isOpen: true, type: 'task', id: taskId });
+    };
+
+    const confirmDeleteTask = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('risk_tasks')
                 .delete()
-                .eq('id', taskId);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
 
@@ -417,8 +433,27 @@ export const RiskMatrixPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, type: 'risk', id: null })}
+                onConfirm={() => {
+                    if (deleteModal.type === 'risk') {
+                        confirmDeleteRisk();
+                    } else {
+                        confirmDeleteTask();
+                    }
+                }}
+                title={deleteModal.type === 'risk' ? 'Excluir Risco/Oportunidade' : 'Excluir Tarefa'}
+                message={deleteModal.type === 'risk'
+                    ? 'Deseja realmente excluir este item? Esta ação não pode ser desfeita.'
+                    : 'Deseja realmente excluir esta tarefa?'}
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             {/* Header */}
-            <div className="flex flex-col gap-4 mb-6 md:mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-2 md:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">

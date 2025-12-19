@@ -62,6 +62,24 @@ interface SidebarGroupProps {
 
 const menuGroups: MenuGroup[] = [
   {
+    groupTitle: 'Dashboard',
+    sections: [
+      {
+        sectionNumber: '',
+        sectionTitle: 'Visão Geral',
+        icon: LayoutDashboard,
+        items: [
+          {
+            label: 'Indicadores e Metas',
+            section: IsoSection.PERFORMANCE_INDICATORS,
+            path: '/app/dashboard',
+            icon: BarChart3
+          }
+        ]
+      }
+    ]
+  },
+  {
     groupTitle: 'Grupo A: Estratégia (Plan)',
     sections: [
       {
@@ -374,7 +392,7 @@ const auditorClientGroups: MenuGroup[] = [
             icon: Factory
           },
           {
-            label: 'RNCs e Ações',
+            label: 'Não Conformidades e Ações',
             section: IsoSection.NON_CONFORMANCES,
             path: '/app/acoes-corretivas',
             icon: AlertOctagon
@@ -454,7 +472,7 @@ const SidebarGroup: React.FC<SidebarGroupProps> = ({
       </button>
 
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
           }`}
       >
         <div className="pl-3 space-y-0.5 border-l-2 border-gray-100 dark:border-gray-800 ml-5">
@@ -498,14 +516,14 @@ interface SidebarProps {
 export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [openGroups, setOpenGroups] = useState<string[]>(['4.0']);
+  const [openGroups, setOpenGroups] = useState<string[]>(['Visão Geral']);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const planLimits = usePlanLimits();
   const { canAccessModule } = planLimits;
 
   // Auditor Context
   const { isAuditorMode, targetCompany, exitAuditorMode } = useAuditor();
-  const { auditorAssignments } = useAuthContext(); // Removed unused 'user'
+  const { auditorAssignments, company } = useAuthContext(); // Removed unused 'user'
 
   const isAuditorUser = auditorAssignments?.length > 0;
 
@@ -637,12 +655,24 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#025159] rounded-lg">
-                <Building2 className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Isotek</h1>
-                <p className="text-xs text-[#025159]">Gestão da Qualidade</p>
+              {company?.logo_url ? (
+                <img
+                  src={company.logo_url}
+                  alt={company.name}
+                  className="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1"
+                />
+              ) : (
+                <div className="p-2 bg-[#025159] rounded-lg">
+                  <Building2 className="w-8 h-8 text-white" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 truncate">
+                  {company?.name || 'Isotek'}
+                </h1>
+                <p className="text-xs text-[#025159] truncate">
+                  {company?.slogan || 'Gestão da Qualidade'}
+                </p>
               </div>
             </div>
           )}

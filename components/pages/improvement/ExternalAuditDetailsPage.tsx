@@ -253,17 +253,17 @@ export const ExternalAuditDetailsPage: React.FC = () => {
                     </div>
 
                     <div className="flex gap-4">
-                        <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-center min-w-[100px]">
+                        <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-center min-w-[120px]">
                             <div className="text-2xl font-bold text-red-700">
                                 {findings.filter(f => f.severity === 'nao_conformidade_maior').length}
                             </div>
-                            <div className="text-xs font-medium text-red-600 uppercase">NC Maior</div>
+                            <div className="text-xs font-medium text-red-600 uppercase">Não Conformidade Maior</div>
                         </div>
-                        <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center min-w-[100px]">
+                        <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center min-w-[120px]">
                             <div className="text-2xl font-bold text-orange-700">
                                 {findings.filter(f => f.severity === 'nao_conformidade_menor').length}
                             </div>
-                            <div className="text-xs font-medium text-orange-600 uppercase">NC Menor</div>
+                            <div className="text-xs font-medium text-orange-600 uppercase">Não Conformidade Menor</div>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center min-w-[100px]">
                             <div className="text-2xl font-bold text-blue-700">

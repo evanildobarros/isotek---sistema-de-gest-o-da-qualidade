@@ -43,9 +43,9 @@ export const LandingPage: React.FC = () => {
                     .limit(6);
 
                 console.log('📦 Dados retornados:', data);
-                console.log('❌ Erro:', error);
-
-                if (!error && data && data.length > 0) {
+                if (error) {
+                    console.error('❌ Erro ao buscar logos:', error);
+                } else if (data && data.length > 0) {
                     setCompanyLogos(data);
                 }
             } catch (err) {

@@ -433,7 +433,7 @@ export interface CorrectiveAction {
   immediate_action?: string; // Ação imediata
   deadline: string;
   responsible_id: string;
-  status: 'open' | 'root_cause_analysis' | 'implementation' | 'verificacao_de_eficacia' | 'effectiveness_check' | 'closed';
+  status: 'open' | 'root_cause_analysis' | 'implementation' | 'effectiveness_check' | 'closed';
   effectiveness_verified?: boolean; // Problem voltou a ocorrer?
   effectiveness_notes?: string; // Parecer do gestor
   created_at?: string;

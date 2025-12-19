@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 interface SwotItem {
     id: string;
@@ -104,6 +105,12 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     // Form state
     const [description, setDescription] = useState('');
     const [impact, setImpact] = useState<'alto' | 'medio' | 'baixo'>('medio');
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
+    });
 
     // Load items
     useEffect(() => {
@@ -245,11 +252,15 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Deseja realmente remover este item?')) return;
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         // Offline mode
         if (!isSupabaseConfigured) {
-            setItems(items.filter(item => item.id !== id));
+            setItems(items.filter(item => item.id !== deleteModal.id));
             toast.warning('Modo Offline: Item removido apenas localmente.');
             return;
         }
@@ -259,10 +270,10 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             const { error } = await supabase
                 .from('swot_analysis')
                 .update({ is_active: false })
-                .eq('id', id);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
-            setItems(items.filter(item => item.id !== id));
+            setItems(items.filter(item => item.id !== deleteModal.id));
             toast.success('Item removido com sucesso!');
         } catch (error) {
             console.error('Erro ao remover item:', error);
@@ -337,6 +348,17 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
     return (
         <>
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Remover Item"
+                message="Deseja realmente remover este item?"
+                confirmLabel="Remover"
+                variant="danger"
+            />
+
             <div className={`rounded-lg border ${config.color.border} bg-white shadow-sm overflow-hidden h-full flex flex-col`}>
                 {/* Header */}
                 <div className={`px-4 py-3 ${config.color.bg} ${config.color.text} flex justify-between items-center border-b ${config.color.border}`}>

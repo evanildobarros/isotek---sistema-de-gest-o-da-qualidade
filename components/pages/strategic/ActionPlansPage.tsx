@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { RiskTask } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const ActionPlansPage: React.FC = () => {
     const { user } = useAuthContext();
@@ -42,6 +43,12 @@ export const ActionPlansPage: React.FC = () => {
         description: '',
         responsible_id: '',
         deadline: ''
+    });
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -160,13 +167,17 @@ export const ActionPlansPage: React.FC = () => {
     };
 
     const handleDeleteTask = async (taskId: string) => {
-        if (!confirm('Deseja realmente excluir esta tarefa?')) return;
+        setDeleteModal({ isOpen: true, id: taskId });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('risk_tasks')
                 .delete()
-                .eq('id', taskId);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
             await loadData();
@@ -241,8 +252,19 @@ export const ActionPlansPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Tarefa"
+                message="Deseja realmente excluir esta tarefa?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             {/* Header */}
-            <div className="flex flex-col gap-4 mb-6 md:mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-2 md:p-3 bg-blue-100 rounded-lg">

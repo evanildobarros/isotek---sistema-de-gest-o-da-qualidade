@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { QualityManual, Process } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const ScopePage: React.FC = () => {
     const { user, company, effectiveCompanyId } = useAuthContext();
@@ -27,6 +28,12 @@ export const ScopePage: React.FC = () => {
         inputs: '',
         outputs: '',
         resources: ''
+    });
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -186,21 +193,38 @@ export const ScopePage: React.FC = () => {
     };
 
     const handleDeleteProcess = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este processo?')) return;
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
         try {
             const { error } = await supabase
                 .from('processes')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteModal.id);
             if (error) throw error;
             fetchData();
+            toast.success('Processo excluído com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir processo:', error);
+            toast.error('Erro ao excluir processo');
         }
     };
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 md:space-y-12">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Processo"
+                message="Tem certeza que deseja excluir este processo?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             {/* Loading State */}
             {loading && (
                 <div className="flex items-center justify-center py-12">

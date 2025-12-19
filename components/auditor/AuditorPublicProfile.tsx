@@ -224,7 +224,8 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
     const [loading, setLoading] = useState(false);
 
     const fetchAuditorData = async () => {
-        if (!auditorId) return;
+        // Check for undefined, null, empty, or literal "undefined" string
+        if (!auditorId || auditorId === 'undefined' || auditorId.trim() === '') return;
 
         try {
             setLoading(true);

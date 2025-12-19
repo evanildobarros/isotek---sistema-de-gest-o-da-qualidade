@@ -86,7 +86,7 @@ export const SectionDashboard: React.FC = () => {
         supabase.rpc('get_dashboard_metrics', { p_company_id: companyId }),
         supabase.from('customer_satisfaction_surveys').select('*').eq('company_id', companyId),
         supabase.from('non_conformities_products').select('created_at, origin').eq('company_id', companyId),
-        supabase.from('corrective_actions').select('id, code, status, deadline').eq('company_id', companyId),
+        supabase.from('corrective_actions').select('id, code, status, deadline, created_at, origin').eq('company_id', companyId),
         supabase.from('audits')
           .select('*')
           .eq('company_id', companyId)
@@ -109,46 +109,50 @@ export const SectionDashboard: React.FC = () => {
         actions_closed: 0
       };
 
-      // 1. NPS Calculation
+      // 1. Average Satisfaction Calculation
       const surveys = surveysRes.data || [];
-      let npsScore = 0;
+      let satisfactionAverage = 0;
       if (surveys.length > 0) {
-        // Simple average for demo, ideally NPS formula: %Promoters - %Detractors
-        const promoters = surveys.filter(s => s.score >= 9).length;
-        const detractors = surveys.filter(s => s.score <= 6).length;
-        const total = surveys.length;
-        npsScore = Math.round(((promoters - detractors) / total) * 100);
+        const totalScore = surveys.reduce((acc, s) => acc + (s.score || 0), 0);
+        satisfactionAverage = Number((totalScore / surveys.length).toFixed(1));
       }
 
-      // 2. NC Data
+      // 2. NC Data (Combined from simplified NCs and Ações Corretivas/RNCs)
       const ncProducts = ncProductsRes.data || [];
+      const actionsData = actionsRes.data || [];
+
+      // Merge for trend and origin charts
+      const allNcs = [
+        ...ncProducts.map(nc => ({ created_at: nc.created_at, origin: nc.origin })),
+        ...actionsData.map(a => ({ created_at: a.created_at || a.deadline, origin: a.origin }))
+      ];
+
       const totalNc = metricsData.total_ncs;
 
-      // Sparkline data (last 7 NCs simply for visual trend)
-      const ncTrendData = ncProducts
+      // Sparkline data
+      const ncTrendData = allNcs
         .sort((a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime())
         .slice(-10)
-        .map((nc, index) => ({ index, value: 1 })); // Simplified for sparkline presence
+        .map((nc, index) => ({ index, value: 1 }));
 
       // 3. Audits
       const auditsCompleted = metricsData.audits_completed;
       const auditsPending = metricsData.audits_pending;
 
       // 4. Actions (SAC)
-      const actions = actionsRes.data || [];
       const actionsOpen = metricsData.actions_open;
       const actionsClosed = metricsData.actions_closed;
 
-      // 5. NC Trend (Last 6 Months)
+      // 5. NC Trend (Last 6 Months) - Combined
       const last6Months = [];
+      const now = new Date();
       for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleString('pt-BR', { month: 'short' });
         const monthKey = d.getMonth();
         const yearKey = d.getFullYear();
 
-        const count = ncProducts.filter(nc => {
+        const count = allNcs.filter(nc => {
           const ncDate = new Date(nc.created_at || '');
           return ncDate.getMonth() === monthKey && ncDate.getFullYear() === yearKey;
         }).length;
@@ -159,21 +163,23 @@ export const SectionDashboard: React.FC = () => {
         });
       }
 
-      // 6. NC by Dept (Origin)
+      // 6. NC by Dept (Origin) - Combined
       const originCounts: Record<string, number> = {};
-      ncProducts.forEach(nc => {
+      allNcs.forEach(nc => {
         const origin = nc.origin || 'Outros';
         originCounts[origin] = (originCounts[origin] || 0) + 1;
       });
-      const ncByDept = Object.entries(originCounts).map(([name, value]) => ({ name, value }));
+      const ncByDept = Object.entries(originCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
 
       // 7. Pending Tasks List
       const pendingTasks = [];
+      const today = new Date();
 
       // Overdue Actions
-      const today = new Date();
-      actions.forEach(a => {
-        if (a.status !== 'closed' && new Date(a.deadline) < today) {
+      actionsData.forEach(a => {
+        if (a.status !== 'closed' && a.deadline && new Date(a.deadline) < today) {
           pendingTasks.push({
             id: `action-${a.id}`,
             title: `Ação Atrasada: ${a.code}`,
@@ -210,7 +216,7 @@ export const SectionDashboard: React.FC = () => {
       });
 
       setMetrics({
-        npsScore,
+        npsScore: satisfactionAverage,
         npsTrend: 'up', // Mock trend
         totalNc,
         ncTrendData,
@@ -258,19 +264,19 @@ export const SectionDashboard: React.FC = () => {
       {/* ROW 1: KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        {/* Card 1: NPS */}
+        {/* Card 1: Average Satisfaction */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-medium text-gray-500">Satisfação do Cliente (NPS)</h3>
+            <h3 className="text-sm font-medium text-gray-500">Média de Satisfação</h3>
             <span className="p-1.5 bg-green-50 rounded-lg text-green-600">
               <TrendingUp size={16} />
             </span>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-bold text-gray-900">{metrics.npsScore}</span>
-            <span className="text-sm font-medium text-green-600">+2.5%</span>
+            <span className="text-sm font-medium text-green-600">0-10</span>
           </div>
-          <p className="text-xs text-gray-400 mt-2">Baseado em pesquisas recentes</p>
+          <p className="text-xs text-gray-400 mt-2">Média aritmética das pesquisas</p>
         </div>
 
         {/* Card 2: NCs + Sparkline */}
@@ -371,7 +377,7 @@ export const SectionDashboard: React.FC = () => {
         {/* Chart 1: NC Trend */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Tendência de NCs</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Tendência de Não Conformidades</h3>
             <button className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
               <MoreHorizontal size={20} />
             </button>
@@ -400,7 +406,7 @@ export const SectionDashboard: React.FC = () => {
         {/* Chart 2: NC by Dept - DONUT CHART */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">NCs por Origem</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Não Conformidades por Origem</h3>
             <button className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
               <MoreHorizontal size={20} />
             </button>

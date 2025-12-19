@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Employee, EmployeeTraining } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const CompetenciesPage: React.FC = () => {
     const { user, company } = useAuthContext();
@@ -48,6 +49,16 @@ export const CompetenciesPage: React.FC = () => {
         expiration_date: '',
         notes: '',
         certificate_file: null as File | null
+    });
+
+    // Delete confirmation modal states
+    const [deleteEmployeeModal, setDeleteEmployeeModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
+    });
+    const [deleteTrainingModal, setDeleteTrainingModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -187,23 +198,29 @@ export const CompetenciesPage: React.FC = () => {
     };
 
     const handleDeleteEmployee = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este colaborador?')) return;
+        setDeleteEmployeeModal({ isOpen: true, id });
+    };
+
+    const confirmDeleteEmployee = async () => {
+        if (!deleteEmployeeModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('employees')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteEmployeeModal.id);
 
             if (error) throw error;
 
-            if (selectedEmployee?.id === id) {
+            if (selectedEmployee?.id === deleteEmployeeModal.id) {
                 setSelectedEmployee(null);
             }
 
             fetchEmployees();
+            toast.success('Colaborador excluído com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir colaborador:', error);
+            toast.error('Erro ao excluir colaborador');
         }
     };
 
@@ -282,21 +299,27 @@ export const CompetenciesPage: React.FC = () => {
     };
 
     const handleDeleteTraining = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este treinamento?')) return;
+        setDeleteTrainingModal({ isOpen: true, id });
+    };
+
+    const confirmDeleteTraining = async () => {
+        if (!deleteTrainingModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('employee_trainings')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteTrainingModal.id);
 
             if (error) throw error;
 
             if (selectedEmployee) {
                 fetchTrainings(selectedEmployee.id);
             }
+            toast.success('Treinamento excluído com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir treinamento:', error);
+            toast.error('Erro ao excluir treinamento');
         }
     };
 
@@ -341,6 +364,28 @@ export const CompetenciesPage: React.FC = () => {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
+            {/* Delete Employee Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteEmployeeModal.isOpen}
+                onClose={() => setDeleteEmployeeModal({ isOpen: false, id: null })}
+                onConfirm={confirmDeleteEmployee}
+                title="Excluir Colaborador"
+                message="Tem certeza que deseja excluir este colaborador?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
+            {/* Delete Training Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteTrainingModal.isOpen}
+                onClose={() => setDeleteTrainingModal({ isOpen: false, id: null })}
+                onConfirm={confirmDeleteTraining}
+                title="Excluir Treinamento"
+                message="Tem certeza que deseja excluir este treinamento?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             {/* Header */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-2">

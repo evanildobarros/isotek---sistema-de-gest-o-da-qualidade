@@ -1,3 +1,9 @@
+import { Buffer } from 'buffer';
+// Polyfill global Buffer for @react-pdf/renderer
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

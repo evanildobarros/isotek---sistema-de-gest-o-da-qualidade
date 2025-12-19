@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Company, AuditAssignment } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 // Interface para Auditores
 interface Auditor {
@@ -74,6 +75,17 @@ export const SuperAdminPage: React.FC = () => {
 
     // Menu State
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+    // Confirmation modal states
+    const [toggleStatusModal, setToggleStatusModal] = useState<{ isOpen: boolean; company: Company | null }>({
+        isOpen: false,
+        company: null
+    });
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; company: Company | null; step: number }>({
+        isOpen: false,
+        company: null,
+        step: 1
+    });
 
     // Form Data (Wizard)
     const [companyForm, setCompanyForm] = useState({
@@ -425,10 +437,14 @@ export const SuperAdminPage: React.FC = () => {
     };
 
     const handleToggleStatus = async (company: Company) => {
-        const newStatus = company.status === 'active' ? 'inactive' : 'active';
-        const action = newStatus === 'active' ? 'ativar' : 'bloquear';
+        setToggleStatusModal({ isOpen: true, company });
+        setOpenMenuId(null);
+    };
 
-        if (!confirm(`Deseja realmente ${action} a empresa ${company.name}?`)) return;
+    const confirmToggleStatus = async () => {
+        if (!toggleStatusModal.company) return;
+        const company = toggleStatusModal.company;
+        const newStatus = company.status === 'active' ? 'inactive' : 'active';
 
         try {
             const { error } = await supabase
@@ -438,6 +454,7 @@ export const SuperAdminPage: React.FC = () => {
 
             if (error) throw error;
             fetchCompanies();
+            toast.success(`Empresa ${newStatus === 'active' ? 'ativada' : 'bloqueada'} com sucesso!`);
         } catch (error: any) {
             console.error('Error toggling status:', error);
             toast.error(`Erro ao alterar status: ${error.message}`);
@@ -445,12 +462,22 @@ export const SuperAdminPage: React.FC = () => {
     };
 
     const handleDelete = async (company: Company) => {
-        if (!confirm(`PERIGO: Tem certeza que deseja EXCLUIR a empresa ${company.name}?\n\nIsso apagará TODOS os dados e usuários desta empresa.\n\nEsta ação não pode ser desfeita.`)) return;
-        if (!confirm(`Confirmação Dupla: Realmente deseja excluir ${company.name}?`)) return;
+        setDeleteModal({ isOpen: true, company, step: 1 });
+        setOpenMenuId(null);
+    };
 
+    const confirmDelete = async () => {
+        if (!deleteModal.company) return;
+
+        // First confirmation - move to step 2
+        if (deleteModal.step === 1) {
+            setDeleteModal({ ...deleteModal, step: 2 });
+            return;
+        }
+
+        // Second confirmation - actually delete
         try {
-            // Use RPC to bypass RLS and handle cleanup
-            const { error } = await supabase.rpc('delete_company', { p_company_id: company.id });
+            const { error } = await supabase.rpc('delete_company', { p_company_id: deleteModal.company.id });
 
             if (error) throw error;
 
@@ -520,6 +547,31 @@ export const SuperAdminPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
+            {/* Toggle Status Confirmation Modal */}
+            <ConfirmModal
+                isOpen={toggleStatusModal.isOpen}
+                onClose={() => setToggleStatusModal({ isOpen: false, company: null })}
+                onConfirm={confirmToggleStatus}
+                title={toggleStatusModal.company?.status === 'active' ? 'Bloquear Empresa' : 'Ativar Empresa'}
+                message={`Deseja realmente ${toggleStatusModal.company?.status === 'active' ? 'bloquear' : 'ativar'} a empresa ${toggleStatusModal.company?.name}?`}
+                confirmLabel={toggleStatusModal.company?.status === 'active' ? 'Bloquear' : 'Ativar'}
+                variant={toggleStatusModal.company?.status === 'active' ? 'warning' : 'primary'}
+            />
+
+            {/* Delete Company Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, company: null, step: 1 })}
+                onConfirm={confirmDelete}
+                title={deleteModal.step === 1 ? 'Excluir Empresa' : 'Confirmação Final'}
+                message={deleteModal.step === 1
+                    ? `PERIGO: Tem certeza que deseja EXCLUIR a empresa ${deleteModal.company?.name}?\n\nIsso apagará TODOS os dados e usuários desta empresa.\n\nEsta ação não pode ser desfeita.`
+                    : `Confirmação Dupla: Realmente deseja excluir ${deleteModal.company?.name}?`
+                }
+                confirmLabel={deleteModal.step === 1 ? 'Continuar' : 'Excluir Permanentemente'}
+                variant="danger"
+            />
+
             {/* Header */}
             <header className="bg-slate-900 text-white shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

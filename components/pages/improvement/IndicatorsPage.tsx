@@ -237,28 +237,18 @@ export const IndicatorsPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* KPI Cards */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <p className="text-sm text-gray-500 font-medium">Média de Satisfação</p>
-                        <div className="flex items-end gap-2 mt-2">
-                            <span className="text-4xl font-bold text-gray-900">{averageSatisfaction}</span>
-                            <span className="text-sm text-gray-400 mb-1">/ 10</span>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between col-span-1 md:col-span-2">
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Média de Satisfação Geral</p>
+                            <div className="flex items-end gap-2 mt-2">
+                                <span className="text-4xl font-bold text-gray-900">{averageSatisfaction}</span>
+                                <span className="text-sm text-gray-400 mb-1">/ 10</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2">Baseado em {surveys.length} pesquisas</p>
                         </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <p className="text-sm text-gray-500 font-medium">NPS (Net Promoter Score)</p>
-                        <div className="flex items-end gap-2 mt-2">
-                            <span className={`text-4xl font-bold ${nps >= 50 ? 'text-green-600' : nps >= 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                {nps}
-                            </span>
-                            <span className="text-sm text-gray-400 mb-1">%</span>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-center">
-                        {pieData.length > 0 ? (
-                            <div className="w-full h-32">
-                                <ResponsiveContainer width="100%" height="100%">
+                        <div className="w-1/2 h-32">
+                            {pieData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                     <PieChart>
                                         <Pie
                                             data={pieData}
@@ -277,10 +267,10 @@ export const IndicatorsPage: React.FC = () => {
                                         <Legend verticalAlign="middle" align="right" layout="vertical" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                     </PieChart>
                                 </ResponsiveContainer>
-                            </div>
-                        ) : (
-                            <p className="text-gray-400 text-sm">Sem dados de pesquisa</p>
-                        )}
+                            ) : (
+                                <p className="text-gray-400 text-sm text-center">Sem dados de pesquisa</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -337,7 +327,7 @@ export const IndicatorsPage: React.FC = () => {
 
                                     <div className="h-64 w-full">
                                         {data.length > 0 ? (
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                                 <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />

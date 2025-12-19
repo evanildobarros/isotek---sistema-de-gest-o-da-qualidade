@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { PageHeader } from '../../common/PageHeader';
 import { AuditAssignment } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 interface UserOption {
     id: string;
@@ -36,6 +37,12 @@ export const AuditAssignmentsPage: React.FC = () => {
         start_date: new Date().toISOString().split('T')[0],
         end_date: '',
         notes: ''
+    });
+
+    // Revoke confirmation modal state
+    const [revokeModal, setRevokeModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -72,13 +79,17 @@ export const AuditAssignmentsPage: React.FC = () => {
             }
 
             // Buscar nomes dos auditores
-            const auditorIds = [...new Set((data || []).map(d => d.auditor_id))];
-            const { data: profiles } = await supabase
-                .from('profiles')
-                .select('id, full_name')
-                .in('id', auditorIds);
+            const auditorIds = [...new Set((data || []).map(d => d.auditor_id).filter(Boolean))];
+            let profileMap = new Map<string, string>();
 
-            const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
+            if (auditorIds.length > 0) {
+                const { data: profiles } = await supabase
+                    .from('profiles')
+                    .select('id, full_name')
+                    .in('id', auditorIds);
+
+                profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
+            }
 
             const mapped: AuditAssignment[] = (data || []).map(item => ({
                 id: item.id,
@@ -174,13 +185,17 @@ export const AuditAssignmentsPage: React.FC = () => {
     };
 
     const handleRevoke = async (id: string) => {
-        if (!confirm('Deseja revogar este vínculo de auditoria?')) return;
+        setRevokeModal({ isOpen: true, id });
+    };
+
+    const confirmRevoke = async () => {
+        if (!revokeModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('audit_assignments')
                 .update({ status: 'cancelada' })
-                .eq('id', id);
+                .eq('id', revokeModal.id);
 
             if (error) {
                 toast.error('Erro ao revogar vínculo');
@@ -238,6 +253,17 @@ export const AuditAssignmentsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* Revoke Confirmation Modal */}
+            <ConfirmModal
+                isOpen={revokeModal.isOpen}
+                onClose={() => setRevokeModal({ isOpen: false, id: null })}
+                onConfirm={confirmRevoke}
+                title="Revogar Vínculo"
+                message="Deseja revogar este vínculo de auditoria?"
+                confirmLabel="Revogar"
+                variant="danger"
+            />
+
             <PageHeader
                 icon={ClipboardCheck}
                 title="Auditores Externos"

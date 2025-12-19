@@ -6,6 +6,7 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import { Audit } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
 import { AuditChecklist } from '../auditor/AuditChecklist';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 const AuditsPageContent: React.FC = () => {
     const { user, company, effectiveCompanyId } = useAuthContext();
@@ -15,6 +16,12 @@ const AuditsPageContent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [checklistAudit, setChecklistAudit] = useState<Audit | null>(null);
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; audit: Audit | null }>({
+        isOpen: false,
+        audit: null
+    });
 
     useEffect(() => {
         if (effectiveCompanyId) {
@@ -77,17 +84,22 @@ const AuditsPageContent: React.FC = () => {
     // CRUD Operations
     const handleDelete = async (id: string) => {
         const audit = audits.find(a => a.id === id);
-        if (!window.confirm(`Tem certeza que deseja excluir a auditoria "${audit?.scope}"?`)) return;
+        if (!audit) return;
+        setDeleteModal({ isOpen: true, audit });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.audit) return;
 
         try {
             const { error } = await supabase
                 .from('audits')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteModal.audit.id);
 
             if (error) throw error;
 
-            setAudits(audits.filter(a => a.id !== id));
+            setAudits(audits.filter(a => a.id !== deleteModal.audit!.id));
             toast.success('Auditoria excluída com sucesso!');
         } catch (error) {
             console.error('Erro ao excluir auditoria:', error);
@@ -293,6 +305,17 @@ const AuditsPageContent: React.FC = () => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, audit: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Auditoria"
+                message={`Tem certeza que deseja excluir a auditoria "${deleteModal.audit?.scope}"?`}
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             {/* Header */}
             {/* Header */}
             <div className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">

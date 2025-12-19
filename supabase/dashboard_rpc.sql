@@ -10,7 +10,10 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT
-        (SELECT COUNT(*) FROM non_conformities_products WHERE company_id = p_company_id) AS total_ncs,
+        (
+            (SELECT COUNT(*) FROM non_conformities_products WHERE company_id = p_company_id) +
+            (SELECT COUNT(*) FROM corrective_actions WHERE company_id = p_company_id)
+        ) AS total_ncs,
         (SELECT COUNT(*) FROM audits WHERE company_id = p_company_id AND status = 'Concluída') AS audits_completed,
         (SELECT COUNT(*) FROM audits WHERE company_id = p_company_id AND status != 'Concluída') AS audits_pending,
         (SELECT COUNT(*) FROM corrective_actions WHERE company_id = p_company_id AND status != 'closed') AS actions_open,

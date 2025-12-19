@@ -21,6 +21,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Supplier, SupplierEvaluation } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 // Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
 const formatCNPJ = (value: string): string => {
@@ -72,6 +73,12 @@ const SuppliersPageContent: React.FC = () => {
         criteria_deadline: 8,
         criteria_communication: 8,
         comments: ''
+    });
+
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
     });
 
     useEffect(() => {
@@ -179,13 +186,17 @@ const SuppliersPageContent: React.FC = () => {
     };
 
     const handleDeleteSupplier = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este fornecedor?')) return;
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
 
         try {
             const { error } = await supabase
                 .from('suppliers')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteModal.id);
 
             if (error) throw error;
             fetchSuppliers();
@@ -291,6 +302,17 @@ const SuppliersPageContent: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Excluir Fornecedor"
+                message="Tem certeza que deseja excluir este fornecedor?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6 md:mb-8">
                 <div>

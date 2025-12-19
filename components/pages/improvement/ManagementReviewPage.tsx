@@ -39,7 +39,7 @@ interface ManagementReview {
 }
 
 export const ManagementReviewPage: React.FC = () => {
-    const { company } = useAuthContext();
+    const { company, effectiveCompanyId } = useAuthContext();
     const [reviews, setReviews] = useState<ManagementReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +51,8 @@ export const ManagementReviewPage: React.FC = () => {
     // Form states
     const [form, setForm] = useState({
         date: '',
-        period_analyzed: '',
+        period_start: '',
+        period_end: '',
         participants: '',
         inputs: {
             previous_actions: '',
@@ -66,17 +67,17 @@ export const ManagementReviewPage: React.FC = () => {
 
     useEffect(() => {
         fetchReviews();
-    }, [company]);
+    }, [effectiveCompanyId]);
 
     const fetchReviews = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('management_reviews')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('date', { ascending: false });
 
             if (error) throw error;
@@ -90,14 +91,42 @@ export const ManagementReviewPage: React.FC = () => {
 
     const handleOpenModal = (review?: ManagementReview) => {
         if (review) {
+            // Tentar extrair datas do formato "DD/MM/YYYY a DD/MM/YYYY"
+            let start = '';
+            let end = '';
+            if (review.period_analyzed && review.period_analyzed.includes(' a ')) {
+                const parts = review.period_analyzed.split(' a ');
+                if (parts.length === 2) {
+                    // Converter DD/MM/YYYY para YYYY-MM-DD para os inputs
+                    const toInputDate = (d: string) => {
+                        const [day, month, year] = d.split('/');
+                        return `${year}-${month}-${day}`;
+                    };
+                    try {
+                        start = toInputDate(parts[0]);
+                        end = toInputDate(parts[1]);
+                    } catch (e) {
+                        console.log('Erro ao parsear datas:', e);
+                    }
+                }
+            }
+
             // Modo edição
             setEditingReview(review);
             setForm({
                 date: review.date,
-                period_analyzed: review.period_analyzed,
+                period_start: start,
+                period_end: end,
                 participants: review.participants,
-                inputs: review.inputs_json,
-                outputs_decisions: review.outputs_decisions
+                inputs: review.inputs_json || {
+                    previous_actions: '',
+                    context_changes: '',
+                    customer_satisfaction: '',
+                    supplier_performance: '',
+                    audit_results: '',
+                    process_performance: ''
+                },
+                outputs_decisions: review.outputs_decisions || ''
             });
         } else {
             // Modo criação
@@ -109,7 +138,8 @@ export const ManagementReviewPage: React.FC = () => {
     };
 
     const handleSaveStep = async () => {
-        if (!company) return;
+        if (!company?.id && !effectiveCompanyId) return;
+        const targetCompanyId = effectiveCompanyId || company?.id;
 
         // Se não for a última etapa, apenas avança
         if (currentStep < 3) {
@@ -119,10 +149,23 @@ export const ManagementReviewPage: React.FC = () => {
 
         // Última etapa: salvar no banco
         try {
+            if (!targetCompanyId || targetCompanyId === 'undefined') {
+                toast.error('Erro: empresa não identificada');
+                return;
+            }
+
+            // Formatar datas para "DD/MM/YYYY"
+            const formatDate = (d: string) => {
+                const date = new Date(d + 'T00:00:00'); // Adiciona T00:00:00 para evitar problemas de fuso horário
+                return date.toLocaleDateString('pt-BR');
+            };
+
+            const periodString = `${formatDate(form.period_start)} a ${formatDate(form.period_end)}`;
+
             const payload: any = {
-                company_id: company.id,
+                company_id: targetCompanyId,
                 date: form.date,
-                period_analyzed: form.period_analyzed,
+                period_analyzed: periodString,
                 participants: form.participants,
                 inputs_json: form.inputs,
                 outputs_decisions: form.outputs_decisions,
@@ -170,7 +213,8 @@ export const ManagementReviewPage: React.FC = () => {
     const resetForm = () => {
         setForm({
             date: '',
-            period_analyzed: '',
+            period_start: '',
+            period_end: '',
             participants: '',
             inputs: {
                 previous_actions: '',
@@ -205,7 +249,7 @@ export const ManagementReviewPage: React.FC = () => {
                 iconColor="orange"
                 action={
                     <button
-                        onClick={handleOpenModal}
+                        onClick={() => handleOpenModal()}
                         className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium"
                     >
                         <Plus className="w-5 h-5" />
@@ -317,16 +361,27 @@ export const ManagementReviewPage: React.FC = () => {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Período Analisado *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={form.period_analyzed}
-                                    onChange={e => setForm({ ...form, period_analyzed: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                                    placeholder="Ex: Jan/2024 a Dez/2024"
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Início do Período *</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={form.period_start}
+                                        onChange={e => setForm({ ...form, period_start: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Fim do Período *</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={form.period_end}
+                                        onChange={e => setForm({ ...form, period_end: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                    />
+                                </div>
                             </div>
 
                             <div>

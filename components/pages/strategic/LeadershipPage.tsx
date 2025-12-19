@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import { PolicyVersion } from '../../../types';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 interface JobRole {
     id: string;
@@ -52,6 +53,16 @@ export const LeadershipPage: React.FC = () => {
     const [versions, setVersions] = useState<PolicyVersion[]>([]);
     const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
     const [viewingVersion, setViewingVersion] = useState<PolicyVersion | null>(null);
+
+    // Confirmation modal states
+    const [deleteRoleModal, setDeleteRoleModal] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
+    });
+    const [restoreVersionModal, setRestoreVersionModal] = useState<{ isOpen: boolean; version: PolicyVersion | null }>({
+        isOpen: false,
+        version: null
+    });
 
     useEffect(() => {
         if (user) {
@@ -167,12 +178,16 @@ export const LeadershipPage: React.FC = () => {
     };
 
     const restoreVersion = async (version: PolicyVersion) => {
-        if (!confirm('Deseja restaurar esta versão da política?')) return;
+        setRestoreVersionModal({ isOpen: true, version });
+    };
+
+    const confirmRestoreVersion = async () => {
+        if (!restoreVersionModal.version) return;
 
         setPolicyData({
-            content: version.content,
-            date: version.approval_date || '',
-            version: version.version
+            content: restoreVersionModal.version.content,
+            date: restoreVersionModal.version.approval_date || '',
+            version: restoreVersionModal.version.version
         });
         setViewingVersion(null);
         toast.info('Versão restaurada! Clique em "Salvar Política" para confirmar.');
@@ -223,15 +238,20 @@ export const LeadershipPage: React.FC = () => {
     };
 
     const handleDeleteRole = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este cargo?')) return;
+        setDeleteRoleModal({ isOpen: true, id });
+    };
+
+    const confirmDeleteRole = async () => {
+        if (!deleteRoleModal.id) return;
         try {
             const { error } = await supabase
                 .from('job_roles')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteRoleModal.id);
 
             if (error) throw error;
-            setRoles(roles.filter(r => r.id !== id));
+            setRoles(roles.filter(r => r.id !== deleteRoleModal.id));
+            toast.success('Cargo excluído com sucesso!');
         } catch (error: any) {
             console.error('Error deleting role:', error);
             toast.error('Erro ao excluir cargo: ' + error.message);
@@ -264,6 +284,28 @@ export const LeadershipPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-200">
+            {/* Delete Role Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteRoleModal.isOpen}
+                onClose={() => setDeleteRoleModal({ isOpen: false, id: null })}
+                onConfirm={confirmDeleteRole}
+                title="Excluir Cargo"
+                message="Tem certeza que deseja excluir este cargo?"
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
+            {/* Restore Version Confirmation Modal */}
+            <ConfirmModal
+                isOpen={restoreVersionModal.isOpen}
+                onClose={() => setRestoreVersionModal({ isOpen: false, version: null })}
+                onConfirm={confirmRestoreVersion}
+                title="Restaurar Versão"
+                message="Deseja restaurar esta versão da política?"
+                confirmLabel="Restaurar"
+                variant="primary"
+            />
+
             <header className="mb-8">
                 <div className="flex items-center gap-2 mb-2">
                     <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">

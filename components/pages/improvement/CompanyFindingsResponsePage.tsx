@@ -61,21 +61,38 @@ export const CompanyFindingsResponsePage: React.FC = () => {
     const fetchAssignments = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
+            // Buscar assignments primeiro
+            const { data: assignmentsData, error: assignmentsError } = await supabase
                 .from('audit_assignments')
-                .select(`
-                    *,
-                    auditor:profiles!audit_assignments_auditor_id_fkey (
-                        id,
-                        full_name,
-                        email
-                    )
-                `)
+                .select('*')
                 .eq('company_id', effectiveCompanyId)
                 .in('status', ['em_andamento', 'concluida'])
                 .order('start_date', { ascending: false });
 
-            if (error) throw error;
+            if (assignmentsError) throw assignmentsError;
+
+            // Buscar perfis dos auditores separadamente
+            const auditorIds = [...new Set((assignmentsData || []).map(a => a.auditor_id).filter(Boolean))];
+
+            let auditorsMap: Record<string, { id: string; full_name: string; email: string }> = {};
+
+            if (auditorIds.length > 0) {
+                const { data: auditorsData } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, email')
+                    .in('id', auditorIds);
+
+                (auditorsData || []).forEach(a => {
+                    auditorsMap[a.id] = a;
+                });
+            }
+
+            // Combinar dados
+            const data = (assignmentsData || []).map(assignment => ({
+                ...assignment,
+                auditor: auditorsMap[assignment.auditor_id] || null
+            }));
+
             setAssignments(data || []);
 
             // Selecionar a primeira automaticamente
@@ -280,8 +297,8 @@ export const CompanyFindingsResponsePage: React.FC = () => {
                                     key={assignment.id}
                                     onClick={() => handleSelectAssignment(assignment)}
                                     className={`w-full p-4 rounded-lg border text-left transition-all ${selectedAssignment?.id === assignment.id
-                                            ? 'bg-[#025159] text-white border-[#025159]'
-                                            : 'bg-white text-gray-700 border-gray-200 hover:border-[#025159]'
+                                        ? 'bg-[#025159] text-white border-[#025159]'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#025159]'
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 mb-2">
@@ -297,8 +314,8 @@ export const CompanyFindingsResponsePage: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className={`mt-2 text-xs px-2 py-1 rounded inline-block ${selectedAssignment?.id === assignment.id
-                                            ? 'bg-white/20'
-                                            : 'bg-gray-100'
+                                        ? 'bg-white/20'
+                                        : 'bg-gray-100'
                                         }`}>
                                         {assignment.status === 'em_andamento' ? 'Em Andamento' : 'Concluída'}
                                     </div>

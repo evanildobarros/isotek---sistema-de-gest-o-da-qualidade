@@ -9,6 +9,11 @@ import { useAuditFindings } from '../../../hooks/useAuditFindings';
 import { AuditIndicator } from '../../common/AuditIndicator';
 import { AuditActionPanel } from '../../auditor/AuditActionPanel';
 import { useAuditor } from '../../../contexts/AuditorContext';
+import { ConfirmModal } from '../../common/ConfirmModal';
+import { PrintableDocumentModal } from './PrintableDocumentModal';
+import { pdf } from '@react-pdf/renderer';
+import { QualityManualTemplate } from '../../documents/QualityManualTemplate';
+import { extractMermaidBlocks } from '../../../lib/mermaidRenderer';
 
 type DocumentStatus = 'vigente' | 'rascunho' | 'obsoleto' | 'em_aprovacao';
 
@@ -61,7 +66,41 @@ export const DocumentsPage: React.FC = () => {
     const [generatingDocument, setGeneratingDocument] = useState(false);
     const [generatedContent, setGeneratedContent] = useState('');
     const [selectedDocType, setSelectedDocType] = useState<'manual_qualidade' | 'procedimento' | 'politica_qualidade'>('manual_qualidade');
+
     const [showPreviewGenerated, setShowPreviewGenerated] = useState(false);
+
+    // Confirm Modal state
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: 'danger' | 'primary' | 'warning';
+        confirmLabel?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'primary'
+    });
+
+    const closeConfirmModal = () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // Print Modal state
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const [printDocument, setPrintDocument] = useState<Document | null>(null);
+    const [printContent, setPrintContent] = useState('');
+    const [loadingPrintContent, setLoadingPrintContent] = useState(false);
+
+    // Reject Modal state
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [rejectDocId, setRejectDocId] = useState<string | null>(null);
+    const [rejectReason, setRejectReason] = useState('');
+
+    // Audit findings hook - busca constatações pendentes para documentos
 
     // Edit mode states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -325,46 +364,58 @@ export const DocumentsPage: React.FC = () => {
     };
 
     // Solicitar aprovação (rascunho → em_aprovacao)
-    const handleRequestApproval = async (docId: string) => {
-        if (!confirm('Deseja enviar este documento para aprovação?')) {
-            return;
-        }
+    const handleRequestApproval = (docId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Solicitar Aprovação',
+            message: 'Deseja enviar este documento para aprovação?',
+            confirmLabel: 'Enviar',
+            variant: 'primary',
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('documents')
+                        .update({ status: 'em_aprovacao' })
+                        .eq('id', docId);
 
-        try {
-            const { error } = await supabase
-                .from('documents')
-                .update({ status: 'em_aprovacao' })
-                .eq('id', docId);
+                    if (error) throw error;
 
-            if (error) throw error;
-
-            toast.success('Documento enviado para análise!');
-            fetchDocuments();
-        } catch (error: any) {
-            console.error('Erro ao solicitar aprovação:', error);
-            toast.error('Erro ao solicitar aprovação: ' + error.message);
-        }
+                    toast.success('Documento enviado para análise!');
+                    fetchDocuments();
+                } catch (error: any) {
+                    console.error('Erro ao solicitar aprovação:', error);
+                    toast.error('Erro ao solicitar aprovação: ' + error.message);
+                }
+            }
+        });
     };
 
     // Rejeitar documento (em_aprovacao → rascunho)
-    const handleReject = async (docId: string) => {
-        const motivo = prompt('Motivo da rejeição (opcional):');
+    const handleReject = (docId: string) => {
+        setRejectDocId(docId);
+        setRejectReason('');
+        setIsRejectModalOpen(true);
+    };
 
-        if (motivo === null) return; // Usuário cancelou
+    const confirmReject = async () => {
+        if (!rejectDocId) return;
 
         try {
             const { error } = await supabase
                 .from('documents')
-                .update({ status: 'rascunho' })
-                .eq('id', docId);
+                .update({ status: 'obsoleto' })
+                .eq('id', rejectDocId);
 
             if (error) throw error;
 
-            const mensagem = motivo
-                ? `❌ Documento rejeitado.\n\nMotivo: ${motivo}`
-                : '❌ Documento rejeitado e retornado para rascunho.';
+            const mensagem = rejectReason
+                ? `❌ Documento rejeitado e obsoletado.\n\nMotivo: ${rejectReason}`
+                : '❌ Documento rejeitado e marcado como obsoleto.';
 
             toast.info(mensagem);
+            setIsRejectModalOpen(false);
+            setRejectDocId(null);
+            setRejectReason('');
             fetchDocuments();
         } catch (error: any) {
             console.error('Erro ao rejeitar:', error);
@@ -373,71 +424,72 @@ export const DocumentsPage: React.FC = () => {
     };
 
     // Lógica inteligente de aprovação com gestão automática de obsolescência
-    const handleApprove = async (docId: string) => {
-        if (!confirm('Deseja aprovar este documento? Ele ficará vigente e versões anteriores serão obsoletadas automaticamente.')) {
-            return;
-        }
+    const handleApprove = (docId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Aprovar Documento',
+            message: 'Deseja aprovar este documento? Ele ficará vigente e versões anteriores serão obsoletadas automaticamente.',
+            confirmLabel: 'Aprovar',
+            variant: 'primary', // Could be warning if it obsoletes others, but primary is fine
+            onConfirm: async () => {
+                try {
+                    // 1. Buscar o documento que está sendo aprovado
+                    const { data: docToApprove, error: fetchError } = await supabase
+                        .from('documents')
+                        .select('id, title, code, version, status')
+                        .eq('id', docId)
+                        .single();
 
-        try {
-            // 1. Buscar o documento que está sendo aprovado
-            const { data: docToApprove, error: fetchError } = await supabase
-                .from('documents')
-                .select('id, title, code, version, status')
-                .eq('id', docId)
-                .single();
+                    if (fetchError || !docToApprove) {
+                        throw new Error('Documento não encontrado');
+                    }
 
-            if (fetchError || !docToApprove) {
-                throw new Error('Documento não encontrado');
-            }
+                    if (!effectiveCompanyId) {
+                        throw new Error('Empresa não encontrada');
+                    }
 
-            if (!effectiveCompanyId) {
-                throw new Error('Empresa não encontrada');
-            }
+                    // 2. Se o documento tem código, obsoletear versões antigas do mesmo código
+                    if (docToApprove.code) {
+                        const { error: obsoleteError } = await supabase
+                            .from('documents')
+                            .update({ status: 'obsoleto' })
+                            .eq('company_id', effectiveCompanyId)
+                            .eq('code', docToApprove.code)
+                            .neq('id', docId);
 
-            // 2. Se o documento tem código, obsoletear versões antigas do mesmo código
-            if (docToApprove.code) {
+                        if (obsoleteError) {
+                            console.error('Erro ao obsoletear versões antigas:', obsoleteError);
+                            throw new Error('Erro ao obsoletear versões antigas: ' + obsoleteError.message);
+                        }
+                    }
 
+                    // 3. Aprovar o documento atual (registrando quem aprovou)
+                    const { error: approveError } = await supabase
+                        .from('documents')
+                        .update({
+                            status: 'vigente',
+                            approved_by: user?.id,
+                            approved_at: new Date().toISOString()
+                        })
+                        .eq('id', docId);
 
-                const { error: obsoleteError } = await supabase
-                    .from('documents')
-                    .update({ status: 'obsoleto' })
-                    .eq('company_id', effectiveCompanyId) // Use effectiveCompanyId
-                    .eq('code', docToApprove.code)
-                    .neq('id', docId); // Não atualizar o documento atual
+                    if (approveError) {
+                        throw new Error('Erro ao aprovar documento: ' + approveError.message);
+                    }
 
-                if (obsoleteError) {
-                    console.error('Erro ao obsoletear versões antigas:', obsoleteError);
-                    throw new Error('Erro ao obsoletear versões antigas: ' + obsoleteError.message);
+                    if (docToApprove.code) {
+                        toast.success('Documento aprovado com sucesso! Versões anteriores foram automaticamente obsoletadas.');
+                    } else {
+                        toast.success('Documento aprovado com sucesso!');
+                    }
+
+                    fetchDocuments();
+                } catch (error: any) {
+                    console.error('Erro na aprovação:', error);
+                    toast.error('Erro ao aprovar documento: ' + error.message);
                 }
-
-
             }
-
-            // 3. Aprovar o documento atual (registrando quem aprovou)
-            const { error: approveError } = await supabase
-                .from('documents')
-                .update({
-                    status: 'vigente',
-                    approved_by: user?.id,
-                    approved_at: new Date().toISOString()
-                })
-                .eq('id', docId);
-
-            if (approveError) {
-                throw new Error('Erro ao aprovar documento: ' + approveError.message);
-            }
-
-            if (docToApprove.code) {
-                toast.success('Documento aprovado com sucesso! Versões anteriores foram automaticamente obsoletadas.');
-            } else {
-                toast.success('Documento aprovado com sucesso!');
-            }
-
-            fetchDocuments();
-        } catch (error: any) {
-            console.error('Erro na aprovação:', error);
-            toast.error('Erro ao aprovar documento: ' + error.message);
-        }
+        });
     };
 
     const getFileIcon = (fileName: string) => {
@@ -666,8 +718,139 @@ export const DocumentsPage: React.FC = () => {
         }
     };
 
+    // Função para imprimir documento (apenas Markdown)
+    const handlePrintDocument = async (doc: Document) => {
+        if (!doc.file_name.endsWith('.md')) {
+            toast.error('Geração de PDF disponível apenas para documentos criados na plataforma (.md)');
+            return;
+        }
+
+        setPrintDocument(doc);
+        setPrintContent('');
+        setIsPrintModalOpen(true);
+        setLoadingPrintContent(true);
+
+        try {
+            const response = await fetch(doc.file_url);
+            if (!response.ok) throw new Error('Falha ao carregar arquivo');
+            const content = await response.text();
+            setPrintContent(content);
+        } catch (error) {
+            console.error('Erro ao carregar conteúdo para impressão:', error);
+            toast.error('Erro ao preparar documento para impressão');
+            setIsPrintModalOpen(false);
+        } finally {
+            setLoadingPrintContent(false);
+        }
+    };
+
+    // Função para baixar PDF profissional
+    const handleDownloadProfessionalPDF = async (doc: Document) => {
+        if (!doc.file_name.endsWith('.md')) {
+            toast.error('Geração de PDF disponível apenas para documentos criados na plataforma (.md)');
+            return;
+        }
+
+        const toastId = toast.loading('Gerando PDF profissional...');
+
+        try {
+            // 1. Obter conteúdo do arquivo
+            const response = await fetch(doc.file_url);
+            if (!response.ok) throw new Error('Falha ao carregar arquivo');
+            const content = await response.text();
+
+            // 2. Processar diagramas Mermaid (converte para descrição textual)
+            toast.loading('Processando conteúdo...', { id: toastId });
+            const { cleanContent } = extractMermaidBlocks(content);
+
+            // 3. Gerar Blob do PDF
+            toast.loading('Gerando PDF...', { id: toastId });
+            const blob = await pdf(
+                <QualityManualTemplate
+                    content={cleanContent}
+                    companyName={isAuditorMode ? (viewingAsCompanyName || 'Empresa Cliente') : (company?.name || 'Sua Empresa')}
+                    companyLogo={isAuditorMode ? null : company?.logo_url}
+                    cnpj={isAuditorMode ? 'N/A' : (company?.cnpj || '')}
+                    docTitle={doc.title}
+                    docVersion={doc.version}
+                    docCode={doc.code || undefined}
+                />
+            ).toBlob();
+
+            // 4. Criar link de download
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${doc.title.replace(/\s+/g, '_')}_v${doc.version}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast.success('PDF gerado com sucesso!', { id: toastId });
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error);
+            toast.error('Erro ao gerar PDF', { id: toastId });
+        }
+    };
     return (
         <div className="p-4 md:p-6 lg:p-8 space-y-6">
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={closeConfirmModal}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                confirmLabel={confirmModal.confirmLabel}
+            />
+
+            <PrintableDocumentModal
+                isOpen={isPrintModalOpen}
+                onClose={() => setIsPrintModalOpen(false)}
+                title={printDocument?.title || 'Documento'}
+                content={loadingPrintContent ? 'Carregando conteúdo...' : printContent}
+                version={printDocument?.version}
+                code={printDocument?.code}
+            />
+
+            {/* Reject Modal */}
+            {isRejectModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Rejeitar Documento</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            O documento será retornado para rascunho. Você pode informar um motivo (opcional):
+                        </p>
+                        <textarea
+                            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#025159] focus:border-transparent resize-none"
+                            rows={3}
+                            placeholder="Motivo da rejeição (opcional)"
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button
+                                onClick={() => {
+                                    setIsRejectModalOpen(false);
+                                    setRejectDocId(null);
+                                    setRejectReason('');
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmReject}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Rejeitar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between md:items-start gap-4">
                 <div>
@@ -943,15 +1126,37 @@ export const DocumentsPage: React.FC = () => {
 
                                         {/* Sempre mostrar Download */}
                                         {doc.file_url && (
-                                            <a
-                                                href={doc.file_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
-                                                title="Download"
-                                            >
-                                                <Download size={18} />
-                                            </a>
+                                            <>
+                                                {/* Se for Markdown, oferece opção de gerar PDF via Print e Profissional */}
+                                                {doc.file_name.endsWith('.md') ? (
+                                                    <div className="flex gap-1">
+                                                        <button
+                                                            onClick={() => handlePrintDocument(doc)}
+                                                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Visualizar para Impressão"
+                                                        >
+                                                            <FileText size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDownloadProfessionalPDF(doc)}
+                                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Baixar PDF Profissional"
+                                                        >
+                                                            <Download size={18} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <a
+                                                        href={doc.file_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-100 rounded-lg transition-colors"
+                                                        title="Download Original"
+                                                    >
+                                                        <Download size={18} />
+                                                    </a>
+                                                )}
+                                            </>
                                         )}
                                     </div>
 
