@@ -84,7 +84,7 @@ export const NonConformityPage: React.FC = () => {
 
     const handleCreateNC = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!effectiveCompanyId) return;
+        if (!effectiveCompanyId || isAuditorMode) return;
 
         try {
             let photoUrl = '';
@@ -135,7 +135,7 @@ export const NonConformityPage: React.FC = () => {
 
     const handleApplyDisposition = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedNC) return;
+        if (!effectiveCompanyId || isAuditorMode) return;
 
         try {
             const { error } = await supabase
@@ -436,7 +436,8 @@ export const NonConformityPage: React.FC = () => {
                             rows={3}
                             value={createForm.description}
                             onChange={e => setCreateForm({ ...createForm, description: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                            disabled={isAuditorMode}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                             placeholder="Ex: Peças com acabamento irregular, arranhões visíveis..."
                         />
                     </div>
@@ -447,7 +448,8 @@ export const NonConformityPage: React.FC = () => {
                             <select
                                 value={createForm.origin}
                                 onChange={e => setCreateForm({ ...createForm, origin: e.target.value as NonConformityProduct['origin'] })}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                                disabled={isAuditorMode}
+                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                             >
                                 <option value="Produção">Produção</option>
                                 <option value="Fornecedor">Fornecedor</option>
@@ -460,7 +462,8 @@ export const NonConformityPage: React.FC = () => {
                             <select
                                 value={createForm.severity}
                                 onChange={e => setCreateForm({ ...createForm, severity: e.target.value as NonConformityProduct['severity'] })}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                                disabled={isAuditorMode}
+                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                             >
                                 <option value="Baixa">Baixa</option>
                                 <option value="Média">Média</option>
@@ -475,7 +478,8 @@ export const NonConformityPage: React.FC = () => {
                                 required
                                 value={createForm.date_occurred}
                                 onChange={e => setCreateForm({ ...createForm, date_occurred: e.target.value })}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                disabled={isAuditorMode}
+                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                             />
                         </div>
 
@@ -486,7 +490,8 @@ export const NonConformityPage: React.FC = () => {
                                 min="0"
                                 value={createForm.quantity_affected}
                                 onChange={e => setCreateForm({ ...createForm, quantity_affected: parseInt(e.target.value) })}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                disabled={isAuditorMode}
+                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                 placeholder="Ex: 50 peças"
                             />
                         </div>
@@ -497,13 +502,14 @@ export const NonConformityPage: React.FC = () => {
                             Foto de Evidência (Opcional)
                         </label>
                         <div className="flex items-center gap-3">
-                            <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+                            <label className={`flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors ${isAuditorMode ? 'cursor-default opacity-50' : 'cursor-pointer'}`}>
                                 <Upload className="w-4 h-4" />
                                 Escolher Arquivo
                                 <input
                                     type="file"
                                     accept="image/*,application/pdf"
-                                    onChange={e => setPhotoFile(e.target.files?.[0] || null)}
+                                    onChange={e => !isAuditorMode && setPhotoFile(e.target.files?.[0] || null)}
+                                    disabled={isAuditorMode}
                                     className="hidden"
                                 />
                             </label>
@@ -566,7 +572,8 @@ export const NonConformityPage: React.FC = () => {
                             required
                             value={dispositionForm.disposition}
                             onChange={e => setDispositionForm({ ...dispositionForm, disposition: e.target.value as NonConformityProduct['disposition'] })}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                            disabled={isAuditorMode}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                         >
                             <option value="Retrabalho">🛠️ Retrabalho (Consertar)</option>
                             <option value="Refugo">🗑️ Refugo (Descarte/Lixo)</option>
@@ -584,7 +591,8 @@ export const NonConformityPage: React.FC = () => {
                             rows={3}
                             value={dispositionForm.disposition_justification}
                             onChange={e => setDispositionForm({ ...dispositionForm, disposition_justification: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                            disabled={isAuditorMode}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                             placeholder="Explique o motivo da decisão..."
                         />
                     </div>
@@ -598,7 +606,8 @@ export const NonConformityPage: React.FC = () => {
                             required
                             value={dispositionForm.authorized_by}
                             onChange={e => setDispositionForm({ ...dispositionForm, authorized_by: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                            disabled={isAuditorMode}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                             placeholder="Nome da autoridade que aprovou"
                         />
                     </div>
@@ -611,12 +620,23 @@ export const NonConformityPage: React.FC = () => {
                         >
                             Cancelar
                         </button>
-                        <button
-                            type="submit"
-                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium"
-                        >
-                            Aplicar Disposição
-                        </button>
+                        {!isAuditorMode && (
+                            <button
+                                type="submit"
+                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium"
+                            >
+                                Aplicar Disposição
+                            </button>
+                        )}
+                        {isAuditorMode && (
+                            <button
+                                type="button"
+                                onClick={() => setIsDispositionModalOpen(false)}
+                                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm font-medium"
+                            >
+                                Fechar
+                            </button>
+                        )}
                     </div>
                 </form>
             </Modal>

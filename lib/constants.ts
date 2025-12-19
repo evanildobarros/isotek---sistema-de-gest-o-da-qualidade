@@ -4,12 +4,12 @@ export const PLANS = {
         label: 'Start',
         price: 297,
         period: 'mês',
-        description: 'Ideal para pequenas empresas (Dono + Responsável da Qualidade).',
+        description: 'Para pequenas empresas (Dono + Analista)',
         features: [
             'Gestão de Documentos (GED)',
             'Gestão de RNCs Básica',
             'IA Consultora (50 prompts/mês)',
-            'Até 2 Usuários (1 Admin + 1 Colaborador)',
+            'Até 2 Usuários (Dono + Analista)',
             'Suporte por Email'
         ],
         limits: {
@@ -26,7 +26,7 @@ export const PLANS = {
         price: 697,
         period: 'mês',
         isPopular: true,
-        description: 'Gestão completa, Matriz de Riscos e acesso a Auditores.',
+        description: 'Gestão completa com IA ilimitada',
         features: [
             'Tudo do plano Start',
             'IA Consultora Ilimitada',

@@ -20,6 +20,7 @@ export interface PlanLimits {
 }
 
 // Module access rules by plan
+// Module access rules by plan
 const PLAN_ACCESS_RULES: Record<PlanId, string[]> = {
     start: [
         'dashboard',
@@ -44,9 +45,9 @@ const PLAN_ACCESS_RULES: Record<PlanId, string[]> = {
         'company-profile',
         'user-profile',
         'units',
-        'external-audits' // Marketplace/Auditores Externos
+        'external-audits'
     ],
-    enterprise: ['*'] // All modules
+    enterprise: ['*']
 };
 
 /**
@@ -96,9 +97,19 @@ export function usePlanLimits(): PlanLimits {
         const canAddUser = usersCount < maxUsers;
 
         const canAccessModule = (moduleName: string): boolean => {
+            const normalizedModule = moduleName.toLowerCase();
+
+            // Explicit checks for key features based on plan flags
+            if (normalizedModule === 'audits' || normalizedModule === 'external-audits') {
+                if (!planData.limits.has_marketplace) return false;
+            }
+            if (normalizedModule === 'risks' || normalizedModule === 'swot') {
+                if (!planData.limits.has_risk_matrix) return false;
+            }
+
             const allowedModules = PLAN_ACCESS_RULES[planId] || PLAN_ACCESS_RULES.start;
             if (allowedModules.includes('*')) return true;
-            return allowedModules.includes(moduleName.toLowerCase());
+            return allowedModules.includes(normalizedModule);
         };
 
         return {

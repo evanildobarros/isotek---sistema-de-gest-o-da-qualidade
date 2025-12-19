@@ -93,12 +93,12 @@ const SuppliersPageContent: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('suppliers')
-                .select('id, name, cnpj, email, phone, category, status, blocked_reason, iqf_score')
+                .select('id, name, cnpj, email, phone, category, status, blocked_reason, iqf_score, company_id')
                 .eq('company_id', effectiveCompanyId)
                 .order('name');
 
             if (error) throw error;
-            setSuppliers(data || []);
+            setSuppliers((data as Supplier[]) || []);
         } catch (error) {
             console.error('Erro ao carregar fornecedores:', error);
             toast.error('Erro ao carregar fornecedores');
@@ -113,13 +113,13 @@ const SuppliersPageContent: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('supplier_evaluations_with_details')
-                .select('id, supplier_name, evaluation_date, comments, criteria_quality, criteria_deadline, criteria_communication, final_score')
+                .select('id, supplier_id, evaluator_id, supplier_name, evaluation_date, comments, criteria_quality, criteria_deadline, criteria_communication, final_score, company_id')
                 .eq('company_id', effectiveCompanyId)
                 .order('evaluation_date', { ascending: false })
                 .limit(20);
 
             if (error) throw error;
-            setEvaluations(data || []);
+            setEvaluations((data as SupplierEvaluation[]) || []);
         } catch (error) {
             console.error('Erro ao carregar avaliações:', error);
         }
@@ -154,7 +154,7 @@ const SuppliersPageContent: React.FC = () => {
 
     const handleSaveSupplier = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!company) return;
+        if (!company || isAuditorMode) return;
 
         try {
             const payload = {
@@ -220,7 +220,7 @@ const SuppliersPageContent: React.FC = () => {
 
     const handleSaveEvaluation = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!evaluatingSupplier || !user) return;
+        if (!evaluatingSupplier || !user || isAuditorMode) return;
 
         try {
             const payload = {
@@ -617,7 +617,7 @@ const SuppliersPageContent: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
                             <h2 className="text-base md:text-lg font-bold text-gray-900">
-                                {editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+                                {isAuditorMode ? 'Detalhes do Fornecedor' : (editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor')}
                             </h2>
                             <button onClick={() => setIsSupplierModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
                                 <X className="w-5 h-5" />
@@ -633,7 +633,8 @@ const SuppliersPageContent: React.FC = () => {
                                         required
                                         value={supplierForm.name}
                                         onChange={e => setSupplierForm({ ...supplierForm, name: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         placeholder="Ex: Papelaria Silva Ltda"
                                     />
                                 </div>
@@ -644,7 +645,8 @@ const SuppliersPageContent: React.FC = () => {
                                         type="text"
                                         value={supplierForm.cnpj}
                                         onChange={e => setSupplierForm({ ...supplierForm, cnpj: formatCNPJ(e.target.value) })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         placeholder="00.000.000/0000-00"
                                     />
                                 </div>
@@ -654,7 +656,8 @@ const SuppliersPageContent: React.FC = () => {
                                     <select
                                         value={supplierForm.category}
                                         onChange={e => setSupplierForm({ ...supplierForm, category: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                                     >
                                         <option value="Matéria Prima">Matéria Prima</option>
                                         <option value="Mat. Escritório">Mat. Escritório</option>
@@ -671,7 +674,8 @@ const SuppliersPageContent: React.FC = () => {
                                         type="email"
                                         value={supplierForm.email}
                                         onChange={e => setSupplierForm({ ...supplierForm, email: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         placeholder="contato@fornecedor.com"
                                     />
                                 </div>
@@ -682,7 +686,8 @@ const SuppliersPageContent: React.FC = () => {
                                         type="tel"
                                         value={supplierForm.phone}
                                         onChange={e => setSupplierForm({ ...supplierForm, phone: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         placeholder="(00) 0000-0000"
                                     />
                                 </div>
@@ -692,7 +697,8 @@ const SuppliersPageContent: React.FC = () => {
                                     <select
                                         value={supplierForm.status}
                                         onChange={e => setSupplierForm({ ...supplierForm, status: e.target.value as Supplier['status'] })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                                     >
                                         <option value="em_analise">Em Análise</option>
                                         <option value="homologado">Homologado</option>
@@ -707,7 +713,8 @@ const SuppliersPageContent: React.FC = () => {
                                             rows={3}
                                             value={supplierForm.blocked_reason}
                                             onChange={e => setSupplierForm({ ...supplierForm, blocked_reason: e.target.value })}
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                                            disabled={isAuditorMode}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                                             placeholder="Ex: Atrasos recorrentes (Ver 3 RNCs)"
                                         />
                                     </div>
@@ -722,12 +729,23 @@ const SuppliersPageContent: React.FC = () => {
                                 >
                                     Cancelar
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
-                                >
-                                    Salvar
-                                </button>
+                                {!isAuditorMode && (
+                                    <button
+                                        type="submit"
+                                        className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
+                                    >
+                                        Salvar
+                                    </button>
+                                )}
+                                {isAuditorMode && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSupplierModalOpen(false)}
+                                        className="w-full md:w-auto px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm font-medium"
+                                    >
+                                        Fechar
+                                    </button>
+                                )}
                             </div>
                         </form>
                     </div>
@@ -740,7 +758,9 @@ const SuppliersPageContent: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
                             <div>
-                                <h2 className="text-base md:text-lg font-bold text-gray-900">Avaliação de Desempenho</h2>
+                                <h2 className="text-base md:text-lg font-bold text-gray-900">
+                                    {isAuditorMode ? 'Visualizar Avaliação' : 'Avaliação de Desempenho'}
+                                </h2>
                                 <p className="text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">{evaluatingSupplier.name}</p>
                             </div>
                             <button onClick={() => setIsEvaluationModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
@@ -762,7 +782,8 @@ const SuppliersPageContent: React.FC = () => {
                                     step="0.5"
                                     value={evaluationForm.criteria_quality}
                                     onChange={e => setEvaluationForm({ ...evaluationForm, criteria_quality: parseFloat(e.target.value) })}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    disabled={isAuditorMode}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50"
                                 />
                                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>0</span>
@@ -784,7 +805,8 @@ const SuppliersPageContent: React.FC = () => {
                                     step="0.5"
                                     value={evaluationForm.criteria_deadline}
                                     onChange={e => setEvaluationForm({ ...evaluationForm, criteria_deadline: parseFloat(e.target.value) })}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    disabled={isAuditorMode}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50"
                                 />
                                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>0</span>
@@ -806,7 +828,8 @@ const SuppliersPageContent: React.FC = () => {
                                     step="0.5"
                                     value={evaluationForm.criteria_communication}
                                     onChange={e => setEvaluationForm({ ...evaluationForm, criteria_communication: parseFloat(e.target.value) })}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    disabled={isAuditorMode}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50"
                                 />
                                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>0</span>
@@ -833,7 +856,8 @@ const SuppliersPageContent: React.FC = () => {
                                     rows={3}
                                     value={evaluationForm.comments}
                                     onChange={e => setEvaluationForm({ ...evaluationForm, comments: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                                    disabled={isAuditorMode}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="Observações sobre o desempenho do fornecedor..."
                                 />
                             </div>
@@ -846,12 +870,23 @@ const SuppliersPageContent: React.FC = () => {
                                 >
                                     Cancelar
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
-                                >
-                                    Salvar Avaliação
-                                </button>
+                                {!isAuditorMode && (
+                                    <button
+                                        type="submit"
+                                        className="w-full md:w-auto px-6 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium"
+                                    >
+                                        Salvar Avaliação
+                                    </button>
+                                )}
+                                {isAuditorMode && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEvaluationModalOpen(false)}
+                                        className="w-full md:w-auto px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm font-medium"
+                                    >
+                                        Fechar
+                                    </button>
+                                )}
                             </div>
                         </form>
                     </div>

@@ -29,7 +29,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const CorrectiveActionsPage: React.FC = () => {
-    const { user, company, effectiveCompanyId } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [actions, setActions] = useState<CorrectiveAction[]>([]);
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -240,6 +240,16 @@ export const CorrectiveActionsPage: React.FC = () => {
 
     const handleSaveStep = async () => {
         if (!effectiveCompanyId || isSaving) return;
+
+        // Se for auditor, apenas navega entre as etapas sem salvar nada
+        if (isAuditorMode) {
+            if (currentStep === 4) {
+                setIsModalOpen(false);
+            } else {
+                setCurrentStep(currentStep + 1);
+            }
+            return;
+        }
 
         try {
             setIsSaving(true);
@@ -540,13 +550,15 @@ export const CorrectiveActionsPage: React.FC = () => {
                             <Printer className="w-4 h-4" />
                             Imprimir
                         </button>
-                        <button
-                            onClick={() => handleOpenModal()}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span>Abrir Não Conformidade</span>
-                        </button>
+                        {!isAuditorMode && (
+                            <button
+                                onClick={() => handleOpenModal()}
+                                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md font-medium"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span>Abrir Não Conformidade</span>
+                            </button>
+                        )}
                     </div>
                 }
             />
@@ -678,17 +690,19 @@ export const CorrectiveActionsPage: React.FC = () => {
                                 }}
                             >
                                 <div className="py-1">
-                                    <button
-                                        onClick={() => {
-                                            const action = actions.find(a => a.id === openMenuId);
-                                            if (action) handleOpenModal(action);
-                                            setOpenMenuId(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                    >
-                                        <Edit className="w-4 h-4 text-gray-500" />
-                                        Editar
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <button
+                                            onClick={() => {
+                                                const action = actions.find(a => a.id === openMenuId);
+                                                if (action) handleOpenModal(action);
+                                                setOpenMenuId(null);
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                        >
+                                            <Edit className="w-4 h-4 text-gray-500" />
+                                            Editar
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => {
                                             const action = actions.find(a => a.id === openMenuId);
@@ -703,17 +717,19 @@ export const CorrectiveActionsPage: React.FC = () => {
                                         <Eye className="w-4 h-4 text-gray-500" />
                                         Visualizar Detalhes
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            const action = actions.find(a => a.id === openMenuId);
-                                            if (action) handleDuplicateAction(action);
-                                            setOpenMenuId(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                    >
-                                        <Copy className="w-4 h-4 text-gray-500" />
-                                        Duplicar
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <button
+                                            onClick={() => {
+                                                const action = actions.find(a => a.id === openMenuId);
+                                                if (action) handleDuplicateAction(action);
+                                                setOpenMenuId(null);
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                        >
+                                            <Copy className="w-4 h-4 text-gray-500" />
+                                            Duplicar
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => {
                                             const action = actions.find(a => a.id === openMenuId);
@@ -728,17 +744,21 @@ export const CorrectiveActionsPage: React.FC = () => {
                                         <Printer className="w-4 h-4 text-gray-500" />
                                         Imprimir Relatório
                                     </button>
-                                    <hr className="my-1 border-gray-100" />
-                                    <button
-                                        onClick={() => {
-                                            handleDeleteAction(openMenuId);
-                                            setOpenMenuId(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        Excluir
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <>
+                                            <hr className="my-1 border-gray-100" />
+                                            <button
+                                                onClick={() => {
+                                                    handleDeleteAction(openMenuId);
+                                                    setOpenMenuId(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Excluir
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -793,16 +813,18 @@ export const CorrectiveActionsPage: React.FC = () => {
                                         {/* Action Menu */}
                                         {openMenuId === action.id && (
                                             <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        handleOpenModal(action);
-                                                        setOpenMenuId(null);
-                                                    }}
-                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                    Editar
-                                                </button>
+                                                {!isAuditorMode && (
+                                                    <button
+                                                        onClick={() => {
+                                                            handleOpenModal(action);
+                                                            setOpenMenuId(null);
+                                                        }}
+                                                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                        Editar
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => {
                                                         handleOpenModal(action);
@@ -814,26 +836,30 @@ export const CorrectiveActionsPage: React.FC = () => {
                                                     <Eye className="w-4 h-4" />
                                                     Ver
                                                 </button>
-                                                <button
-                                                    onClick={() => {
-                                                        handleDuplicateAction(action);
-                                                        setOpenMenuId(null);
-                                                    }}
-                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                                                >
-                                                    <Copy className="w-4 h-4" />
-                                                    Duplicar
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        handleDeleteAction(action.id);
-                                                        setOpenMenuId(null);
-                                                    }}
-                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                    Excluir
-                                                </button>
+                                                {!isAuditorMode && (
+                                                    <button
+                                                        onClick={() => {
+                                                            handleDuplicateAction(action);
+                                                            setOpenMenuId(null);
+                                                        }}
+                                                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                        Duplicar
+                                                    </button>
+                                                )}
+                                                {!isAuditorMode && (
+                                                    <button
+                                                        onClick={() => {
+                                                            handleDeleteAction(action.id);
+                                                            setOpenMenuId(null);
+                                                        }}
+                                                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                        Excluir
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -848,7 +874,7 @@ export const CorrectiveActionsPage: React.FC = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={`${selectedAction ? 'Editar' : 'Nova'} RNC - Etapa ${currentStep} de 4`}
+                title={`${isAuditorMode ? 'Visualizar' : selectedAction ? 'Editar' : 'Nova'} RNC - Etapa ${currentStep} de 4`}
                 subtitle={['O Problema', 'Causa Raiz', 'Plano de Ação', 'Verificação de Eficácia'][currentStep - 1]}
                 size="xl"
             >
@@ -874,7 +900,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     <select
                                         value={form.origin}
                                         onChange={e => setForm({ ...form, origin: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                                     >
                                         <option value="Auditoria">Auditoria</option>
                                         <option value="Reclamação Cliente">Reclamação Cliente</option>
@@ -890,7 +917,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     rows={4}
                                     value={form.description}
                                     onChange={e => setForm({ ...form, description: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                                    disabled={isAuditorMode}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="Descreva detalhadamente o problema identificado..."
                                 />
                             </div>
@@ -901,7 +929,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     rows={3}
                                     value={form.immediate_action}
                                     onChange={e => setForm({ ...form, immediate_action: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                                    disabled={isAuditorMode}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="O que foi feito imediatamente para conter o problema?"
                                 />
                             </div>
@@ -912,7 +941,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     <select
                                         value={form.responsible_id}
                                         onChange={e => setForm({ ...form, responsible_id: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-500"
                                     >
                                         {profiles.map(p => (
                                             <option key={p.id} value={p.id}>{p.full_name}</option>
@@ -926,7 +956,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                         required
                                         value={form.deadline}
                                         onChange={e => setForm({ ...form, deadline: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                        disabled={isAuditorMode}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                     />
                                 </div>
                             </div>
@@ -942,7 +973,8 @@ export const CorrectiveActionsPage: React.FC = () => {
                                     rows={10}
                                     value={form.root_cause}
                                     onChange={e => setForm({ ...form, root_cause: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none font-mono text-sm"
+                                    disabled={isAuditorMode}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none font-mono text-sm disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder={`Método 5 Porquês:
 1. Por que ocorreu? [resposta]
 2. Por que [resposta anterior]? [resposta]
@@ -974,7 +1006,8 @@ Ou use Diagrama de Ishikawa (6M):
                                                 type="checkbox"
                                                 checked={task.completed}
                                                 onChange={() => handleToggleTask(index)}
-                                                className="w-5 h-5"
+                                                disabled={isAuditorMode}
+                                                className="w-5 h-5 disabled:opacity-50"
                                             />
                                             <div className="flex-1">
                                                 <p className={`text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
@@ -984,52 +1017,56 @@ Ou use Diagrama de Ishikawa (6M):
                                                     {profiles.find(p => p.id === task.responsible_id)?.full_name} - {task.due_date && new Date(task.due_date).toLocaleDateString('pt-BR')}
                                                 </p>
                                             </div>
-                                            <button
-                                                onClick={() => handleRemoveTask(index)}
-                                                className="text-red-600 hover:text-red-700"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
+                                            {!isAuditorMode && (
+                                                <button
+                                                    onClick={() => handleRemoveTask(index)}
+                                                    className="text-red-600 hover:text-red-700"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="border-t pt-4">
-                                    <p className="text-sm font-medium text-gray-700 mb-3">+ Adicionar Tarefa</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <input
-                                            type="text"
-                                            value={newTask.description}
-                                            onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-                                            placeholder="O que fazer"
-                                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500"
-                                        />
-                                        <select
-                                            value={newTask.responsible_id}
-                                            onChange={e => setNewTask({ ...newTask, responsible_id: e.target.value })}
-                                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500 bg-white"
-                                        >
-                                            <option value="">Quem</option>
-                                            {profiles.map(p => (
-                                                <option key={p.id} value={p.id}>{p.full_name}</option>
-                                            ))}
-                                        </select>
-                                        <div className="flex gap-2">
+                                {!isAuditorMode && (
+                                    <div className="border-t pt-4">
+                                        <p className="text-sm font-medium text-gray-700 mb-3">+ Adicionar Tarefa</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <input
-                                                type="date"
-                                                value={newTask.due_date}
-                                                onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
-                                                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500"
+                                                type="text"
+                                                value={newTask.description}
+                                                onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+                                                placeholder="O que fazer"
+                                                className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500"
                                             />
-                                            <button
-                                                onClick={handleAddTask}
-                                                className="px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] text-sm font-medium"
+                                            <select
+                                                value={newTask.responsible_id}
+                                                onChange={e => setNewTask({ ...newTask, responsible_id: e.target.value })}
+                                                className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500 bg-white"
                                             >
-                                                +
-                                            </button>
+                                                <option value="">Quem</option>
+                                                {profiles.map(p => (
+                                                    <option key={p.id} value={p.id}>{p.full_name}</option>
+                                                ))}
+                                            </select>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="date"
+                                                    value={newTask.due_date}
+                                                    onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
+                                                    className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500"
+                                                />
+                                                <button
+                                                    onClick={handleAddTask}
+                                                    className="px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] text-sm font-medium"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1048,20 +1085,22 @@ Ou use Diagrama de Ishikawa (6M):
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-3">O problema voltou a ocorrer após as ações implementadas?</label>
                                 <div className="flex gap-4">
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                    <label className={`flex items-center gap-2 ${isAuditorMode ? 'cursor-default opacity-70' : 'cursor-pointer'}`}>
                                         <input
                                             type="radio"
                                             checked={!form.effectiveness_verified}
-                                            onChange={() => setForm({ ...form, effectiveness_verified: false })}
+                                            onChange={() => !isAuditorMode && setForm({ ...form, effectiveness_verified: false })}
+                                            disabled={isAuditorMode}
                                             className="w-4 h-4"
                                         />
                                         <span className="text-sm">Sim (Problema persiste)</span>
                                     </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                    <label className={`flex items-center gap-2 ${isAuditorMode ? 'cursor-default opacity-70' : 'cursor-pointer'}`}>
                                         <input
                                             type="radio"
                                             checked={form.effectiveness_verified}
-                                            onChange={() => setForm({ ...form, effectiveness_verified: true })}
+                                            onChange={() => !isAuditorMode && setForm({ ...form, effectiveness_verified: true })}
+                                            disabled={isAuditorMode}
                                             className="w-4 h-4"
                                         />
                                         <span className="text-sm">Não (Ação eficaz)</span>
@@ -1075,7 +1114,8 @@ Ou use Diagrama de Ishikawa (6M):
                                     rows={5}
                                     value={form.effectiveness_notes}
                                     onChange={e => setForm({ ...form, effectiveness_notes: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                                    disabled={isAuditorMode}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="Descreva os resultados observados, evidências de eficácia, recomendações..."
                                 />
                             </div>
@@ -1095,10 +1135,10 @@ Ou use Diagrama de Ishikawa (6M):
 
                         <button
                             onClick={handleSaveStep}
-                            disabled={currentStep === 4 && !allTasksCompleted}
+                            disabled={!isAuditorMode && currentStep === 4 && !allTasksCompleted}
                             className="flex items-center gap-2 px-6 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {currentStep === 4 ? 'Encerrar RNC' : 'Próximo'}
+                            {isAuditorMode && currentStep === 4 ? 'Fechar' : currentStep === 4 ? 'Encerrar RNC' : 'Próximo'}
                             {currentStep !== 4 && <ChevronRight className="w-4 h-4" />}
                         </button>
                     </div>
