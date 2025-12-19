@@ -8,7 +8,7 @@ import { Stakeholder } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const StakeholdersPage: React.FC = () => {
-    const { user, company, loadingCompany } = useAuthContext();
+    const { user, company, loadingCompany, effectiveCompanyId } = useAuthContext();
     const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,21 +89,12 @@ export const StakeholdersPage: React.FC = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) return;
+        if (!user || !effectiveCompanyId) return;
 
         try {
-            // Fetch user profile to get company_id
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('company_id')
-                .eq('id', user.id)
-                .single();
-
-            if (!profile) throw new Error('Perfil não encontrado');
-
             const payload = {
                 ...formData,
-                company_id: profile.company_id
+                company_id: effectiveCompanyId
             };
 
             if (editingId) {

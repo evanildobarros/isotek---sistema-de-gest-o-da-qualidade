@@ -23,11 +23,10 @@ interface QualityObjective {
 }
 
 export const QualityObjectivesPage: React.FC = () => {
-    const { user } = useAuthContext();
+    const { user, company, loadingCompany, effectiveCompanyId } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [objectives, setObjectives] = useState<QualityObjective[]>([]);
     const [processes, setProcesses] = useState<Process[]>([]);
-    const [companyId, setCompanyId] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     // Modal States
@@ -56,40 +55,32 @@ export const QualityObjectivesPage: React.FC = () => {
     });
 
     useEffect(() => {
-        if (user) loadData();
-    }, [user]);
+        if (effectiveCompanyId) loadData();
+    }, [user, effectiveCompanyId]);
 
     const loadData = async () => {
+        if (!effectiveCompanyId) return;
+
         try {
             setLoading(true);
 
-            const { data: company } = await supabase
-                .from('company_info')
-                .select('id')
-                .eq('owner_id', user?.id)
-                .single();
+            const { data: processesData } = await supabase
+                .from('processes')
+                .select('id, name')
+                .eq('company_id', effectiveCompanyId);
+            setProcesses(processesData || []);
 
-            if (company) {
-                setCompanyId(company.id);
+            const { data: objectivesData, error } = await supabase
+                .from('quality_objectives')
+                .select(`
+                    *,
+                    process:processes(name)
+                `)
+                .eq('company_id', effectiveCompanyId)
+                .order('deadline', { ascending: true });
 
-                const { data: processesData } = await supabase
-                    .from('processes')
-                    .select('id, name')
-                    .eq('company_id', company.id);
-                setProcesses(processesData || []);
-
-                const { data: objectivesData, error } = await supabase
-                    .from('quality_objectives')
-                    .select(`
-                        *,
-                        process:processes(name)
-                    `)
-                    .eq('company_id', company.id)
-                    .order('deadline', { ascending: true });
-
-                if (error) throw error;
-                setObjectives(objectivesData || []);
-            }
+            if (error) throw error;
+            setObjectives(objectivesData || []);
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
@@ -99,12 +90,12 @@ export const QualityObjectivesPage: React.FC = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!companyId) return;
+        if (!effectiveCompanyId) return;
         setSaving(true);
 
         try {
             const payload = {
-                company_id: companyId,
+                company_id: effectiveCompanyId,
                 name: formData.name,
                 process_id: formData.process_id || null,
                 deadline: formData.deadline,

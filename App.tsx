@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AuditorProvider } from './contexts/AuditorContext';
+import { AuditorProvider, useAuditor } from './contexts/AuditorContext';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 
 // Auth components (Eager load login helps UX)
@@ -60,13 +60,33 @@ const SuperAdminPage = React.lazy(() => import('./components/pages/settings').th
 const SupportPage = React.lazy(() => import('./components/pages/settings').then(m => ({ default: m.SupportPage })));
 const AuditAssignmentsPage = React.lazy(() => import('./components/pages/settings').then(m => ({ default: m.AuditAssignmentsPage })));
 
+const DynamicToaster: React.FC = () => {
+  const { isAuditorMode } = useAuditor();
+  const offset = isAuditorMode ? 160 : 112;
+
+  return (
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      offset={offset}
+      toastOptions={{
+        style: {
+          marginTop: '0px',
+          marginLeft: '304px',
+        },
+      }}
+    />
+  );
+};
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <AuditorProvider>
           <ThemeProvider>
-            <Toaster position="top-right" richColors closeButton />
+            <DynamicToaster />
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 {/* Public Routes */}

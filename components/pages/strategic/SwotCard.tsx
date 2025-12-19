@@ -95,7 +95,7 @@ const getMockData = (type: string): SwotItem[] => {
 
 export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     const config = typeConfig[type];
-    const { user, company } = useAuthContext();
+    const { user, effectiveCompanyId } = useAuthContext();
 
     const [items, setItems] = useState<SwotItem[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,9 +124,9 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
     const loadItems = async () => {
         try {
-            // Verificar se o usuário está vinculado a uma empresa
-            if (!company) {
-                console.warn('Usuário não vinculado a uma empresa');
+            // Verificar se temos o ID da empresa (seja do usuário ou via auditoria)
+            if (!effectiveCompanyId) {
+                console.warn('Empresa não identificada');
                 setItems([]);
                 return;
             }
@@ -135,7 +135,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                 .from('swot_analysis')
                 .select('*')
                 .eq('type', config.dbValue)
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
@@ -173,8 +173,8 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
 
         // Online mode - save to Supabase
         try {
-            if (!user || !company) {
-                toast.warning('Você precisa estar logado e vinculado a uma empresa para adicionar itens.');
+            if (!user || !effectiveCompanyId) {
+                toast.warning('Você precisa estar logado para adicionar itens.');
                 setIsLoading(false);
                 return;
             }
@@ -183,7 +183,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
             const { data: existingItems, error: searchError } = await supabase
                 .from('swot_analysis')
                 .select('*')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .eq('type', config.dbValue)
                 .ilike('description', description.trim()); // Case-insensitive match
 
@@ -219,7 +219,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                             type: config.dbValue,
                             is_active: true,
                             user_id: user.id,
-                            company_id: company.id
+                            company_id: effectiveCompanyId
                         }
                     ])
                     .select()
@@ -301,7 +301,7 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                 .from('risks_opportunities')
                 .insert([
                     {
-                        company_id: company.id,
+                        company_id: effectiveCompanyId,
                         swot_id: item.id,
                         description: targetDescription,
                         type: targetType,

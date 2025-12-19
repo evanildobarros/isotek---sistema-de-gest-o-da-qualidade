@@ -31,6 +31,7 @@ interface Document {
     elaborated_by?: string;
     approved_by?: string;
     approved_at?: string;
+    next_review_date?: string;
     // From view
     elaborated_by_name?: string;
     approved_by_name?: string;
@@ -56,6 +57,7 @@ export const DocumentsPage: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const [elaboratedBy, setElaboratedBy] = useState('');
+    const [nextReviewDate, setNextReviewDate] = useState('');
 
     // Version control states
     const [isVersionMode, setIsVersionMode] = useState(false);
@@ -187,7 +189,7 @@ export const DocumentsPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('documents_with_responsibles')
-                .select('id, title, code, version, status, file_url, file_name, file_size, uploaded_at, owner_id, elaborated_by, approved_by, approved_at, elaborated_by_name, approved_by_name')
+                .select('id, title, code, version, status, file_url, file_name, file_size, uploaded_at, owner_id, elaborated_by, approved_by, approved_at, next_review_date, elaborated_by_name, approved_by_name')
                 .eq('company_id', effectiveCompanyId)
                 .order('uploaded_at', { ascending: false });
 
@@ -235,6 +237,7 @@ export const DocumentsPage: React.FC = () => {
         setIsVersionMode(false);
         setVersionBaseDocument(null);
         setElaboratedBy('');
+        setNextReviewDate('');
     };
 
     const handleFileSelect = (file: File) => {
@@ -340,7 +343,8 @@ export const DocumentsPage: React.FC = () => {
                         file_size: selectedFile.size,
                         owner_id: user.id,
                         company_id: effectiveCompanyId, // Use effectiveCompanyId
-                        elaborated_by: user.id
+                        elaborated_by: user.id,
+                        next_review_date: nextReviewDate || null
                     }
                 ]);
 
@@ -652,6 +656,7 @@ export const DocumentsPage: React.FC = () => {
         setEditingDocument(doc);
         setEditContent('');
         setEditPreviewMode(false);
+        setNextReviewDate(doc.next_review_date || '');
         setIsEditModalOpen(true);
         setLoadingEditContent(true);
 
@@ -699,6 +704,7 @@ export const DocumentsPage: React.FC = () => {
                 .from('documents')
                 .update({
                     file_size: blob.size,
+                    next_review_date: nextReviewDate || null,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', editingDocument.id);
@@ -1247,6 +1253,17 @@ export const DocumentsPage: React.FC = () => {
                                         placeholder="1.0"
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Próxima Revisão (Validade)
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={nextReviewDate}
+                                        onChange={(e) => setNextReviewDate(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159]"
+                                    />
+                                </div>
                             </div>
 
                             {/* File Upload Area */}
@@ -1595,13 +1612,22 @@ export const DocumentsPage: React.FC = () => {
                                 >
                                     {editPreviewMode ? '✏️ Editar' : '👁️ Preview'}
                                 </button>
+                                <div className="flex flex-col">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Próxima Revisão</label>
+                                    <input
+                                        type="date"
+                                        value={nextReviewDate}
+                                        onChange={(e) => setNextReviewDate(e.target.value)}
+                                        className="px-2 py-1 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#025159]/20 focus:border-[#025159] h-8"
+                                    />
+                                </div>
                                 <button
                                     onClick={() => {
                                         setIsEditModalOpen(false);
                                         setEditingDocument(null);
                                         setEditContent('');
                                     }}
-                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors font-bold"
                                 >
                                     <X size={20} className="text-gray-500" />
                                 </button>
@@ -1660,7 +1686,8 @@ export const DocumentsPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };

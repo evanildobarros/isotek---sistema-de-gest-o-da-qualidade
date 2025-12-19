@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Target, Telescope, Diamond, Save, Loader2, Upload, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuthContext } from '../../../contexts/AuthContext';
 
 export const StrategicDefinitionPage: React.FC = () => {
-    const { user } = useAuth();
+    const { user, effectiveCompanyId } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -22,17 +22,19 @@ export const StrategicDefinitionPage: React.FC = () => {
     });
 
     useEffect(() => {
-        loadCompanyData();
-    }, [user]);
+        if (effectiveCompanyId) {
+            loadCompanyData();
+        }
+    }, [effectiveCompanyId]);
 
     const loadCompanyData = async () => {
-        if (!user) return;
+        if (!effectiveCompanyId) return;
 
         try {
             const { data, error } = await supabase
                 .from('company_info')
                 .select('id, mission, vision, values, slogan, logo_url')
-                .eq('owner_id', user.id)
+                .eq('id', effectiveCompanyId)
                 .single();
 
             if (error && error.code !== 'PGRST116') {
@@ -96,23 +98,22 @@ export const StrategicDefinitionPage: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!user) return;
+        if (!effectiveCompanyId || !user) return;
         setSaving(true);
 
         try {
             const payload = {
-                owner_id: user.id,
                 mission: formData.mission,
                 vision: formData.vision,
                 values: formData.values,
                 slogan: formData.slogan,
                 logo_url: formData.logo_url,
-                ...(companyId ? { id: companyId } : { name: 'Minha Empresa' })
+                id: effectiveCompanyId
             };
 
             const { data, error } = await supabase
                 .from('company_info')
-                .upsert(payload)
+                .upsert(payload, { onConflict: 'id' })
                 .select()
                 .single();
 

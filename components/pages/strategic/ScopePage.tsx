@@ -37,18 +37,18 @@ export const ScopePage: React.FC = () => {
     });
 
     useEffect(() => {
-        if (user) {
+        if (effectiveCompanyId) {
             fetchData();
         }
-    }, [user]);
+    }, [user, effectiveCompanyId]);
 
     const fetchData = async () => {
         try {
             setLoading(true);
 
-            // Verificar se o usuário está vinculado a uma empresa
+            // Verificar se temos o ID da empresa
             if (!effectiveCompanyId) {
-                console.warn('Usuário não vinculado a uma empresa');
+                console.warn('Empresa não identificada no ScopePage');
                 setLoading(false);
                 return;
             }
@@ -90,15 +90,15 @@ export const ScopePage: React.FC = () => {
     // --- Scope Functions ---
 
     const handleSaveScope = async () => {
-        if (!user || !company) {
-            toast.warning('Você precisa estar logado e vinculado a uma empresa.');
+        if (!user || !effectiveCompanyId) {
+            toast.warning('Você precisa estar logado para realizar esta ação.');
             return;
         }
 
         setSavingScope(true);
         try {
             const payload = {
-                ...scopeData,
+                scope: scopeData.scope,
                 company_id: effectiveCompanyId
             };
 

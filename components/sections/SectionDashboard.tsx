@@ -72,6 +72,12 @@ export const SectionDashboard: React.FC = () => {
       setLoading(true);
       if (!effectiveCompanyId) return;
 
+      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      const sevenDaysStr = sevenDaysFromNow.toISOString().split('T')[0];
+
       const companyId = effectiveCompanyId;
 
       // Parallel Fetching
@@ -81,6 +87,7 @@ export const SectionDashboard: React.FC = () => {
         ncProductsRes,
         actionsRes,
         nextAuditsRes,
+        nextExtAuditsRes,
         riskTasksRes
       ] = await Promise.all([
         supabase.rpc('get_dashboard_metrics', { p_company_id: companyId }),
@@ -94,12 +101,38 @@ export const SectionDashboard: React.FC = () => {
           .gte('date', new Date().toISOString().split('T')[0])
           .order('date', { ascending: true })
           .limit(5),
+        supabase.from('audit_assignments')
+          .select('id, start_date, status')
+          .eq('company_id', companyId)
+          .in('status', ['agendada', 'em_andamento', 'pending', 'active'])
+          .lte('start_date', sevenDaysStr) // Using sevenDaysStr here too or similar logic
+          .order('start_date', { ascending: true })
+          .limit(5),
         supabase.from('risk_tasks_with_responsible')
           .select('id, description, deadline, responsible_name, status')
           .eq('status', 'pending')
           .order('deadline', { ascending: true, nullsFirst: false })
           .limit(10)
       ]);
+
+      // Sequential Fetching for Findings (since we need assignment IDs)
+      let extFindings: any[] = [];
+      const { data: allAssignments } = await supabase
+        .from('audit_assignments')
+        .select('id')
+        .eq('company_id', companyId);
+
+      if (allAssignments && allAssignments.length > 0) {
+        const assignmentIds = allAssignments.map(a => a.id);
+        const { data: findingsData } = await supabase
+          .from('audit_findings')
+          .select('id, severity, iso_clause, audit_assignment_id')
+          .in('audit_assignment_id', assignmentIds)
+          .eq('status', 'open')
+          .in('severity', ['nao_conformidade_menor', 'nao_conformidade_maior']);
+
+        extFindings = findingsData || [];
+      }
 
       const metricsData = metricsRes.data?.[0] || {
         total_ncs: 0,
@@ -145,7 +178,6 @@ export const SectionDashboard: React.FC = () => {
 
       // 5. NC Trend (Last 6 Months) - Combined
       const last6Months = [];
-      const now = new Date();
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleString('pt-BR', { month: 'short' });
@@ -175,11 +207,10 @@ export const SectionDashboard: React.FC = () => {
 
       // 7. Pending Tasks List
       const pendingTasks = [];
-      const today = new Date();
 
       // Overdue Actions
       actionsData.forEach(a => {
-        if (a.status !== 'closed' && a.deadline && new Date(a.deadline) < today) {
+        if (a.status !== 'closed' && a.deadline && new Date(a.deadline) < now) {
           pendingTasks.push({
             id: `action-${a.id}`,
             title: `Ação Atrasada: ${a.code}`,
@@ -190,7 +221,7 @@ export const SectionDashboard: React.FC = () => {
         }
       });
 
-      // Upcoming Audits
+      // Audits (Internal)
       (nextAuditsRes.data || []).forEach(a => {
         pendingTasks.push({
           id: `audit-${a.id}`,
@@ -201,10 +232,33 @@ export const SectionDashboard: React.FC = () => {
         });
       });
 
+      // Audits (External)
+      (nextExtAuditsRes.data || []).forEach(a => {
+        pendingTasks.push({
+          id: `ext-audit-${a.id}`,
+          title: `Auditoria Externa`,
+          type: 'audit',
+          status: 'warning',
+          date: a.start_date
+        });
+      });
+
+      // External Audit Findings
+      (extFindings || []).forEach(f => {
+        pendingTasks.push({
+          id: `finding-${f.id}`,
+          title: `NC Auditoria: ${f.severity === 'nao_conformidade_maior' ? 'Maior' : 'Menor'}`,
+          subtitle: `Cláusula: ${f.iso_clause || 'Ver detalhes'}`,
+          type: 'action',
+          status: 'critical',
+          date: new Date().toISOString()
+        });
+      });
+
       // Risk Tasks
       const riskTasks = riskTasksRes.data || [];
       riskTasks.forEach(task => {
-        const isOverdue = task.deadline && new Date(task.deadline) < today;
+        const isOverdue = task.deadline && new Date(task.deadline) < now;
         pendingTasks.push({
           id: `risk-task-${task.id}`,
           title: `Tarefa: ${task.description.substring(0, 50)}${task.description.length > 50 ? '...' : ''}`,
@@ -297,7 +351,7 @@ export const SectionDashboard: React.FC = () => {
               </ResponsiveContainer>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">Total acumulado</p>
+          <p className="text-xs text-gray-400 mt-2">Total em aberto</p>
         </div>
 
         {/* Card 3: Audits (Donut) */}
