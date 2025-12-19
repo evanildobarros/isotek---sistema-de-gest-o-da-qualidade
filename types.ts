@@ -469,12 +469,16 @@ export interface QualityObjective {
   company_id: string;
   name: string;
   target_value: number;
-  unit: string;
+  metric_name: string;
   frequency: string;
   deadline: string;
   status: 'pending' | 'on_track' | 'at_risk' | 'completed';
-  linked_process?: string;
+  process_id?: string | null;
+  current_value?: number;
+  action_plan?: string;
   created_at?: string;
+  // Joined fields
+  process?: { name: string };
 }
 
 export interface KpiMeasurement {

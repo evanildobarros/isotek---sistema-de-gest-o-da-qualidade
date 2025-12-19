@@ -86,7 +86,7 @@ export const IndicatorsPage: React.FC = () => {
         // Fetch objectives
         const { data: objs, error: objError } = await supabase
             .from('quality_objectives')
-            .select('id, name, target_value, unit, frequency, deadline, status, company_id')
+            .select('id, name, target_value, metric_name, frequency, deadline, status, company_id')
             .eq('company_id', company.id);
 
         if (objError) throw objError;
@@ -314,7 +314,7 @@ export const IndicatorsPage: React.FC = () => {
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <h3 className="font-semibold text-gray-900">{obj.name}</h3>
-                                            <p className="text-sm text-gray-500">Meta: {obj.target_value} {obj.unit} | Freq: {obj.frequency}</p>
+                                            <p className="text-sm text-gray-500">Meta: {obj.target_value} {obj.metric_name} | Freq: {obj.frequency}</p>
                                         </div>
                                         <button
                                             onClick={() => openMeasurementModal(obj)}

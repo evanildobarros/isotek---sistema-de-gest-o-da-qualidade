@@ -1,26 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Plus, Edit2, Trash2, Save, Loader2, TrendingUp, Calendar, CheckCircle2, AlertCircle, Rocket, Users2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Target, Plus, Edit2, Trash2, Loader2, TrendingUp, Calendar, Rocket, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { ConfirmModal } from '../../common/ConfirmModal';
-
-interface Process {
-    id: string;
-    name: string;
-}
-
-interface QualityObjective {
-    id: string;
-    name: string;
-    process_id: string | null;
-    process?: Process;
-    deadline: string;
-    metric_name: string;
-    target_value: number;
-    current_value: number;
-    action_plan: string;
-}
+import { QualityObjective } from '../../../types';
 
 export const QualityObjectivesPage: React.FC = () => {
     const { user, company, loadingCompany, effectiveCompanyId } = useAuthContext();
