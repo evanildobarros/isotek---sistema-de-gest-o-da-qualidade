@@ -343,7 +343,7 @@ export const SectionDashboard: React.FC = () => {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-4xl font-bold text-gray-900">{metrics.totalNc}</span>
-            <div className="w-24 h-12">
+            <div className="w-24 h-12" style={{ minWidth: 96, minHeight: 48 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={metrics.ncTrendData}>
                   <Area type="monotone" dataKey="value" stroke="#ef4444" fill="#fee2e2" strokeWidth={2} />
@@ -371,7 +371,7 @@ export const SectionDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-20 h-20">
+          <div className="w-20 h-20" style={{ minWidth: 80, minHeight: 80 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -409,7 +409,7 @@ export const SectionDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-24 h-16">
+          <div className="w-24 h-16" style={{ minWidth: 96, minHeight: 64 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={[
                 { name: 'Abertas', value: metrics.actionsOpen },
@@ -436,7 +436,7 @@ export const SectionDashboard: React.FC = () => {
               <MoreHorizontal size={20} />
             </button>
           </div>
-          <div className="h-72">
+          <div className="h-72 w-full" style={{ minHeight: 288 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={metrics.ncByMonth}>
                 <defs>
@@ -467,7 +467,7 @@ export const SectionDashboard: React.FC = () => {
           </div>
           <div className="flex items-center justify-center gap-8">
             {/* Donut Chart */}
-            <div className="w-48 h-48">
+            <div className="w-48 h-48" style={{ minWidth: 192, minHeight: 192 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie

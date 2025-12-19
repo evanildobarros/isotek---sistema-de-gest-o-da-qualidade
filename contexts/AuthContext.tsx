@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 2. Get company details
             const { data: companyData, error: companyError } = await supabase
                 .from('company_info')
-                .select('id, name, logo_url, slogan, owner_id, created_at, status, plan, cnpj, monthly_revenue, owner_name, owner_email, email, phone, address, subscription_status, plan_id, current_period_end, max_users, max_storage_gb, stripe_customer_id, stripe_subscription_id, payment_method_brand, payment_method_last4')
+                .select('id, name, logo_url, slogan, owner_id, created_at, status, plan, cnpj, monthly_revenue, email, phone, address, subscription_status, plan_id, current_period_end, max_users, max_storage_gb, stripe_customer_id')
                 .eq('id', profile.company_id)
                 .single();
 
