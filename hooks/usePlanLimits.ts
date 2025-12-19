@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
-import type { PlanId } from '../types';
+import { PLANS, type PlanId } from '../types';
 
 export interface PlanLimits {
     planId: PlanId;
     planName: string;
     canAddUser: boolean;
     canAccessModule: (moduleName: string) => boolean;
+    hasAuditMarketplace: boolean;
+    aiPromptsLimit: number;
     usage: {
         usersUsed: number;
         usersLimit: number;
@@ -39,7 +41,8 @@ const PLAN_ACCESS_RULES: Record<PlanId, string[]> = {
         'risks',
         'company-profile',
         'user-profile',
-        'units'
+        'units',
+        'external-audits' // Marketplace/Auditores Externos
     ],
     enterprise: ['*'] // All modules
 };
@@ -52,13 +55,14 @@ export function usePlanLimits(): PlanLimits {
 
     return useMemo(() => {
         const planId = (company?.plan_id || 'start') as PlanId;
-        const maxUsers = company?.max_users || 5;
-        const maxStorage = company?.max_storage_gb || 5;
+        const planData = PLANS[planId] || PLANS.start;
+
+        const maxUsers = company?.max_users || planData.limits.maxUsers;
+        const maxStorage = company?.max_storage_gb || planData.limits.maxStorageGb;
 
         // TODO: Get actual current usage from database
-        // For now, using dummy values
-        const currentUsers = 0; // This should be fetched from profiles count
-        const currentStorage = 0; // This should be calculated from storage usage
+        const currentUsers = 0;
+        const currentStorage = 0;
 
         const planNames: Record<PlanId, string> = {
             start: 'Start',
@@ -70,13 +74,7 @@ export function usePlanLimits(): PlanLimits {
 
         const canAccessModule = (moduleName: string): boolean => {
             const allowedModules = PLAN_ACCESS_RULES[planId];
-
-            // Enterprise has access to everything
-            if (allowedModules.includes('*')) {
-                return true;
-            }
-
-            // Check if module is in allowed list
+            if (allowedModules.includes('*')) return true;
             return allowedModules.includes(moduleName.toLowerCase());
         };
 
@@ -85,6 +83,8 @@ export function usePlanLimits(): PlanLimits {
             planName: planNames[planId],
             canAddUser,
             canAccessModule,
+            hasAuditMarketplace: planData.limits.audit_marketplace,
+            aiPromptsLimit: planData.limits.ai_prompts,
             usage: {
                 usersUsed: currentUsers,
                 usersLimit: maxUsers,

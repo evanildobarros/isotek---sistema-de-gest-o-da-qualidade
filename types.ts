@@ -244,7 +244,57 @@ export interface PlanLimits {
   hasAdvancedReports: boolean;
   hasApiAccess: boolean;
   hasPrioritySupport: boolean;
+  ai_prompts: number;
+  audit_marketplace: boolean;
 }
+
+export const PLANS = {
+  start: {
+    id: 'price_start_brl', // ID do Stripe
+    name: 'Start',
+    price: 297,
+    features: ['Gestão de Documentos', 'RNC Básico', 'IA Limitada (50 prompts)', '1 Usuário'],
+    limits: {
+      maxUsers: 1,
+      maxStorageGb: 5,
+      ai_prompts: 50,
+      audit_marketplace: false,
+      hasAdvancedReports: false,
+      hasApiAccess: false,
+      hasPrioritySupport: false
+    }
+  },
+  pro: {
+    id: 'price_pro_brl',
+    name: 'Pro',
+    price: 697,
+    features: ['IA Ilimitada', 'Matriz de Riscos', 'Marketplace de Auditores', '5 Usuários'],
+    limits: {
+      maxUsers: 5,
+      maxStorageGb: 20,
+      ai_prompts: 9999,
+      audit_marketplace: true,
+      hasAdvancedReports: true,
+      hasApiAccess: true,
+      hasPrioritySupport: true
+    }
+  },
+  enterprise: {
+    id: 'price_ent_brl',
+    name: 'Enterprise',
+    price: 1497,
+    features: ['Múltiplas Unidades', 'API', 'Gestor Dedicado', 'Usuários Ilimitados'],
+    limits: {
+      maxUsers: 999,
+      maxStorageGb: 100,
+      ai_prompts: 9999,
+      audit_marketplace: true,
+      hasAdvancedReports: true,
+      hasApiAccess: true,
+      hasPrioritySupport: true
+    }
+  }
+};
 
 export interface Plan {
   id: PlanId;

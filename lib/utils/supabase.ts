@@ -95,7 +95,7 @@ export async function isSuperAdmin(): Promise<boolean> {
 // SUBSCRIPTION MANAGEMENT
 // ============================================
 
-import type { Plan, PlanId } from '../../types';
+import { PLANS } from '../../types';
 
 /**
  * Definições dos planos disponíveis
@@ -104,74 +104,42 @@ export function getAvailablePlans(): Plan[] {
     return [
         {
             id: 'start',
-            name: 'Start',
-            price: 0,
+            ...PLANS.start,
             billingPeriod: 'monthly',
             description: 'Perfeito para começar',
             features: [
-                'Gestão de documentos básica',
-                'Indicadores essenciais',
-                'Suporte por email',
-                'Dashboard básico',
-                'Gestão de não conformidades'
+                ...PLANS.start.features,
+                'Acesso a Auditores Nível Bronze',
+                'Taxa de serviço: 30%'
             ],
-            limits: {
-                maxUsers: 5,
-                maxStorageGb: 5,
-                hasAdvancedReports: false,
-                hasApiAccess: false,
-                hasPrioritySupport: false
-            }
+            limits: PLANS.start.limits
         },
         {
             id: 'pro',
-            name: 'Pro',
-            price: 199,
+            ...PLANS.pro,
             billingPeriod: 'monthly',
             description: 'Para empresas em crescimento',
             popular: true,
             features: [
-                'Tudo do plano Start',
-                'Relatórios avançados',
-                'Auditorias ilimitadas',
-                'Integrações via API',
-                'Múltiplas unidades',
-                'Suporte prioritário',
-                'Análise de riscos avançada'
+                ...PLANS.pro.features,
+                'Auditores Nível Ouro (ISO 9001)',
+                'Taxa reduzida: 20%'
             ],
-            limits: {
-                maxUsers: 25,
-                maxStorageGb: 50,
-                hasAdvancedReports: true,
-                hasApiAccess: true,
-                hasPrioritySupport: true
-            }
+            limits: PLANS.pro.limits
         },
         {
             id: 'enterprise',
-            name: 'Enterprise',
-            price: 0, // Sob consulta
+            ...PLANS.enterprise,
             billingPeriod: 'monthly',
             description: 'Para grandes organizações',
             features: [
-                'Tudo do plano Pro',
-                'SSO / SAML',
-                'SLA garantido',
-                'Gerente de conta dedicado',
-                'Treinamento personalizado',
-                'Customizações',
-                'Usuários ilimitados',
-                'Armazenamento ilimitado'
+                ...PLANS.enterprise.features,
+                'Auditores Senior (Diamante)',
+                'Taxa de serviço: 10%'
             ],
-            limits: {
-                maxUsers: 999999,
-                maxStorageGb: 999999,
-                hasAdvancedReports: true,
-                hasApiAccess: true,
-                hasPrioritySupport: true
-            }
+            limits: PLANS.enterprise.limits
         }
-    ];
+    ] as Plan[];
 }
 
 /**
