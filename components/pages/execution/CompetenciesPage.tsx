@@ -24,7 +24,7 @@ import { Employee, EmployeeTraining } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const CompetenciesPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [trainings, setTrainings] = useState<EmployeeTraining[]>([]);
@@ -40,7 +40,7 @@ export const CompetenciesPage: React.FC = () => {
         job_title: '',
         department: '',
         admission_date: '',
-        status: 'active' as const
+        status: 'active' as Employee['status']
     });
 
     const [trainingForm, setTrainingForm] = useState({
@@ -74,12 +74,12 @@ export const CompetenciesPage: React.FC = () => {
     const fetchEmployees = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('employees')
-                .select('id, name, job_title, department, admission_date, status')
-                .eq('company_id', company.id)
+                .select('id, name, job_title, department, admission_date, status, company_id')
+                .eq('company_id', effectiveCompanyId)
                 .order('name');
 
             if (error) throw error;
@@ -407,14 +407,16 @@ export const CompetenciesPage: React.FC = () => {
                         <div className="p-4 border-b border-gray-100 bg-gray-50">
                             <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
                                 <h2 className="font-bold text-gray-900">Colaboradores</h2>
-                                <button
-                                    onClick={() => handleOpenEmployeeModal()}
-                                    className="w-full md:w-auto p-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm flex items-center justify-center gap-2"
-                                    title="Adicionar Colaborador"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span className="md:hidden">Novo Colaborador</span>
-                                </button>
+                                {!isAuditorMode && (
+                                    <button
+                                        onClick={() => handleOpenEmployeeModal()}
+                                        className="w-full md:w-auto p-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                        title="Adicionar Colaborador"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        <span className="md:hidden">Novo Colaborador</span>
+                                    </button>
+                                )}
                             </div>
 
                             <div className="relative w-full">
@@ -534,20 +536,24 @@ export const CompetenciesPage: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleOpenEmployeeModal(selectedEmployee)}
-                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Editar Colaborador"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteEmployee(selectedEmployee.id)}
-                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Excluir Colaborador"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        {!isAuditorMode && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleOpenEmployeeModal(selectedEmployee)}
+                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Editar Colaborador"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteEmployee(selectedEmployee.id)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Excluir Colaborador"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -556,13 +562,15 @@ export const CompetenciesPage: React.FC = () => {
                             <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
                                 <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                                     <h3 className="font-bold text-gray-900">Matriz de Treinamentos</h3>
-                                    <button
-                                        onClick={handleOpenTrainingModal}
-                                        className="flex items-center gap-2 px-3 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm text-sm"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        Registrar Treinamento
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <button
+                                            onClick={handleOpenTrainingModal}
+                                            className="flex items-center gap-2 px-3 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm text-sm"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Registrar Treinamento
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="p-4">
@@ -603,13 +611,15 @@ export const CompetenciesPage: React.FC = () => {
                                                             </a>
                                                         )}
 
-                                                        <button
-                                                            onClick={() => handleDeleteTraining(training.id)}
-                                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Excluir Treinamento"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        {!isAuditorMode && (
+                                                            <button
+                                                                onClick={() => handleDeleteTraining(training.id)}
+                                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Excluir Treinamento"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -698,7 +708,7 @@ export const CompetenciesPage: React.FC = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                     <select
                                         value={employeeForm.status}
-                                        onChange={e => setEmployeeForm({ ...employeeForm, status: e.target.value as 'active' | 'inactive' })}
+                                        onChange={e => setEmployeeForm({ ...employeeForm, status: e.target.value as Employee['status'] })}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
                                     >
                                         <option value="active">Ativo</option>

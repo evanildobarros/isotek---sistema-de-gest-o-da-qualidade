@@ -67,8 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 1. Get company_id from profile
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('company_id, is_super_admin')
-                .eq('id', user.id)
+                .select('company_id, is_super_admin, role')
+                .eq('id', session.user.id)
                 .single();
 
             if (profileError) {
@@ -170,13 +170,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchAuditorAssignments();
     }, [fetchAuditorAssignments]);
 
-    // Restaurar seleção de empresa do sessionStorage
+    // Restaurar seleção de empresa do localStorage (sincronizado com AuditorContext)
     useEffect(() => {
-        const savedCompanyId = sessionStorage.getItem('auditor_viewing_company_id');
-        const savedCompanyName = sessionStorage.getItem('auditor_viewing_company_name');
-        if (savedCompanyId) {
-            setViewingAsCompanyId(savedCompanyId);
-            setViewingAsCompanyName(savedCompanyName);
+        const savedCompany = localStorage.getItem('isotek_target_company');
+        if (savedCompany) {
+            try {
+                const companyData = JSON.parse(savedCompany);
+                setViewingAsCompanyId(companyData.id);
+                setViewingAsCompanyName(companyData.name);
+            } catch (e) {
+                console.error('Erro ao restaurar empresa do auditor:', e);
+            }
         }
     }, []);
 
@@ -186,13 +190,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setViewingAsCompanyName(companyName || null);
 
         if (companyId) {
-            sessionStorage.setItem('auditor_viewing_company_id', companyId);
-            if (companyName) {
-                sessionStorage.setItem('auditor_viewing_company_name', companyName);
-            }
+            localStorage.setItem('isotek_target_company', JSON.stringify({ id: companyId, name: companyName }));
         } else {
-            sessionStorage.removeItem('auditor_viewing_company_id');
-            sessionStorage.removeItem('auditor_viewing_company_name');
+            localStorage.removeItem('isotek_target_company');
+            localStorage.removeItem('isotek_auditor_mode');
         }
     }, []);
 
@@ -212,8 +213,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuditorAssignments([]);
         setViewingAsCompanyId(null);
         setViewingAsCompanyName(null);
-        sessionStorage.removeItem('auditor_viewing_company_id');
-        sessionStorage.removeItem('auditor_viewing_company_name');
+        localStorage.removeItem('isotek_target_company');
+        localStorage.removeItem('isotek_auditor_mode');
         // navigate('/login', { replace: true }); // Removed direct navigation to avoid context issues
     }, [setSession, setUser, setCompany, setIsSuperAdmin, setLoading, setLoadingCompany, setAuditorAssignments, setViewingAsCompanyId, setViewingAsCompanyName]);
 
@@ -223,7 +224,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Computar valores derivados
     const isAuditorMode = !!viewingAsCompanyId;
-    const effectiveCompanyId = viewingAsCompanyId || company?.id || null;
+
+    // Se for auditor, o effectiveCompanyId DEVE ser viewingAsCompanyId ou null (não deve usar company?.id do próprio auditor)
+    const isActuallyAuditor = user?.role === 'auditor';
+    const effectiveCompanyId = viewingAsCompanyId || (isActuallyAuditor ? null : company?.id) || null;
 
     // Memoizar o valor do contexto para evitar re-renderizações
     const value = React.useMemo(() => ({

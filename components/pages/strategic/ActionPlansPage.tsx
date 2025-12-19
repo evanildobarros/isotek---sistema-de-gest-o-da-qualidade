@@ -21,7 +21,7 @@ import { RiskTask } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const ActionPlansPage: React.FC = () => {
-    const { user } = useAuthContext();
+    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [tasks, setTasks] = useState<RiskTask[]>([]);
     const [risks, setRisks] = useState<any[]>([]);
@@ -52,21 +52,15 @@ export const ActionPlansPage: React.FC = () => {
     });
 
     useEffect(() => {
-        if (user) loadData();
-    }, [user]);
+        if (effectiveCompanyId) loadData();
+    }, [effectiveCompanyId]);
 
     const loadData = async () => {
         try {
             setLoading(true);
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('company_id')
-                .eq('id', user?.id)
-                .single();
-
-            if (!profile?.company_id) return;
-            setCompanyId(profile.company_id);
+            if (!effectiveCompanyId) return;
+            setCompanyId(effectiveCompanyId);
 
             // Fetch all data
             const [tasksRes, risksRes, usersRes] = await Promise.all([
@@ -77,12 +71,12 @@ export const ActionPlansPage: React.FC = () => {
                 supabase
                     .from('risks_opportunities')
                     .select('id, description, type')
-                    .eq('company_id', profile.company_id)
+                    .eq('company_id', effectiveCompanyId)
                     .eq('status', 'active'),
                 supabase
                     .from('profiles')
                     .select('id, full_name')
-                    .eq('company_id', profile.company_id)
+                    .eq('company_id', effectiveCompanyId)
             ]);
 
             setTasks(tasksRes.data || []);
@@ -276,13 +270,15 @@ export const ActionPlansPage: React.FC = () => {
                         Gerenciamento centralizado de tarefas de riscos e oportunidades
                     </p>
                 </div>
-                <button
-                    onClick={() => openTaskModal()}
-                    className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
-                >
-                    <Plus size={20} />
-                    <span>Nova Tarefa</span>
-                </button>
+                {!isAuditorMode && (
+                    <button
+                        onClick={() => openTaskModal()}
+                        className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
+                    >
+                        <Plus size={20} />
+                        <span>Nova Tarefa</span>
+                    </button>
+                )}
             </div>
 
             {/* KPI Cards */}
@@ -374,10 +370,11 @@ export const ActionPlansPage: React.FC = () => {
                                     <tr key={task.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <button
-                                                onClick={() => handleToggleStatus(task)}
+                                                onClick={() => !isAuditorMode && handleToggleStatus(task)}
+                                                disabled={isAuditorMode}
                                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'completed'
                                                     ? 'bg-green-500 border-green-500'
-                                                    : 'border-gray-300 hover:border-green-500'
+                                                    : isAuditorMode ? 'border-gray-200 bg-gray-50 cursor-not-allowed' : 'border-gray-300 hover:border-green-500'
                                                     }`}
                                             >
                                                 {task.status === 'completed' && (
@@ -436,22 +433,24 @@ export const ActionPlansPage: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => openTaskModal(task)}
-                                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteTask(task.id)}
-                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
+                                            {!isAuditorMode && (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => openTaskModal(task)}
+                                                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteTask(task.id)}
+                                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -478,10 +477,11 @@ export const ActionPlansPage: React.FC = () => {
                         <div key={task.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
                             <div className="flex items-start gap-3">
                                 <button
-                                    onClick={() => handleToggleStatus(task)}
+                                    onClick={() => !isAuditorMode && handleToggleStatus(task)}
+                                    disabled={isAuditorMode}
                                     className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 mt-0.5 ${task.status === 'completed'
                                         ? 'bg-green-500 border-green-500'
-                                        : 'border-gray-300 hover:border-green-500'
+                                        : isAuditorMode ? 'border-gray-200 bg-gray-50 cursor-not-allowed' : 'border-gray-300 hover:border-green-500'
                                         }`}
                                 >
                                     {task.status === 'completed' && (
@@ -532,22 +532,24 @@ export const ActionPlansPage: React.FC = () => {
                                     }`}>
                                     {task.status === 'completed' ? 'Concluída' : isOverdue ? 'Atrasada' : 'Pendente'}
                                 </span>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={() => openTaskModal(task)}
-                                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                        title="Editar"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteTask(task.id)}
-                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                        title="Excluir"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
+                                {!isAuditorMode && (
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => openTaskModal(task)}
+                                            className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                            title="Editar"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteTask(task.id)}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

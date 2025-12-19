@@ -32,7 +32,7 @@ import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
 
 export const IndicatorsPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [loading, setLoading] = useState(true);
 
     // Data states
@@ -61,10 +61,10 @@ export const IndicatorsPage: React.FC = () => {
     });
 
     useEffect(() => {
-        if (company) {
+        if (effectiveCompanyId) {
             fetchData();
         }
-    }, [company]);
+    }, [effectiveCompanyId]);
 
     const fetchData = async () => {
         try {
@@ -81,13 +81,13 @@ export const IndicatorsPage: React.FC = () => {
     };
 
     const fetchObjectives = async () => {
-        if (!company) return;
+        if (!effectiveCompanyId) return;
 
         // Fetch objectives
         const { data: objs, error: objError } = await supabase
             .from('quality_objectives')
             .select('id, name, target_value, metric_name, frequency, deadline, status, company_id')
-            .eq('company_id', company.id);
+            .eq('company_id', effectiveCompanyId);
 
         if (objError) throw objError;
         setObjectives(objs || []);
@@ -97,7 +97,7 @@ export const IndicatorsPage: React.FC = () => {
             const { data: meas, error: measError } = await supabase
                 .from('kpi_measurements')
                 .select('id, objective_id, date, value, notes, company_id')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('date', { ascending: true });
 
             if (measError) throw measError;
@@ -113,12 +113,12 @@ export const IndicatorsPage: React.FC = () => {
     };
 
     const fetchSurveys = async () => {
-        if (!company) return;
+        if (!effectiveCompanyId) return;
 
         const { data, error } = await supabase
             .from('customer_satisfaction_surveys')
             .select('id, date, score, client_name, feedback, company_id')
-            .eq('company_id', company.id)
+            .eq('company_id', effectiveCompanyId)
             .order('date', { ascending: false });
 
         if (error) throw error;
@@ -127,12 +127,12 @@ export const IndicatorsPage: React.FC = () => {
 
     const handleSaveMeasurement = async () => {
         try {
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { error } = await supabase
                 .from('kpi_measurements')
                 .insert([{
-                    company_id: company.id,
+                    company_id: effectiveCompanyId,
                     objective_id: measurementForm.objective_id,
                     date: measurementForm.date,
                     value: Number(measurementForm.value),
@@ -157,12 +157,12 @@ export const IndicatorsPage: React.FC = () => {
 
     const handleSaveSurvey = async () => {
         try {
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { error } = await supabase
                 .from('customer_satisfaction_surveys')
                 .insert([{
-                    company_id: company.id,
+                    company_id: effectiveCompanyId,
                     ...surveyForm
                 }]);
 
@@ -226,13 +226,15 @@ export const IndicatorsPage: React.FC = () => {
                         <Users className="w-6 h-6 text-blue-600" />
                         Satisfação do Cliente (9.1.2)
                     </h2>
-                    <button
-                        onClick={() => setIsSurveyModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium text-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Registrar Pesquisa
-                    </button>
+                    {!isAuditorMode && (
+                        <button
+                            onClick={() => setIsSurveyModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium text-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Registrar Pesquisa
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -282,13 +284,15 @@ export const IndicatorsPage: React.FC = () => {
                         <TrendingUp className="w-6 h-6 text-blue-600" />
                         Indicadores de Processo (9.1.1)
                     </h2>
-                    <button
-                        onClick={() => openMeasurementModal()}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium text-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Lançar Medição
-                    </button>
+                    {!isAuditorMode && (
+                        <button
+                            onClick={() => openMeasurementModal()}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium text-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Lançar Medição
+                        </button>
+                    )}
                 </div>
 
                 {loading ? (
@@ -316,13 +320,15 @@ export const IndicatorsPage: React.FC = () => {
                                             <h3 className="font-semibold text-gray-900">{obj.name}</h3>
                                             <p className="text-sm text-gray-500">Meta: {obj.target_value} {obj.metric_name} | Freq: {obj.frequency}</p>
                                         </div>
-                                        <button
-                                            onClick={() => openMeasurementModal(obj)}
-                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Lançar Medição"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                        </button>
+                                        {!isAuditorMode && (
+                                            <button
+                                                onClick={() => openMeasurementModal(obj)}
+                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Lançar Medição"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </div>
 
                                     <div className="h-64 w-full">

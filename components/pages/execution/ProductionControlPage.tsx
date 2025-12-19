@@ -19,7 +19,7 @@ import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 
 export const ProductionControlPage: React.FC = () => {
-    const { company } = useAuthContext();
+    const { company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [orders, setOrders] = useState<ProductionOrder[]>([]);
     const [salesOrders, setSalesOrders] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,12 +52,12 @@ export const ProductionControlPage: React.FC = () => {
     const fetchOrders = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('production_orders_with_details')
                 .select('id, code, client_name, product_service, current_stage, batch_number, status, notes, company_id, created_at')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -71,12 +71,12 @@ export const ProductionControlPage: React.FC = () => {
 
     const fetchSalesOrders = async () => {
         try {
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('sales_orders')
                 .select('id, code, client_name, company_id, description, delivery_deadline, status')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .eq('status', 'approved')
                 .order('code');
 
@@ -217,7 +217,7 @@ export const ProductionControlPage: React.FC = () => {
                 title="Controle de Produção e Serviços"
                 subtitle="ISO 9001: 8.5 - Execução Controlada"
                 iconColor="purple"
-                action={
+                action={!isAuditorMode && (
                     <button
                         onClick={() => {
                             resetCreateForm();
@@ -228,7 +228,7 @@ export const ProductionControlPage: React.FC = () => {
                         <Plus className="w-5 h-5" />
                         Nova Ordem
                     </button>
-                }
+                )}
             />
 
             {/* Tabs */}
@@ -321,32 +321,32 @@ export const ProductionControlPage: React.FC = () => {
                             </div>
 
                             {/* Action Button */}
-                            {order.status !== 'completed' && (
-                                <button
-                                    onClick={() => handleOpenUpdate(order)}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium mb-3"
-                                >
-                                    <Edit className="w-4 h-4" />
-                                    Registrar Execução
-                                </button>
-                            )}
-                            {order.status !== 'completed' && (
-                                <button
-                                    onClick={() => {
-                                        setSelectedOrder(order);
-                                        setUpdateForm({
-                                            status: order.status === 'scheduled' ? 'in_progress' :
-                                                order.status === 'in_progress' ? 'quality_check' : 'completed',
-                                            current_stage: order.current_stage || '',
-                                            notes: order.notes || '',
-                                            batch_number: order.batch_number || ''
-                                        });
-                                        setIsUpdateModalOpen(true);
-                                    }}
-                                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                                >
-                                    Concluir
-                                </button>
+                            {!isAuditorMode && order.status !== 'completed' && (
+                                <>
+                                    <button
+                                        onClick={() => handleOpenUpdate(order)}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium mb-3"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                        Registrar Execução
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedOrder(order);
+                                            setUpdateForm({
+                                                status: order.status === 'scheduled' ? 'in_progress' :
+                                                    order.status === 'in_progress' ? 'quality_check' : 'completed',
+                                                current_stage: order.current_stage || '',
+                                                notes: order.notes || '',
+                                                batch_number: order.batch_number || ''
+                                            });
+                                            setIsUpdateModalOpen(true);
+                                        }}
+                                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                    >
+                                        Concluir
+                                    </button>
+                                </>
                             )}
                         </div>
                     ))}

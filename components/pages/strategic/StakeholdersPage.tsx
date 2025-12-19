@@ -8,7 +8,7 @@ import { Stakeholder } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const StakeholdersPage: React.FC = () => {
-    const { user, company, loadingCompany, effectiveCompanyId } = useAuthContext();
+    const { user, company, loadingCompany, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,18 +28,18 @@ export const StakeholdersPage: React.FC = () => {
     });
 
     useEffect(() => {
-        if (!loadingCompany && company) {
+        if (!loadingCompany && effectiveCompanyId) {
             fetchStakeholders();
         }
-    }, [company, loadingCompany]);
+    }, [effectiveCompanyId, loadingCompany]);
 
     const fetchStakeholders = async () => {
         try {
             setLoading(true);
 
-            // Verificar se o usuário está vinculado a uma empresa
-            if (!company) {
-                console.warn('Usuário não vinculado a uma empresa');
+            // Verificar se temos o ID da empresa (seja do usuário ou via auditoria)
+            if (!effectiveCompanyId) {
+                console.warn('Empresa não identificada');
                 setStakeholders([]);
                 return;
             }
@@ -47,7 +47,7 @@ export const StakeholdersPage: React.FC = () => {
             const { data, error } = await supabase
                 .from('stakeholders')
                 .select('id, name, type, needs, expectations, monitor_frequency, company_id, created_at')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -174,13 +174,15 @@ export const StakeholdersPage: React.FC = () => {
                     </div>
                     <p className="text-gray-500 text-sm">Gestão de stakeholders e seus requisitos (ISO 9001:2015 - 4.2)</p>
                 </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm w-full md:w-auto"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span>Adicionar Parte</span>
-                </button>
+                {!isAuditorMode && (
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#025159]/90 transition-colors shadow-sm w-full md:w-auto"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span>Adicionar Parte</span>
+                    </button>
+                )}
             </div>
 
             {/* Table - Desktop Only */}
@@ -226,22 +228,24 @@ export const StakeholdersPage: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => handleOpenModal(item)}
-                                                className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                                title="Editar"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(item.id)}
-                                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        {!isAuditorMode && (
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleOpenModal(item)}
+                                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item.id)}
+                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -293,22 +297,24 @@ export const StakeholdersPage: React.FC = () => {
                                 <Calendar className="w-3.5 h-3.5" />
                                 <span>{item.monitor_frequency}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => handleOpenModal(item)}
-                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                    title="Editar"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(item.id)}
-                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                    title="Excluir"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {!isAuditorMode && (
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => handleOpenModal(item)}
+                                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                        title="Editar"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(item.id)}
+                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}

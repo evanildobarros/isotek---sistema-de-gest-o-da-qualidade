@@ -36,7 +36,7 @@ const formatCNPJ = (value: string): string => {
 };
 
 const SuppliersPageContent: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [activeTab, setActiveTab] = useState<'directory' | 'evaluations'>('directory');
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
@@ -84,17 +84,17 @@ const SuppliersPageContent: React.FC = () => {
     useEffect(() => {
         fetchSuppliers();
         fetchEvaluations();
-    }, [user, company]);
+    }, [user, company, effectiveCompanyId]);
 
     const fetchSuppliers = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('suppliers')
                 .select('id, name, cnpj, email, phone, category, status, blocked_reason, iqf_score')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('name');
 
             if (error) throw error;
@@ -109,12 +109,12 @@ const SuppliersPageContent: React.FC = () => {
 
     const fetchEvaluations = async () => {
         try {
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('supplier_evaluations_with_details')
                 .select('id, supplier_name, evaluation_date, comments, criteria_quality, criteria_deadline, criteria_communication, final_score')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('evaluation_date', { ascending: false })
                 .limit(20);
 
@@ -328,13 +328,15 @@ const SuppliersPageContent: React.FC = () => {
                         ISO 9001: 8.4 - Controle de Processos Externos
                     </p>
                 </div>
-                <button
-                    onClick={() => handleOpenSupplierModal()}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium w-full md:w-auto"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span>Novo Fornecedor</span>
-                </button>
+                {!isAuditorMode && (
+                    <button
+                        onClick={() => handleOpenSupplierModal()}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium w-full md:w-auto"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span>Novo Fornecedor</span>
+                    </button>
+                )}
             </div>
 
             {/* Tabs */}
@@ -427,28 +429,32 @@ const SuppliersPageContent: React.FC = () => {
 
                                                 {/* Actions */}
                                                 <div className="col-span-3 flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleOpenEvaluationModal(supplier)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Avaliar Fornecedor"
-                                                    >
-                                                        <Star className="w-4 h-4" />
-                                                        Avaliar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenSupplierModal(supplier)}
-                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteSupplier(supplier.id)}
-                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {!isAuditorMode && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleOpenEvaluationModal(supplier)}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Avaliar Fornecedor"
+                                                            >
+                                                                <Star className="w-4 h-4" />
+                                                                Avaliar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleOpenSupplierModal(supplier)}
+                                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit2 className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteSupplier(supplier.id)}
+                                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Excluir"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
 
                                                     {supplier.status === 'bloqueado' && supplier.blocked_reason && (
                                                         <button
@@ -499,27 +505,31 @@ const SuppliersPageContent: React.FC = () => {
 
                                                 {/* Actions */}
                                                 <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                                                    <button
-                                                        onClick={() => handleOpenEvaluationModal(supplier)}
-                                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                                                    >
-                                                        <Star className="w-4 h-4" />
-                                                        Avaliar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenSupplierModal(supplier)}
-                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteSupplier(supplier.id)}
-                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {!isAuditorMode && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleOpenEvaluationModal(supplier)}
+                                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                                            >
+                                                                <Star className="w-4 h-4" />
+                                                                Avaliar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleOpenSupplierModal(supplier)}
+                                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit2 className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteSupplier(supplier.id)}
+                                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Excluir"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                     {supplier.status === 'bloqueado' && supplier.blocked_reason && (
                                                         <button
                                                             onClick={() => setExpandedSupplierId(isExpanded ? null : supplier.id)}

@@ -146,7 +146,7 @@ export const DocumentsPage: React.FC = () => {
 
     useEffect(() => {
         fetchDocuments();
-    }, []);
+    }, [effectiveCompanyId]);
 
     // Handle navigation from global search
     useEffect(() => {

@@ -39,7 +39,7 @@ interface ManagementReview {
 }
 
 export const ManagementReviewPage: React.FC = () => {
-    const { company, effectiveCompanyId } = useAuthContext();
+    const { company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [reviews, setReviews] = useState<ManagementReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,7 +76,7 @@ export const ManagementReviewPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('management_reviews')
-                .select('id, company_id, date, period_analyzed, participants, inputs_json, outputs_decisions, status, created_at')
+                .select('id, company_id, date, period_analyzed, participants, inputs_json, outputs_decisions, status, created_at, updated_at')
                 .eq('company_id', effectiveCompanyId)
                 .order('date', { ascending: false });
 
@@ -247,7 +247,7 @@ export const ManagementReviewPage: React.FC = () => {
                 title="Análise Crítica pela Direção"
                 subtitle="ISO 9001: 9.3 - Reuniões de Análise do SGQ"
                 iconColor="orange"
-                action={
+                action={!isAuditorMode && (
                     <button
                         onClick={() => handleOpenModal()}
                         className="flex items-center gap-2 px-4 py-2.5 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors shadow-md font-medium"
@@ -255,7 +255,7 @@ export const ManagementReviewPage: React.FC = () => {
                         <Plus className="w-5 h-5" />
                         Nova Ata
                     </button>
-                }
+                )}
             />
 
             {/* Lista de Reuniões */}
@@ -310,13 +310,15 @@ export const ManagementReviewPage: React.FC = () => {
                                 </div>
 
                                 <div className="flex flex-row gap-2 w-full md:w-auto mt-4 md:mt-0 overflow-x-auto">
-                                    <button
-                                        onClick={() => handleOpenModal(review)}
-                                        className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                        Editar
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <button
+                                            onClick={() => handleOpenModal(review)}
+                                            className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                            Editar
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => handleViewAta(review)}
                                         className="flex items-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors text-sm font-medium whitespace-nowrap"

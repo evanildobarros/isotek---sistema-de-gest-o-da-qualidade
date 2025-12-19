@@ -18,7 +18,7 @@ import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 
 export const SalesRequirementsPage: React.FC = () => {
-    const { user, company } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [orders, setOrders] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -42,17 +42,17 @@ export const SalesRequirementsPage: React.FC = () => {
 
     useEffect(() => {
         fetchOrders();
-    }, [user, company]);
+    }, [user, company, effectiveCompanyId]);
 
     const fetchOrders = async () => {
         try {
             setLoading(true);
-            if (!company) return;
+            if (!effectiveCompanyId) return;
 
             const { data, error } = await supabase
                 .from('sales_orders_with_reviewer')
                 .select('id, code, client_name, description, delivery_deadline, status, requirements_defined, has_capacity, risks_considered, review_notes, company_id, created_at')
-                .eq('company_id', company.id)
+                .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -193,7 +193,7 @@ export const SalesRequirementsPage: React.FC = () => {
                 title="Comercial e Requisitos de Clientes"
                 subtitle="ISO 9001: 8.2 - Análise Crítica de Requisitos"
                 iconColor="sky"
-                action={
+                action={!isAuditorMode && (
                     <button
                         onClick={() => {
                             resetCreateForm();
@@ -204,7 +204,7 @@ export const SalesRequirementsPage: React.FC = () => {
                         <Plus className="w-5 h-5" />
                         Novo Pedido
                     </button>
-                }
+                )}
             />
 
             {loading ? (
@@ -261,7 +261,7 @@ export const SalesRequirementsPage: React.FC = () => {
                             )}
 
                             {/* Action Button */}
-                            {order.status === 'pending_review' && (
+                            {!isAuditorMode && order.status === 'pending_review' && (
                                 <button
                                     onClick={() => handleOpenReview(order)}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#025159] text-white rounded-lg hover:bg-[#3F858C] transition-colors font-medium"

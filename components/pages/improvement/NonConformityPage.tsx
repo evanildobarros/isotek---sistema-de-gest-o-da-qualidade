@@ -25,7 +25,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const NonConformityPage: React.FC = () => {
-    const { user, company, effectiveCompanyId } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [ncProducts, setNcProducts] = useState<NonConformityProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -334,7 +334,7 @@ export const NonConformityPage: React.FC = () => {
                                 </div>
 
                                 <div className="flex gap-2 mt-3">
-                                    {status !== 'resolved' && (
+                                    {!isAuditorMode && status !== 'resolved' && (
                                         <button
                                             onClick={() => handleMoveToNext(nc)}
                                             className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#025159] text-white text-sm font-medium rounded-lg hover:bg-[#3F858C] transition-colors"
@@ -361,13 +361,15 @@ export const NonConformityPage: React.FC = () => {
                                             <ExternalLink className="w-4 h-4" />
                                         </a>
                                     )}
-                                    <button
-                                        onClick={() => handleDelete(nc.id)}
-                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                        title="Excluir"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <button
+                                            onClick={() => handleDelete(nc.id)}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -395,7 +397,7 @@ export const NonConformityPage: React.FC = () => {
                 title="Controle de Saídas Não Conformes"
                 subtitle="ISO 9001:2015 - 8.7 - Gestão de produtos/serviços defeituosos"
                 iconColor="indigo"
-                action={
+                action={!isAuditorMode && (
                     <button
                         onClick={() => {
                             resetCreateForm();
@@ -406,7 +408,7 @@ export const NonConformityPage: React.FC = () => {
                         <Plus className="w-5 h-5" />
                         Nova Não Conformidade
                     </button>
-                }
+                )}
             />
 
             {/* Kanban Board */}

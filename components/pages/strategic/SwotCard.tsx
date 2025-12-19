@@ -95,7 +95,7 @@ const getMockData = (type: string): SwotItem[] => {
 
 export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     const config = typeConfig[type];
-    const { user, effectiveCompanyId } = useAuthContext();
+    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
 
     const [items, setItems] = useState<SwotItem[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -363,13 +363,15 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                 {/* Header */}
                 <div className={`px-4 py-3 ${config.color.bg} ${config.color.text} flex justify-between items-center border-b ${config.color.border}`}>
                     <h3 className="font-bold text-base">{config.title}</h3>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="p-1.5 hover:bg-white/50 rounded-md transition-colors"
-                        title="Adicionar item"
-                    >
-                        <Plus size={18} />
-                    </button>
+                    {!isAuditorMode && (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="p-1.5 hover:bg-white/50 rounded-md transition-colors"
+                            title="Adicionar item"
+                        >
+                            <Plus size={18} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Offline Warning */}
@@ -402,31 +404,35 @@ export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
                                 </div>
 
                                 <div className="flex flex-col gap-1">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handlePromoteToRisk(item);
-                                        }}
-                                        disabled={processedItems.has(item.id)}
-                                        className={`flex-shrink-0 p-2 rounded-md transition-all ${processedItems.has(item.id)
-                                            ? 'text-gray-300 cursor-not-allowed'
-                                            : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'
-                                            }`}
-                                        title={processedItems.has(item.id) ? "Já processado" : "Gerar Risco/Oportunidade Associado"}
-                                    >
-                                        <Zap size={16} />
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handlePromoteToRisk(item);
+                                                }}
+                                                disabled={processedItems.has(item.id)}
+                                                className={`flex-shrink-0 p-2 rounded-md transition-all ${processedItems.has(item.id)
+                                                    ? 'text-gray-300 cursor-not-allowed'
+                                                    : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'
+                                                    }`}
+                                                title={processedItems.has(item.id) ? "Já processado" : "Gerar Risco/Oportunidade Associado"}
+                                            >
+                                                <Zap size={16} />
+                                            </button>
 
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(item.id);
-                                        }}
-                                        className="flex-shrink-0 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                                        title="Remover item"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(item.id);
+                                                }}
+                                                className="flex-shrink-0 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                                title="Remover item"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))

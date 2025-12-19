@@ -46,6 +46,7 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
         itemId: string;
         item?: AuditChecklistItem;
     }>({ isOpen: false, itemId: '' });
+    const [qmsScope, setQmsScope] = useState<string | null>(null);
 
     // Carregar itens do checklist e respostas existentes
     useEffect(() => {
@@ -89,6 +90,15 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
                 responsesMap.set(response.item_id, response);
             });
             setResponses(responsesMap);
+
+            // Buscar escopo do SGQ para referência
+            const { data: qmsData } = await supabase
+                .from('quality_manual')
+                .select('scope')
+                .eq('company_id', audit.company_id)
+                .maybeSingle();
+
+            if (qmsData) setQmsScope(qmsData.scope);
 
         } catch (error) {
             console.error('Erro ao carregar checklist:', error);
@@ -254,7 +264,17 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, onClose, 
                                 <h2 className="text-xl font-bold text-gray-900">
                                     Execução de Auditoria
                                 </h2>
-                                <p className="text-sm text-gray-500">{audit.scope}</p>
+                                <p className="text-sm text-gray-500 flex items-center gap-2">
+                                    {audit.scope}
+                                    {qmsScope && audit.scope !== qmsScope && (
+                                        <div className="group relative">
+                                            <AlertTriangle size={14} className="text-amber-500 cursor-help" />
+                                            <div className="absolute left-0 top-full mt-1 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-[10px] rounded shadow-lg z-[70]">
+                                                Este escopo diverge do escopo oficial definido no SGQ da empresa.
+                                            </div>
+                                        </div>
+                                    )}
+                                </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">

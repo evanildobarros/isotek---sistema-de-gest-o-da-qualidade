@@ -45,7 +45,7 @@ interface SwotItem {
 }
 
 export const RiskMatrixPage: React.FC = () => {
-    const { user, effectiveCompanyId } = useAuthContext();
+    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [risks, setRisks] = useState<RiskItem[]>([]);
     const [swotItems, setSwotItems] = useState<SwotItem[]>([]);
@@ -465,13 +465,15 @@ export const RiskMatrixPage: React.FC = () => {
                         Gestão baseada em riscos (ISO 9001: 6.1)
                     </p>
                 </div>
-                <button
-                    onClick={() => setIsImportModalOpen(true)}
-                    className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
-                >
-                    <Download size={20} />
-                    <span>Importar da SWOT</span>
-                </button>
+                {!isAuditorMode && (
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
+                    >
+                        <Download size={20} />
+                        <span>Importar da SWOT</span>
+                    </button>
+                )}
             </div>
 
             {/* Filters */}
@@ -578,22 +580,24 @@ export const RiskMatrixPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => openEditModal(risk)}
-                                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteRisk(risk.id)}
-                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
+                                            {!isAuditorMode && (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => openEditModal(risk)}
+                                                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteRisk(risk.id)}
+                                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -675,22 +679,24 @@ export const RiskMatrixPage: React.FC = () => {
                             )}
 
                             {/* Rodapé: Ações */}
-                            <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-                                <button
-                                    onClick={() => openEditModal(risk)}
-                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                    title="Editar"
-                                >
-                                    <Edit2 size={18} />
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteRisk(risk.id)}
-                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                    title="Excluir"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
+                            {!isAuditorMode && (
+                                <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                                    <button
+                                        onClick={() => openEditModal(risk)}
+                                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                        title="Editar"
+                                    >
+                                        <Edit2 size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteRisk(risk.id)}
+                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -841,20 +847,20 @@ export const RiskMatrixPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Task List Section */}
-                            <div className="border-t pt-4 mt-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Plano de Ação (Tarefas)
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={() => openTaskModal()}
-                                        className="flex items-center gap-1 px-3 py-1.5 bg-[#025159] text-white text-sm rounded-lg hover:bg-[#3F858C] transition-colors"
-                                    >
-                                        <Plus size={16} />
-                                        Nova Tarefa
-                                    </button>
+                            {/* Tasks Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-bold text-gray-900 border-l-4 border-blue-500 pl-3">Plano de Ação / Tarefas</h4>
+                                    {!isAuditorMode && (
+                                        <button
+                                            type="button"
+                                            onClick={() => openTaskModal()}
+                                            className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors border border-blue-100"
+                                        >
+                                            <Plus size={14} />
+                                            Nova Tarefa
+                                        </button>
+                                    )}
                                 </div>
 
                                 {tasks.length === 0 ? (
@@ -880,6 +886,7 @@ export const RiskMatrixPage: React.FC = () => {
                                                             ? 'bg-green-500 border-green-500'
                                                             : 'border-gray-300 hover:border-green-500'
                                                             }`}
+                                                        disabled={isAuditorMode}
                                                     >
                                                         {task.status === 'completed' && (
                                                             <Check size={14} className="text-white" />
@@ -910,23 +917,37 @@ export const RiskMatrixPage: React.FC = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex gap-1">
+                                                    <div className="flex items-center gap-1">
                                                         <button
                                                             type="button"
-                                                            onClick={() => openTaskModal(task)}
-                                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                            title="Editar"
+                                                            onClick={() => handleToggleTaskStatus(task.id, task.status)}
+                                                            disabled={isAuditorMode}
+                                                            className={`p-1.5 rounded-md transition-colors ${task.status === 'completed'
+                                                                ? 'text-green-600 bg-green-50 hover:bg-green-100'
+                                                                : 'text-gray-400 bg-gray-50 hover:bg-gray-100'
+                                                                } ${isAuditorMode ? 'cursor-not-allowed opacity-70' : ''}`}
+                                                            title={task.status === 'completed' ? 'Marcar como pendente' : 'Marcar como concluído'}
                                                         >
-                                                            <Edit2 size={14} />
+                                                            <Check size={14} />
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleDeleteTask(task.id)}
-                                                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                            title="Excluir"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
+                                                        {!isAuditorMode && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openTaskModal(task)}
+                                                                    className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                                                >
+                                                                    <Edit2 size={14} />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteTask(task.id)}
+                                                                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

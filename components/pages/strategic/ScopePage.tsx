@@ -7,7 +7,7 @@ import { QualityManual, Process } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const ScopePage: React.FC = () => {
-    const { user, company, effectiveCompanyId } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [savingScope, setSavingScope] = useState(false);
     const [isEditingScope, setIsEditingScope] = useState(false);
@@ -68,6 +68,9 @@ export const ScopePage: React.FC = () => {
                 setScopeData({
                     scope: manualData.scope
                 });
+            } else {
+                setManualId(null);
+                setScopeData({ scope: '' });
             }
 
             // Fetch Processes
@@ -270,13 +273,15 @@ export const ScopePage: React.FC = () => {
                                                 <CheckCircle className="w-5 h-5 text-green-600" />
                                                 <h3 className="font-semibold text-gray-900">Escopo Definido</h3>
                                             </div>
-                                            <button
-                                                onClick={() => setIsEditingScope(true)}
-                                                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                                Editar
-                                            </button>
+                                            {!isAuditorMode && (
+                                                <button
+                                                    onClick={() => setIsEditingScope(true)}
+                                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                    Editar
+                                                </button>
+                                            )}
                                         </div>
                                         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                                             {scopeData.scope}
@@ -292,13 +297,15 @@ export const ScopePage: React.FC = () => {
                                         <p className="text-gray-500 max-w-md mx-auto mb-6">
                                             Defina o escopo do seu Sistema de Gestão da Qualidade para atender aos requisitos da ISO 9001.
                                         </p>
-                                        <button
-                                            onClick={() => setIsEditingScope(true)}
-                                            className="inline-flex items-center gap-2 bg-[#025159] hover:bg-[#3F858C] text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            Definir Escopo
-                                        </button>
+                                        {!isAuditorMode && (
+                                            <button
+                                                onClick={() => setIsEditingScope(true)}
+                                                className="inline-flex items-center gap-2 bg-[#025159] hover:bg-[#3F858C] text-white px-6 py-2.5 rounded-lg transition-colors font-medium shadow-sm"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                Definir Escopo
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -359,13 +366,15 @@ export const ScopePage: React.FC = () => {
                                 </div>
                                 <p className="text-gray-500 text-sm">Identificação dos processos, suas interações e recursos (ISO 9001:2015 - 4.4)</p>
                             </div>
-                            <button
-                                onClick={() => handleOpenModal()}
-                                className="flex items-center gap-2 bg-[#025159] text-white px-5 py-2.5 rounded-xl hover:bg-[#025159]/90 transition-colors shadow-sm font-medium"
-                            >
-                                <Plus className="w-5 h-5" />
-                                Novo Processo
-                            </button>
+                            {!isAuditorMode && (
+                                <button
+                                    onClick={() => handleOpenModal()}
+                                    className="flex items-center gap-2 bg-[#025159] text-white px-5 py-2.5 rounded-xl hover:bg-[#025159]/90 transition-colors shadow-sm font-medium"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    Novo Processo
+                                </button>
+                            )}
                         </div>
 
                         <div className="grid gap-6">
@@ -425,22 +434,24 @@ export const ScopePage: React.FC = () => {
                                         </div>
 
                                         {/* Ações */}
-                                        <div className="flex items-center justify-end gap-2 w-full md:w-auto pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-gray-100 mt-4 md:mt-0">
-                                            <button
-                                                onClick={() => handleOpenModal(process)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Editar"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteProcess(process.id)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        {!isAuditorMode && (
+                                            <div className="flex items-center justify-end gap-2 w-full md:w-auto pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-gray-100 mt-4 md:mt-0">
+                                                <button
+                                                    onClick={() => handleOpenModal(process)}
+                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteProcess(process.id)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Recursos (Expansível ou visível) */}
@@ -463,12 +474,14 @@ export const ScopePage: React.FC = () => {
                                     <p className="text-gray-500 max-w-md mx-auto mt-1">
                                         Comece definindo os processos principais da sua organização para visualizar o fluxo de valor.
                                     </p>
-                                    <button
-                                        onClick={() => handleOpenModal()}
-                                        className="mt-6 text-blue-600 font-medium hover:text-blue-700 hover:underline"
-                                    >
-                                        Adicionar primeiro processo
-                                    </button>
+                                    {!isAuditorMode && (
+                                        <button
+                                            onClick={() => handleOpenModal()}
+                                            className="mt-6 text-blue-600 font-medium hover:text-blue-700 hover:underline"
+                                        >
+                                            Adicionar primeiro processo
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>

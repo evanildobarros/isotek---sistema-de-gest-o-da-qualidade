@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, AlertTriangle, Plus, ClipboardCheck } from 'lucide-react';
+import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, MessageSquare, AlertCircle, Copy, AlertTriangle, ClipboardCheck, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
@@ -9,7 +9,7 @@ import { AuditChecklist } from '../auditor/AuditChecklist';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 const AuditsPageContent: React.FC = () => {
-    const { user, company, effectiveCompanyId } = useAuthContext();
+    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [audits, setAudits] = useState<Audit[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAudit, setSelectedAudit] = useState<Audit | null>(null);
@@ -29,6 +29,8 @@ const AuditsPageContent: React.FC = () => {
         }
     }, [effectiveCompanyId]);
 
+    const [qmsScope, setQmsScope] = useState<string>('');
+
     const fetchAudits = async () => {
         if (!effectiveCompanyId) return;
 
@@ -47,6 +49,19 @@ const AuditsPageContent: React.FC = () => {
             toast.error('Erro ao carregar auditorias');
         } finally {
             setLoading(false);
+        }
+
+        // Fetch QMS Scope for reference
+        try {
+            const { data: qmsData } = await supabase
+                .from('quality_manual')
+                .select('scope')
+                .eq('company_id', effectiveCompanyId)
+                .maybeSingle();
+
+            if (qmsData) setQmsScope(qmsData.scope);
+        } catch (e) {
+            console.error('Erro ao buscar escopo do SGQ:', e);
         }
     };
 
@@ -303,7 +318,7 @@ const AuditsPageContent: React.FC = () => {
                 onClose={() => setDeleteModal({ isOpen: false, audit: null })}
                 onConfirm={confirmDelete}
                 title="Excluir Auditoria"
-                message={`Tem certeza que deseja excluir a auditoria "${deleteModal.audit?.scope}"?`}
+                message={`Tem certeza que deseja excluir a auditoria "${deleteModal.audit?.scope}" ? `}
                 confirmLabel="Excluir"
                 variant="danger"
             />
@@ -320,13 +335,15 @@ const AuditsPageContent: React.FC = () => {
                     </div>
                     <p className="text-gray-600 text-sm">Planeje, execute e gerencie auditorias internas e de processo (ISO 9001: 9.2).</p>
                 </div>
-                <button
-                    onClick={handleCreate}
-                    className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#025159] text-white font-semibold rounded-lg hover:bg-[#025159]/90 transition-colors shadow-md hover:shadow-lg"
-                >
-                    <Plus size={20} />
-                    Nova Auditoria
-                </button>
+                {!isAuditorMode && (
+                    <button
+                        onClick={handleCreate}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#025159] text-white font-semibold rounded-lg hover:bg-[#025159]/90 transition-colors shadow-md hover:shadow-lg"
+                    >
+                        <Plus size={20} />
+                        Nova Auditoria
+                    </button>
+                )}
             </div>
 
             {/* Stats Cards */}
@@ -408,7 +425,17 @@ const AuditsPageContent: React.FC = () => {
                                 {audits.map((audit) => (
                                     <tr key={audit.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                            {audit.scope}
+                                            <div className="flex items-center gap-2">
+                                                {audit.scope}
+                                                {qmsScope && audit.scope !== qmsScope && (
+                                                    <div className="group relative">
+                                                        <AlertTriangle size={14} className="text-amber-500 cursor-help" />
+                                                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-[10px] rounded shadow-lg z-10">
+                                                            Atenção: O escopo desta auditoria diverge do escopo definido no SGQ da empresa.
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-700">
                                             <span className="px-2 py-1 bg-gray-100 rounded text-xs">
@@ -425,7 +452,7 @@ const AuditsPageContent: React.FC = () => {
                                             {new Date(audit.date).toLocaleDateString('pt-BR')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(audit.status)}`}>
+                                            <span className={`inline - flex items - center gap - 1.5 px - 3 py - 1 rounded - full text - xs font - semibold ${getStatusStyle(audit.status)} `}>
                                                 {getStatusIcon(audit.status)}
                                                 {audit.status}
                                             </span>
@@ -434,44 +461,46 @@ const AuditsPageContent: React.FC = () => {
                                             <div className="space-y-1">
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className={`h-2 rounded-full transition-all ${audit.progress === 100
+                                                        className={`h - 2 rounded - full transition - all ${audit.progress === 100
                                                             ? 'bg-green-500'
                                                             : audit.progress > 0
                                                                 ? 'bg-yellow-500'
                                                                 : 'bg-blue-500'
-                                                            }`}
-                                                        style={{ width: `${audit.progress}%` }}
+                                                            } `}
+                                                        style={{ width: `${audit.progress}% ` }}
                                                     />
                                                 </div>
                                                 <span className="text-xs text-gray-600">{audit.progress}%</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex justify-end gap-2">
-                                                {(audit.status === 'Agendada' || audit.status === 'Em Andamento') && (
+                                            {!isAuditorMode && (
+                                                <div className="flex justify-end gap-2">
+                                                    {(audit.status === 'Agendada' || audit.status === 'Em Andamento') && (
+                                                        <button
+                                                            onClick={() => handlePlay(audit)}
+                                                            className="p-2 text-[#BF7B54] hover:text-[#8C512E] hover:bg-orange-50 rounded-lg transition-colors"
+                                                            title={audit.status === 'Agendada' ? 'Iniciar' : 'Continuar'}
+                                                        >
+                                                            <PlayCircle size={18} />
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        onClick={() => handlePlay(audit)}
-                                                        className="p-2 text-[#BF7B54] hover:text-[#8C512E] hover:bg-orange-50 rounded-lg transition-colors"
-                                                        title={audit.status === 'Agendada' ? 'Iniciar' : 'Continuar'}
+                                                        onClick={() => handleEdit(audit)}
+                                                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Editar"
                                                     >
-                                                        <PlayCircle size={18} />
+                                                        <Pencil size={18} />
                                                     </button>
-                                                )}
-                                                <button
-                                                    onClick={() => handleEdit(audit)}
-                                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(audit.id)}
-                                                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
+                                                    <button
+                                                        onClick={() => handleDelete(audit.id)}
+                                                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -501,7 +530,7 @@ const AuditsPageContent: React.FC = () => {
                                 <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 font-medium">
                                     {audit.type}
                                 </span>
-                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${getStatusStyle(audit.status)}`}>
+                                <span className={`inline - flex items - center gap - 1.5 px - 2 py - 1 rounded - full text - xs font - semibold ${getStatusStyle(audit.status)} `}>
                                     {getStatusIcon(audit.status)}
                                     {audit.status}
                                 </span>
@@ -509,7 +538,12 @@ const AuditsPageContent: React.FC = () => {
 
                             {/* Body: Scope, Auditor, Date */}
                             <div className="mb-4">
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">{audit.scope}</h3>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2 flex items-center gap-2">
+                                    {audit.scope}
+                                    {qmsScope && audit.scope !== qmsScope && (
+                                        <AlertTriangle size={14} className="text-amber-500" />
+                                    )}
+                                </h3>
                                 <div className="flex flex-col gap-1 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
                                         <User size={14} className="text-gray-400" />
@@ -530,43 +564,45 @@ const AuditsPageContent: React.FC = () => {
                                 </div>
                                 <div className="w-full bg-gray-100 rounded-full h-2">
                                     <div
-                                        className={`h-2 rounded-full transition-all ${audit.progress === 100
+                                        className={`h - 2 rounded - full transition - all ${audit.progress === 100
                                             ? 'bg-green-500'
                                             : audit.progress > 0
                                                 ? 'bg-yellow-500'
                                                 : 'bg-blue-500'
-                                            }`}
-                                        style={{ width: `${audit.progress}%` }}
+                                            } `}
+                                        style={{ width: `${audit.progress}% ` }}
                                     />
                                 </div>
                             </div>
 
                             {/* Footer: Actions */}
-                            <div className="flex justify-end gap-3 pt-3 mt-3 border-t border-gray-200">
-                                {(audit.status === 'Agendada' || audit.status === 'Em Andamento') && (
+                            {!isAuditorMode && (
+                                <div className="flex justify-end gap-3 pt-3 mt-3 border-t border-gray-200">
+                                    {(audit.status === 'Agendada' || audit.status === 'Em Andamento') && (
+                                        <button
+                                            onClick={() => handlePlay(audit)}
+                                            className="p-2 text-[#BF7B54] hover:text-[#8C512E] hover:bg-orange-50 rounded-lg transition-colors bg-orange-50/50"
+                                            title={audit.status === 'Agendada' ? 'Iniciar' : 'Continuar'}
+                                        >
+                                            <PlayCircle size={20} />
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => handlePlay(audit)}
-                                        className="p-2 text-[#BF7B54] hover:text-[#8C512E] hover:bg-orange-50 rounded-lg transition-colors bg-orange-50/50"
-                                        title={audit.status === 'Agendada' ? 'Iniciar' : 'Continuar'}
+                                        onClick={() => handleEdit(audit)}
+                                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-gray-50"
+                                        title="Editar"
                                     >
-                                        <PlayCircle size={20} />
+                                        <Pencil size={20} />
                                     </button>
-                                )}
-                                <button
-                                    onClick={() => handleEdit(audit)}
-                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-gray-50"
-                                    title="Editar"
-                                >
-                                    <Pencil size={20} />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(audit.id)}
-                                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors bg-red-50/50"
-                                    title="Excluir"
-                                >
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
+                                    <button
+                                        onClick={() => handleDelete(audit.id)}
+                                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors bg-red-50/50"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))
                 )}
@@ -582,7 +618,19 @@ const AuditsPageContent: React.FC = () => {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Escopo</label>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-gray-700">Escopo</label>
+                                    {qmsScope && (
+                                        <button
+                                            onClick={() => setSelectedAudit({ ...selectedAudit, scope: qmsScope })}
+                                            className="text-[10px] text-[#BF7B54] hover:underline flex items-center gap-1"
+                                            title="Copiar do Manual da Qualidade"
+                                        >
+                                            <Copy size={10} />
+                                            Importar do SGQ
+                                        </button>
+                                    )}
+                                </div>
                                 <input
                                     type="text"
                                     value={selectedAudit.scope}

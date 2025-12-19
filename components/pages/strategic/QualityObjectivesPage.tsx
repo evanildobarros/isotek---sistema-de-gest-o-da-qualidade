@@ -7,7 +7,7 @@ import { ConfirmModal } from '../../common/ConfirmModal';
 import { QualityObjective } from '../../../types';
 
 export const QualityObjectivesPage: React.FC = () => {
-    const { user, company, loadingCompany, effectiveCompanyId } = useAuthContext();
+    const { user, company, loadingCompany, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [objectives, setObjectives] = useState<QualityObjective[]>([]);
     const [processes, setProcesses] = useState<Process[]>([]);
@@ -217,13 +217,15 @@ export const QualityObjectivesPage: React.FC = () => {
                         Planejamento para alcançar resultados (ISO 9001: 6.2)
                     </p>
                 </div>
-                <button
-                    onClick={() => openModal()}
-                    className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2 rounded-lg hover:bg-[#3F858C] transition-colors shadow-md"
-                >
-                    <Plus size={20} />
-                    Novo Objetivo
-                </button>
+                {!isAuditorMode && (
+                    <button
+                        onClick={() => openModal()}
+                        className="flex items-center gap-2 bg-[#025159] text-white px-4 py-2 rounded-lg hover:bg-[#3F858C] transition-colors shadow-md"
+                    >
+                        <Plus size={20} />
+                        Novo Objetivo
+                    </button>
+                )}
             </header>
 
             <div className="space-y-4">
@@ -260,21 +262,23 @@ export const QualityObjectivesPage: React.FC = () => {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <button
-                                            onClick={() => openUpdateModal(obj)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#025159] text-white rounded-lg text-sm font-medium hover:bg-[#3F858C] transition-colors"
-                                        >
-                                            <Edit2 size={14} />
-                                            Atualizar Medição
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(obj.id)}
-                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
+                                    {!isAuditorMode && (
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                onClick={() => openUpdateModal(obj)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#025159] text-white rounded-lg text-sm font-medium hover:bg-[#3F858C] transition-colors"
+                                            >
+                                                <Edit2 size={14} />
+                                                Atualizar Medição
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(obj.id)}
+                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Progress Bar */}
@@ -330,12 +334,14 @@ export const QualityObjectivesPage: React.FC = () => {
                     <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
                         <Target className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-500 dark:text-gray-400">Nenhum objetivo definido ainda.</p>
-                        <button
-                            onClick={() => openModal()}
-                            className="mt-4 text-[#025159] hover:underline font-medium"
-                        >
-                            Criar primeiro objetivo
-                        </button>
+                        {!isAuditorMode && (
+                            <button
+                                onClick={() => openModal()}
+                                className="mt-4 text-[#025159] hover:underline font-medium"
+                            >
+                                Criar primeiro objetivo
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
