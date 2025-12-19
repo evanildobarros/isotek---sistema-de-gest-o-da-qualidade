@@ -32,7 +32,6 @@ interface AuditDetails {
     notes: string;
     auditor?: {
         full_name: string;
-        email: string;
         avatar_url: string;
     };
 }
@@ -86,7 +85,7 @@ export const ExternalAuditDetailsPage: React.FC = () => {
             // Fetch Audit Info (sem join quebrado)
             const { data: auditData, error: auditError } = await supabase
                 .from('audit_assignments')
-                .select('id, company_id, status, start_date, end_date, notes, auditor_id, audit_type, scope')
+                .select('id, company_id, status, start_date, end_date, notes, auditor_id')
                 .eq('id', id)
                 .single();
 
@@ -97,7 +96,7 @@ export const ExternalAuditDetailsPage: React.FC = () => {
             if (auditData.auditor_id) {
                 const { data: profileData } = await supabase
                     .from('profiles')
-                    .select('full_name, email, avatar_url')
+                    .select('full_name, avatar_url')
                     .eq('id', auditData.auditor_id)
                     .maybeSingle();
 
@@ -206,7 +205,6 @@ export const ExternalAuditDetailsPage: React.FC = () => {
     // If not, and we are in auditor mode, use current user info.
     const displayAuditor = audit.auditor || (isAuditorMode && user ? {
         full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Auditor',
-        email: user.email || '',
         avatar_url: user.user_metadata?.avatar_url || ''
     } : undefined);
 
