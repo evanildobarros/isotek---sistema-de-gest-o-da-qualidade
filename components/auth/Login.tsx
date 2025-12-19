@@ -69,38 +69,41 @@ export const Login: React.FC = () => {
 
     return (
         <div
-            className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url('/assets/login-background-new.png')" }}
+            className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat relative overflow-hidden"
+            style={{
+                backgroundImage: "url('/assets/login-background-new.png')",
+                backgroundColor: '#f8fafc'
+            }}
         >
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="flex justify-center">
-                    <Link to="/" className="hover:opacity-80 transition-opacity" title="Voltar para Home">
-                        <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="30" cy="20" r="15" fill="#2dd4bf" />
-                            <path d="M15 40 H45 V85 C45 93.2843 38.2843 100 30 100 C21.7157 100 15 93.2843 15 85 V40 Z" fill="#2dd4bf" />
-                            <path d="M40 60 L80 95 L95 80 L55 45 Z" fill="#0c4a6e" />
-                            <path d="M5 70 L85 20 L95 35 L15 85 Z" fill="#86efac" />
-                        </svg>
+            {/* Subtle overlay for better contrast */}
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]"></div>
+
+            <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+                <div className="flex justify-center mb-8">
+                    <Link to="/" className="transform hover:scale-105 transition-transform duration-300" title="Voltar para Home">
+                        <div className="p-4 bg-white rounded-2xl shadow-xl border border-gray-100 flex items-center justify-center">
+                            <img src="/logo_isotek.svg" alt="Isotek Logo" className="w-20 h-20 object-contain" />
+                        </div>
                     </Link>
                 </div>
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                <h2 className="text-center text-4xl font-extrabold text-gray-900 tracking-tight">
                     Entrar na Plataforma
                 </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
+                <p className="mt-3 text-center text-lg text-gray-600 font-medium">
                     Acesse sua conta Isotek
                 </p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
+            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+                <div className="bg-white/70 backdrop-blur-xl py-10 px-6 shadow-2xl sm:rounded-3xl sm:px-12 border border-white/60">
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
                                 E-mail corporativo
                             </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <div className="mt-1 relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-isotek-500 transition-colors" aria-hidden="true" />
                                 </div>
                                 <input
                                     id="email"
@@ -110,19 +113,19 @@ export const Login: React.FC = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="focus:ring-isotek-500 focus:border-isotek-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 border"
+                                    className="block w-full pl-11 pr-4 py-3 bg-white/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-isotek-500/20 focus:border-isotek-500 transition-all sm:text-sm"
                                     placeholder="seu@email.com"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
                                 Senha
                             </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <div className="mt-1 relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-isotek-500 transition-colors" aria-hidden="true" />
                                 </div>
                                 <input
                                     id="password"
@@ -132,12 +135,12 @@ export const Login: React.FC = () => {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="focus:ring-isotek-500 focus:border-isotek-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-2 border"
+                                    className="block w-full pl-11 pr-12 py-3 bg-white/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-isotek-500/20 focus:border-isotek-500 transition-all sm:text-sm"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-isotek-500 focus:outline-none transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? (
@@ -155,48 +158,52 @@ export const Login: React.FC = () => {
                                     id="remember-me"
                                     name="remember-me"
                                     type="checkbox"
-                                    className="h-4 w-4 text-isotek-600 focus:ring-isotek-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-isotek-600 focus:ring-isotek-500/30 border-gray-300 rounded-md cursor-pointer"
                                 />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600 font-medium cursor-pointer hover:text-gray-900">
                                     Lembrar-me
                                 </label>
                             </div>
 
                             <div className="text-sm">
-                                <a href="#" className="font-medium text-isotek-600 hover:text-isotek-500">
+                                <a href="#" className="font-semibold text-isotek-600 hover:text-isotek-700 transition-colors">
                                     Esqueceu sua senha?
                                 </a>
                             </div>
                         </div>
 
-                        <div>
+                        <div className="pt-2">
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-isotek-600 hover:bg-isotek-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-isotek-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                                className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-[#03A6A6] hover:bg-[#028a8a] focus:outline-none focus:ring-4 focus:ring-[#03A6A6]/30 disabled:opacity-70 disabled:cursor-not-allowed transition-all active:scale-[0.98] overflow-hidden group"
                             >
+                                <div className="absolute inset-0 bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
                                 {isLoading ? (
                                     <Loader2 className="animate-spin h-5 w-5" />
                                 ) : (
-                                    <span className="flex items-center gap-2">
-                                        Entrar na Plataforma <ArrowRight size={16} />
+                                    <span className="flex items-center gap-2 relative z-10 text-white">
+                                        Login <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                     </span>
                                 )}
                             </button>
                         </div>
                     </form>
 
-                    <div className="mt-6">
+                    <div className="mt-8">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300" />
+                                <div className="w-full border-t border-gray-200" />
                             </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-gray-500">
-                                    Protegido por criptografia SSL
+                            <div className="relative flex justify-center text-xs uppercase tracking-widest font-semibold">
+                                <span className="px-4 bg-white/80 rounded-full text-gray-400">
+                                    Segurança Isotek
                                 </span>
                             </div>
                         </div>
+                        <p className="text-center mt-4 text-[10px] text-gray-400 font-medium">
+                            Protegido por criptografia SSL de 256 bits
+                        </p>
                     </div>
                 </div>
             </div>
