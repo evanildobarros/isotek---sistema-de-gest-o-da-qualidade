@@ -1,3 +1,5 @@
+import { AuditContextInfo } from '../types';
+
 export const PLANS = {
     start: {
         id: 'price_start_brl',
@@ -74,4 +76,39 @@ export const AUDITOR_RATES = {
     diamond: { label: 'Diamante', rate: 0.85, next: null }
 };
 
+
 export const AUDIT_BASE_PRICE = 1200; // Preço base diária sugerida
+
+// Mapeamento de Contexto ISO 9001:2015 por Rota (Dicas de Auditoria)
+export const AUDIT_ROUTE_MAP: Record<string, AuditContextInfo> = {
+    '/app/documentos': {
+        clause: '7.5',
+        title: 'Informação Documentada',
+        description: 'Verifique aprovação, revisão e disponibilidade dos documentos.'
+    },
+    '/app/matriz-riscos': {
+        clause: '6.1',
+        title: 'Riscos e Oportunidades',
+        description: 'Confira se os riscos altos possuem planos de ação.'
+    },
+    '/app/fornecedores': {
+        clause: '8.4',
+        title: 'Provisão Externa',
+        description: 'Verifique os critérios de seleção e avaliação.'
+    },
+    '/app/politica-qualidade': {
+        clause: '5.1',
+        title: 'Liderança',
+        description: 'Busque evidências do comprometimento da alta direção.'
+    },
+    '/app/acoes-corretivas': {
+        clause: '10.2',
+        title: 'Não Conformidade e Ação Corretiva',
+        description: 'Verifique se as causas raízes foram investigadas.'
+    },
+    '/app/auditorias': {
+        clause: '9.2',
+        title: 'Auditoria Interna',
+        description: 'Cheque o cumprimento do programa de auditoria.'
+    }
+};

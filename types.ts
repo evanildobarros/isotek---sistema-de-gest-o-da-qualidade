@@ -719,3 +719,9 @@ export interface AuditFindingsSummary {
   aguardando_validacao: number;
   resolvidas: number;
 }
+
+export interface AuditContextInfo {
+  clause: string;
+  title: string;
+  description?: string;
+}

@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { AuditContextInfo } from '../types';
+import { AUDIT_ROUTE_MAP } from '../lib/constants';
+import { useAuthContext } from './AuthContext';
 
 interface TargetCompany {
     id: string;
@@ -9,11 +13,10 @@ interface TargetCompany {
 interface AuditorContextType {
     isAuditorMode: boolean;
     targetCompany: TargetCompany | null;
+    currentContext: AuditContextInfo | null;
     enterAuditorMode: (company: TargetCompany) => void;
     exitAuditorMode: () => void;
 }
-
-import { useAuthContext } from './AuthContext';
 
 const AuditorContext = createContext<AuditorContextType | undefined>(undefined);
 
@@ -21,6 +24,20 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
     const { setViewingAsCompany } = useAuthContext();
     const [isAuditorMode, setIsAuditorMode] = useState(false);
     const [targetCompany, setTargetCompany] = useState<TargetCompany | null>(null);
+    const [currentContext, setCurrentContext] = useState<AuditContextInfo | null>(null);
+    const location = useLocation();
+
+    // Context detecting effect
+    useEffect(() => {
+        if (!isAuditorMode) {
+            setCurrentContext(null);
+            return;
+        }
+
+        const path = location.pathname;
+        const context = AUDIT_ROUTE_MAP[path] || null;
+        setCurrentContext(context);
+    }, [location.pathname, isAuditorMode]);
 
     // Initial load from storage
     useEffect(() => {
@@ -62,9 +79,10 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
     const value = React.useMemo(() => ({
         isAuditorMode,
         targetCompany,
+        currentContext,
         enterAuditorMode,
         exitAuditorMode
-    }), [isAuditorMode, targetCompany]);
+    }), [isAuditorMode, targetCompany, currentContext]);
 
     return (
         <AuditorContext.Provider value={value}>

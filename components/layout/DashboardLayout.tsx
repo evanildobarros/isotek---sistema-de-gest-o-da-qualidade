@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { AiChatWidget } from '../common/AiChatWidget';
+import { AiChatWidget, AuditActionPanel } from '../common';
 import { IsoSection } from '../../types';
 import { useAuditor } from '../../contexts/AuditorContext';
 import { Eye, ArrowLeft } from 'lucide-react';
@@ -13,7 +13,7 @@ export const DashboardLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Auditor Context
-    const { isAuditorMode, targetCompany, exitAuditorMode } = useAuditor();
+    const { isAuditorMode, targetCompany, exitAuditorMode, currentContext } = useAuditor();
 
     const handleExitAuditorMode = () => {
         exitAuditorMode();
@@ -106,6 +106,11 @@ export const DashboardLayout: React.FC = () => {
 
             {/* AI Assistant Widget */}
             <AiChatWidget />
+
+            {/* Auditor Action Panel */}
+            {isAuditorMode && (
+                <AuditActionPanel />
+            )}
         </div>
     );
 };

@@ -1,294 +1,219 @@
 import React, { useState } from 'react';
 import {
-    CheckCircle,
-    AlertTriangle,
-    Lightbulb,
-    XCircle,
-    MessageSquare,
-    Send,
+    ClipboardCheck,
     X,
-    Loader2
+    ChevronDown,
+    ChevronUp,
+    CheckCircle2,
+    AlertCircle,
+    MessageSquare,
+    Minimize2,
+    Maximize2,
+    Send
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '../../lib/supabase';
 import { useAuditor } from '../../contexts/AuditorContext';
+import { AuditResponseStatus } from '../../types';
 
-export type AuditSeverity = 'conforme' | 'oportunidade' | 'nao_conformidade_menor' | 'nao_conformidade_maior';
-
-interface AuditActionPanelProps {
-    entityId: string;
-    entityType: 'document' | 'risk' | 'rnc' | 'supplier' | 'process' | 'objective' | 'training' | 'audit' | 'general';
-    entityName: string;
-    auditAssignmentId: string;
-    existingFinding?: {
-        id: string;
-        severity: AuditSeverity;
-        auditor_notes: string;
-        status: string;
-    } | null;
-    onFindingSaved?: () => void;
-    compact?: boolean;
+interface Question {
+    id: number;
+    text: string;
+    status: AuditResponseStatus | null;
+    evidence?: string;
 }
 
-const severityConfig: Record<AuditSeverity, {
-    label: string;
-    icon: React.ElementType;
-    bgColor: string;
-    textColor: string;
-    borderColor: string;
-    description: string;
-}> = {
-    conforme: {
-        label: 'Conforme',
-        icon: CheckCircle,
-        bgColor: 'bg-green-50 hover:bg-green-100',
-        textColor: 'text-green-700',
-        borderColor: 'border-green-200',
-        description: 'Atende aos requisitos da norma'
-    },
-    oportunidade: {
-        label: 'Oportunidade',
-        icon: Lightbulb,
-        bgColor: 'bg-blue-50 hover:bg-blue-100',
-        textColor: 'text-blue-700',
-        borderColor: 'border-blue-200',
-        description: 'Sugestão de melhoria'
-    },
-    nao_conformidade_menor: {
-        label: 'NC Menor',
-        icon: AlertTriangle,
-        bgColor: 'bg-orange-50 hover:bg-orange-100',
-        textColor: 'text-orange-700',
-        borderColor: 'border-orange-200',
-        description: 'Não conformidade que não afeta a eficácia do SGQ'
-    },
-    nao_conformidade_maior: {
-        label: 'NC Maior',
-        icon: XCircle,
-        bgColor: 'bg-red-50 hover:bg-red-100',
-        textColor: 'text-red-700',
-        borderColor: 'border-red-200',
-        description: 'Não conformidade crítica que afeta a eficácia do SGQ'
-    }
-};
+const MOCK_QUESTIONS = [
+    { id: 1, text: 'O processo possui indicadores definidos?' },
+    { id: 2, text: 'A documentação está atualizada?' },
+    { id: 3, text: 'As competências dos envolvidos foram verificadas?' }
+];
 
-export const AuditActionPanel: React.FC<AuditActionPanelProps> = ({
-    entityId,
-    entityType,
-    entityName,
-    auditAssignmentId,
-    existingFinding,
-    onFindingSaved,
-    compact = false
-}) => {
-    const { isAuditorMode } = useAuditor();
+export const AuditActionPanel: React.FC = () => {
+    const { isAuditorMode, currentContext } = useAuditor();
     const [isExpanded, setIsExpanded] = useState(false);
-    const [selectedSeverity, setSelectedSeverity] = useState<AuditSeverity | null>(
-        existingFinding?.severity || null
+    const [questions, setQuestions] = useState<Question[]>(
+        MOCK_QUESTIONS.map(q => ({ ...q, status: null }))
     );
-    const [notes, setNotes] = useState(existingFinding?.auditor_notes || '');
-    const [saving, setSaving] = useState(false);
+    const [activeNCItem, setActiveNCItem] = useState<number | null>(null);
 
-    // Só renderiza se estiver em modo auditor
-    if (!isAuditorMode) {
-        return null;
-    }
+    if (!isAuditorMode) return null;
 
-    const handleSaveFinding = async () => {
-        if (!selectedSeverity) {
-            toast.warning('Selecione uma classificação');
-            return;
-        }
+    const handleAnswer = (questionId: number, status: AuditResponseStatus) => {
+        setQuestions(prev => prev.map(q =>
+            q.id === questionId ? { ...q, status } : q
+        ));
 
-        setSaving(true);
-        try {
-            if (existingFinding?.id) {
-                // Atualizar constatação existente
-                const { error } = await supabase
-                    .from('audit_findings')
-                    .update({
-                        severity: selectedSeverity,
-                        auditor_notes: notes,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', existingFinding.id);
-
-                if (error) throw error;
-                toast.success('Constatação atualizada!');
-            } else {
-                // Criar nova constatação
-                const { error } = await supabase
-                    .from('audit_findings')
-                    .insert({
-                        audit_assignment_id: auditAssignmentId,
-                        entity_type: entityType,
-                        entity_id: entityId,
-                        severity: selectedSeverity,
-                        auditor_notes: notes,
-                        status: 'open'
-                    });
-
-                if (error) throw error;
-                toast.success('Constatação registrada!');
-            }
-
-            setIsExpanded(false);
-            onFindingSaved?.();
-        } catch (error: any) {
-            console.error('Erro ao salvar constatação:', error);
-            toast.error('Erro ao salvar: ' + error.message);
-        } finally {
-            setSaving(false);
+        if (status === 'non_compliant') {
+            setActiveNCItem(questionId);
+        } else {
+            setActiveNCItem(null);
+            toast.success('Resposta registrada como Conforme!');
         }
     };
 
-    // Versão compacta - apenas ícones
-    if (compact) {
-        return (
-            <div className="flex items-center gap-1">
-                {Object.entries(severityConfig).map(([key, config]) => {
-                    const Icon = config.icon;
-                    const isSelected = selectedSeverity === key;
-                    return (
-                        <button
-                            key={key}
-                            onClick={() => {
-                                setSelectedSeverity(key as AuditSeverity);
-                                setIsExpanded(true);
-                            }}
-                            className={`p-1.5 rounded-lg border transition-all ${isSelected
-                                ? `${config.bgColor} ${config.borderColor} ${config.textColor} ring-2 ring-offset-1 ring-${key === 'conforme' ? 'green' : key === 'oportunidade' ? 'blue' : key === 'nao_conformidade_menor' ? 'orange' : 'red'}-300`
-                                : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                                }`}
-                            title={config.label}
-                        >
-                            <Icon size={14} />
-                        </button>
-                    );
-                })}
+    const handleSaveNC = (questionId: number, evidence: string) => {
+        if (!evidence.trim()) {
+            toast.error('Descreva a evidência objetiva!');
+            return;
+        }
 
-                {isExpanded && (
-                    <button
-                        onClick={() => setIsExpanded(true)}
-                        className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
-                        title="Adicionar observações"
-                    >
-                        <MessageSquare size={14} />
-                    </button>
+        setQuestions(prev => prev.map(q =>
+            q.id === questionId ? { ...q, evidence } : q
+        ));
+        setActiveNCItem(null);
+        toast.warning('Não Conformidade registrada com evidência.');
+    };
+
+    const pendingCount = questions.filter(q => q.status === null).length;
+
+    // Minimizado (FAB)
+    if (!isExpanded) {
+        return (
+            <button
+                onClick={() => setIsExpanded(true)}
+                className="fixed bottom-6 right-24 z-50 p-4 bg-[#025159] text-white rounded-full shadow-2xl hover:scale-110 transition-all group"
+                title="Painel de Auditoria"
+            >
+                <ClipboardCheck className="w-8 h-8" />
+                {pendingCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full border-2 border-white">
+                        {pendingCount}
+                    </span>
                 )}
-            </div>
+            </button>
         );
     }
 
-    // Versão expandida padrão - Organizada em blocos horizontais
+    // Expandido
     return (
-        <div className="bg-amber-50 rounded-xl overflow-hidden">
-            {/* Bloco 1: Cabeçalho - Identificação da classificação */}
-            <div className="flex items-center justify-between px-4 py-3 bg-amber-100 border-b border-amber-200">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-amber-200 rounded-lg">
-                        <CheckCircle size={16} className="text-amber-700" />
+        <div className="fixed bottom-6 right-24 z-50 w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300">
+            {/* Header */}
+            <div className="bg-[#025159] p-4 text-white flex items-center justify-between">
+                <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wider opacity-70">Contexto ISO 9001:2015</span>
+                    <h3 className="font-bold flex items-center gap-2">
+                        {currentContext ? (
+                            <>
+                                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">{currentContext.clause}</span>
+                                <span className="truncate max-w-[200px]">{currentContext.title}</span>
+                            </>
+                        ) : (
+                            'Aguardando Contexto...'
+                        )}
+                    </h3>
+                </div>
+                <button
+                    onClick={() => setIsExpanded(false)}
+                    className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                    <Minimize2 className="w-5 h-5" />
+                </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto max-h-[400px] p-4 space-y-4 bg-gray-50">
+                {!currentContext ? (
+                    <div className="text-center py-10">
+                        <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 text-sm italic">
+                            Navegue para uma área auditável para iniciar a coleta de evidências.
+                        </p>
                     </div>
-                    <span className="text-sm font-semibold text-amber-800">
-                        Classificação do Auditor
-                    </span>
-                </div>
-                <span className="text-xs text-amber-600 truncate max-w-[150px]" title={entityName}>
-                    {entityName}
+                ) : (
+                    <>
+                        <p className="text-xs text-gray-500 leading-relaxed border-l-2 border-[#025159]/30 pl-3">
+                            {currentContext.description}
+                        </p>
+
+                        <div className="space-y-3">
+                            {questions.map((q) => (
+                                <div
+                                    key={q.id}
+                                    className={`bg-white p-4 rounded-xl border transition-all ${q.status === 'compliant' ? 'border-green-200 bg-green-50/30' :
+                                        q.status === 'non_compliant' ? 'border-red-200 bg-red-50/30' :
+                                            'border-gray-100'
+                                        }`}
+                                >
+                                    <p className="text-sm font-medium text-gray-800 mb-3">{q.text}</p>
+
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleAnswer(q.id, 'compliant')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${q.status === 'compliant'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-green-50 text-green-700 hover:bg-green-100'
+                                                }`}
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            Conforme
+                                        </button>
+                                        <button
+                                            onClick={() => handleAnswer(q.id, 'non_compliant')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${q.status === 'non_compliant'
+                                                ? 'bg-red-600 text-white'
+                                                : 'bg-red-50 text-red-700 hover:bg-red-100'
+                                                }`}
+                                        >
+                                            <AlertCircle className="w-4 h-4" />
+                                            Não Conforme
+                                        </button>
+                                    </div>
+
+                                    {/* NC Evidence Input */}
+                                    {activeNCItem === q.id && (
+                                        <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <label className="block text-[10px] font-bold text-red-600 uppercase">
+                                                Evidência Objetiva (Obrigatório)
+                                            </label>
+                                            <textarea
+                                                autoFocus
+                                                placeholder="Descreva o que foi encontrado que não atende ao requisito..."
+                                                className="w-full p-3 text-sm border-2 border-red-100 rounded-lg focus:ring-0 focus:border-red-300 resize-none h-24"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && e.ctrlKey) {
+                                                        handleSaveNC(q.id, (e.target as HTMLTextAreaElement).value);
+                                                    }
+                                                }}
+                                                id={`nc-evidence-${q.id}`}
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const val = (document.getElementById(`nc-evidence-${q.id}`) as HTMLTextAreaElement).value;
+                                                    handleSaveNC(q.id, val);
+                                                }}
+                                                className="w-full py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Send className="w-4 h-4" />
+                                                Salvar Não Conformidade
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {q.evidence && q.status === 'non_compliant' && activeNCItem !== q.id && (
+                                        <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-red-600 mb-1">
+                                                <MessageSquare className="w-3 h-3" />
+                                                EVIDÊNCIA COLETADA
+                                            </div>
+                                            <p className="text-xs text-red-800 italic leading-relaxed">
+                                                "{q.evidence}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-tighter">
+                    Auditando: <span className="text-[#025159] font-bold">Modo Coleta em Tempo Real</span>
                 </span>
-            </div>
-
-            {/* Bloco 2: Área de Classificação - Botões e Observações */}
-            <div className="p-4 border-b border-amber-200">
-                {/* Botões de Severidade em linha horizontal */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {Object.entries(severityConfig).map(([key, config]) => {
-                        const Icon = config.icon;
-                        const isSelected = selectedSeverity === key;
-                        return (
-                            <button
-                                key={key}
-                                onClick={() => setSelectedSeverity(key as AuditSeverity)}
-                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl border-2 transition-all flex-1 min-w-[70px] ${isSelected
-                                    ? `${config.bgColor} ${config.borderColor} ${config.textColor} ring-2 ring-offset-1`
-                                    : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
-                                    }`}
-                            >
-                                <Icon size={18} />
-                                <span className="text-xs font-medium whitespace-nowrap">{config.label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Campo de Observações */}
-                <div>
-                    <label className="block text-xs font-medium text-amber-700 mb-1.5">
-                        Observações do Auditor
-                    </label>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Descreva as evidências, referência à cláusula ISO, etc..."
-                        className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300 bg-white resize-none"
-                        rows={2}
-                    />
-                </div>
-            </div>
-
-            {/* Bloco 3: Botões de Ação */}
-            <div className="flex items-center justify-end gap-2 px-4 py-3 bg-amber-50">
-                <button
-                    onClick={() => {
-                        setSelectedSeverity(existingFinding?.severity || null);
-                        setNotes(existingFinding?.auditor_notes || '');
-                        setIsExpanded(false);
-                    }}
-                    className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 bg-white"
-                >
-                    Cancelar
-                </button>
-                <button
-                    onClick={handleSaveFinding}
-                    disabled={saving || !selectedSeverity}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                    {saving ? (
-                        <>
-                            <Loader2 size={16} className="animate-spin" />
-                            Salvando...
-                        </>
-                    ) : (
-                        <>
-                            <Send size={16} />
-                            {existingFinding ? 'Atualizar' : 'Registrar'} Constatação
-                        </>
-                    )}
-                </button>
+                <span className="text-[10px] text-gray-400">v1.0-alpha</span>
             </div>
         </div>
     );
 };
-
-// Componente de Badge para exibir constatação existente
-export const AuditFindingBadge: React.FC<{
-    severity: AuditSeverity;
-    notes?: string;
-    onClick?: () => void;
-}> = ({ severity, notes, onClick }) => {
-    const config = severityConfig[severity];
-    const Icon = config.icon;
-
-    return (
-        <button
-            onClick={onClick}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.bgColor} ${config.textColor} ${config.borderColor} transition-colors`}
-            title={notes || config.description}
-        >
-            <Icon size={12} />
-            {config.label}
-        </button>
-    );
-};
-
-export default AuditActionPanel;
