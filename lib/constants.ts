@@ -68,12 +68,19 @@ export const PLANS = {
     }
 };
 
-// Regras de Comissionamento do Marketplace (Auditor recebe X%)
+// Taxas do Sistema Financeiro (Stripe/Pagar.me)
+export const FINANCIAL_FEES = {
+    GATEWAY_PERCENT: 0.0399, // 3.99% (Cartão de Crédito)
+    FIXED_TRANSACTION: 1.00, // R$ 1,00 por transação
+    TAX_INVOICE_PERCENT: 0.06 // 6% (Imposto estimado sobre a nota da Isotek)
+};
+
+// Níveis e Comissões
 export const AUDITOR_RATES = {
-    bronze: { label: 'Bronze', rate: 0.70, next: 'silver' }, // 70%
-    silver: { label: 'Prata', rate: 0.75, next: 'gold' },
-    gold: { label: 'Ouro', rate: 0.80, next: 'diamond' },
-    diamond: { label: 'Diamante', rate: 0.85, next: null }
+    bronze: { label: 'Bronze', rate: 0.70 },
+    silver: { label: 'Prata', rate: 0.75 },
+    gold: { label: 'Ouro', rate: 0.80 },
+    diamond: { label: 'Diamante', rate: 0.85 }
 };
 
 

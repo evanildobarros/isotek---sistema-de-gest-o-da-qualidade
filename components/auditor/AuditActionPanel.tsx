@@ -12,6 +12,7 @@ import {
     Send
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '../../lib/supabase';
 import { useAuditor } from '../../contexts/AuditorContext';
 import { AuditResponseStatus } from '../../types';
 
@@ -29,7 +30,7 @@ const MOCK_QUESTIONS = [
 ];
 
 export const AuditActionPanel: React.FC = () => {
-    const { isAuditorMode, currentContext } = useAuditor();
+    const { isAuditorMode, currentContext, targetCompany } = useAuditor();
     const [isExpanded, setIsExpanded] = useState(false);
     const [questions, setQuestions] = useState<Question[]>(
         MOCK_QUESTIONS.map(q => ({ ...q, status: null }))
@@ -51,7 +52,7 @@ export const AuditActionPanel: React.FC = () => {
         }
     };
 
-    const handleSaveNC = (questionId: number, evidence: string) => {
+    const handleSaveNC = async (questionId: number, evidence: string) => {
         if (!evidence.trim()) {
             toast.error('Descreva a evidência objetiva!');
             return;
@@ -61,6 +62,33 @@ export const AuditActionPanel: React.FC = () => {
             q.id === questionId ? { ...q, evidence } : q
         ));
         setActiveNCItem(null);
+
+        // Notificar empresa
+        try {
+            if (targetCompany?.id) {
+                // 1. Buscar owner da empresa
+                const { data: companyData } = await supabase
+                    .from('companies')
+                    .select('owner_id')
+                    .eq('id', targetCompany.id)
+                    .single();
+
+                if (companyData?.owner_id) {
+                    await supabase.from('notifications').insert({
+                        company_id: targetCompany.id,
+                        recipient_id: companyData.owner_id,
+                        title: 'Nova Não Conformidade',
+                        message: `O auditor apontou uma falha no requisito ${currentContext?.clause || 'ISO'}.`,
+                        type: 'warning', // 'alert' mapeado para 'warning' do sistema
+                        link: '/app/melhoria/nao-conformidades',
+                        read: false
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao enviar notificação:', error);
+        }
+
         toast.warning('Não Conformidade registrada com evidência.');
     };
 

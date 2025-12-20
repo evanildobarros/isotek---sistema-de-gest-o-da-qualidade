@@ -26,7 +26,8 @@ import {
   HelpingHand,
   LayoutDashboard,
   Lock,
-  ArrowLeft
+  ArrowLeft,
+  Wallet
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../../types';
 import { usePlanLimits } from '../../hooks/usePlanLimits';
@@ -332,6 +333,12 @@ const auditorPortalGroups: MenuGroup[] = [
             section: IsoSection.CONTEXT_ANALYSIS,
             path: '/app/auditor-portal',
             icon: Briefcase
+          },
+          {
+            label: 'Minha Carteira',
+            section: IsoSection.USER_PROFILE,
+            path: '/app/minha-carteira',
+            icon: Wallet
           },
           {
             label: 'Consultar ISO 9001',
@@ -725,15 +732,7 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
 
         {/* Footer/Actions */}
         <div className="p-4 border-t border-gray-100 bg-gray-50">
-          {isAuditorMode ? (
-            <button
-              onClick={handleExitAuditorMode}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl transition-all shadow-sm group"
-            >
-              <BookOpen className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-              <span className="font-medium">Sair da Auditoria</span>
-            </button>
-          ) : isAuditorUser ? (
+          {isAuditorUser ? (
             <div className="px-4 py-3 bg-white border border-gray-200 rounded-xl flex items-center gap-3 shadow-sm">
               <div className="p-2 bg-amber-50 rounded-lg">
                 <UserCog className="w-5 h-5 text-amber-600" />

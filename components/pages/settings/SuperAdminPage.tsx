@@ -10,6 +10,8 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Company, AuditAssignment } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
+import { AUDIT_BASE_PRICE } from '../../../lib/constants';
+import { calculateAuditEarnings } from '../../../lib/utils/finance';
 
 // Interface para Auditores
 interface Auditor {
@@ -21,6 +23,7 @@ interface Auditor {
     // Status calculado
     status: 'livre' | 'em_auditoria';
     active_assignments?: number;
+    estimated_payout?: number;
 }
 
 // Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
@@ -182,7 +185,11 @@ export const SuperAdminPage: React.FC = () => {
                 role: p.role,
                 created_at: p.created_at,
                 status: assignmentCount.get(p.id) ? 'em_auditoria' : 'livre',
-                active_assignments: assignmentCount.get(p.id) || 0
+                active_assignments: assignmentCount.get(p.id) || 0,
+                estimated_payout: calculateAuditEarnings(
+                    (assignmentCount.get(p.id) || 0) * AUDIT_BASE_PRICE,
+                    'bronze'
+                ).auditorShare
             }));
 
             setAuditors(mappedAuditors);
@@ -835,6 +842,7 @@ export const SuperAdminPage: React.FC = () => {
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">E-mail</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Status</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Auditorias Ativas</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Valor Previsto</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Cadastrado em</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider text-right">Ações</th>
                                         </tr>
@@ -866,6 +874,9 @@ export const SuperAdminPage: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 text-sm text-gray-600 text-center">
                                                         {auditor.active_assignments || 0}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm font-medium text-emerald-600">
+                                                        {(auditor.estimated_payout || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                     </td>
                                                     <td className="px-6 py-4 text-sm text-gray-500">
                                                         {new Date(auditor.created_at).toLocaleDateString('pt-BR')}

@@ -23,6 +23,7 @@ const SectionPerfil = React.lazy(() => import('./components/sections/SectionPerf
 
 // Page components - Auditor
 const AuditorPortal = React.lazy(() => import('./components/pages/auditor/AuditorPortal').then(m => ({ default: m.AuditorPortal })));
+const AuditorWalletPage = React.lazy(() => import('./components/pages/auditor/AuditorWalletPage').then(m => ({ default: m.AuditorWalletPage })));
 
 // Page components - Strategic
 const SwotAnalysis = React.lazy(() => import('./components/pages/strategic/SwotAnalysis').then(m => ({ default: m.SwotAnalysis })));
@@ -103,6 +104,7 @@ const App: React.FC = () => {
                     <Route index element={<Navigate to="/app/dashboard" replace />} />
                     <Route path="dashboard" element={<SectionDashboard />} />
                     <Route path="auditor-portal" element={<AuditorPortal />} />
+                    <Route path="minha-carteira" element={<AuditorWalletPage />} />
                     <Route path="perfil" element={<SectionPerfil />} />
 
                     {/* Grupo A: Estratégia (Plan) */}

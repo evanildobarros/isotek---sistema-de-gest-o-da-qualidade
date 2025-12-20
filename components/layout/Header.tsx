@@ -9,6 +9,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { useAuditor } from '../../contexts/AuditorContext';
 import { supabase } from '../../lib/supabase';
 import { NotificationPanel } from './NotificationPanel';
+import { ActiveAuditIndicator } from '../common/ActiveAuditIndicator';
 
 interface HeaderProps {
   activeSection: IsoSection;
@@ -122,6 +123,9 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
 
       {/* Actions */}
       <div className="flex items-center gap-2 md:gap-4">
+
+        {/* Active Audit Indicator - Visível apenas se houver auditoria */}
+        <ActiveAuditIndicator />
 
         {/* Search */}
         <div className="relative hidden md:block" ref={searchRef}>

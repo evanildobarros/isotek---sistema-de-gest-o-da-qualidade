@@ -40,24 +40,10 @@ export const UsersPage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Busca usuários diretamente por profiles (mais confiável com RLS configurado)
-      let query = supabase
-        .from('profiles')
-        .select(`
-          id, 
-          email, 
-          full_name, 
-          role, 
-          created_at, 
-          company_id
-        `)
-        .order('created_at', { ascending: false });
+      // Busca usuários via RPC para garantir acesso seguro e incluir e-mails
+      const { data, error } = await supabase.rpc('get_users_with_emails');
 
-      if (!isSuperAdmin && company?.id) {
-        query = query.eq('company_id', company.id);
-      }
-
-      const { data, error } = await query;
+      if (error) throw error;
 
       if (error) throw error;
       setUsers(data || []);
