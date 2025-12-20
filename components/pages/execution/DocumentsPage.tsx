@@ -1000,11 +1000,11 @@ export const DocumentsPage: React.FC = () => {
                         return (
                             <div
                                 key={doc.id}
-                                className={`bg-white rounded-xl shadow-sm hover:shadow-md border transition-all overflow-hidden group ${borderClass}`}
+                                className={`bg-white rounded-xl shadow-sm hover:shadow-md border transition-all group ${borderClass}`}
                             >
                                 <div className={`flex flex-col ${auditorModeActive ? 'md:flex-row' : ''}`}>
                                     {/* Icon Area */}
-                                    <div className={`${bgClass} ${auditorModeActive ? 'md:w-48 py-4 md:py-0' : 'py-8'} flex items-center justify-center transition-all border-r border-gray-50`}>
+                                    <div className={`${bgClass} ${auditorModeActive ? 'md:w-48 py-4 md:py-0 md:rounded-l-xl md:rounded-tr-none' : 'py-8'} rounded-t-xl flex items-center justify-center transition-all border-r border-gray-50`}>
                                         <div className={`${bgClass} rounded-full p-4`}>
                                             <Icon size={auditorModeActive ? 40 : 48} className={colorClass} />
                                         </div>

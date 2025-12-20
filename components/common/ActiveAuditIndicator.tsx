@@ -1,22 +1,29 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Activity } from 'lucide-react';
 
 export const ActiveAuditIndicator = () => {
     // Busca auditoria ativa
-    const { data: activeAudit } = useQuery({
-        queryKey: ['activeAudit'],
-        queryFn: async () => {
+    const [activeAudit, setActiveAudit] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchAudit = async () => {
             const { data } = await supabase
                 .from('audit_assignments')
                 .select('*, auditor:profiles!auditor_id(full_name)')
-                .eq('status', 'em_andamento') // O status correto no banco é 'em_andamento', não 'in_progress'
+                .eq('status', 'em_andamento')
                 .single();
-            return data;
-        },
-        refetchInterval: 30000 // Atualiza a cada 30s
-    });
+
+            if (data) {
+                setActiveAudit(data);
+            }
+        };
+
+        fetchAudit();
+        const interval = setInterval(fetchAudit, 30000); // Atualiza a cada 30s
+
+        return () => clearInterval(interval);
+    }, []);
 
     if (!activeAudit) return null;
 

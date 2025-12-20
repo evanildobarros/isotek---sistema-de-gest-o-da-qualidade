@@ -563,7 +563,7 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
         }
       });
     });
-  }, [location.pathname, displayedGroups, openGroups]);
+  }, [location.pathname, displayedGroups]);
 
   const toggleGroup = React.useCallback((title: string) => {
     setOpenGroups(prev =>

@@ -67,16 +67,10 @@ const DynamicToaster: React.FC = () => {
 
   return (
     <Toaster
-      position="top-right"
+      position="top-center"
       richColors
       closeButton
       offset={offset}
-      toastOptions={{
-        style: {
-          marginTop: '0px',
-          marginLeft: '304px',
-        },
-      }}
     />
   );
 };
