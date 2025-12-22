@@ -26,6 +26,9 @@ export const UsersPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+
 
   const [formData, setFormData] = useState({
     email: '',
@@ -96,22 +99,45 @@ export const UsersPage: React.FC = () => {
 
     setDeletingId(id);
     try {
-      // Nota: Apenas um Super Admin ou uma Edge Function segura deve deletar do Auth.
-      // Aqui, como exemplo, removemos apenas o perfil se o RLS permitir, 
-      // mas o ideal é ter uma Edge Function 'admin-delete-user'.
-      const { error } = await supabase.from('profiles').delete().eq('id', id);
+      const { error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId: id }
+      });
 
       if (error) throw error;
 
-      toast.success('Usuário removido da organização.');
+      toast.success('Usuário removido com sucesso.');
       fetchUsers();
       refreshLimits();
     } catch (error: any) {
+      console.error('Error deleting user:', error);
       toast.error('Erro ao remover usuário.');
     } finally {
+
       setDeletingId(null);
     }
   };
+
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    setIsUpdatingRole(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.success('Permissão atualizada com sucesso!');
+      setEditingUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating role:', error);
+      toast.error('Erro ao atualizar permissão.');
+    } finally {
+      setIsUpdatingRole(false);
+    }
+  };
+
 
   const filteredUsers = users.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -252,7 +278,8 @@ export const UsersPage: React.FC = () => {
                           {new Date(profile.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+
                             {canDelete && (
                               <button
                                 onClick={() => handleDeleteUser(profile.id)}
@@ -263,9 +290,14 @@ export const UsersPage: React.FC = () => {
                                 {deletingId === profile.id ? <div className="animate-spin w-4 h-4 border-2 border-red-200 border-t-red-600 rounded-full" /> : <Trash2 className="w-4 h-4" />}
                               </button>
                             )}
-                            <button className="p-2 text-gray-400 hover:text-[#025159] hover:bg-teal-50 rounded-lg transition-all" title="Editar permissões">
+                            <button
+                              onClick={() => setEditingUser(profile)}
+                              className="p-2 text-gray-400 hover:text-[#025159] hover:bg-teal-50 rounded-lg transition-all"
+                              title="Editar permissões"
+                            >
                               <Edit2 className="w-4 h-4" />
                             </button>
+
                           </div>
                         </td>
                       </tr>
@@ -380,7 +412,58 @@ export const UsersPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Edit Role Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-teal-50 text-[#025159] rounded-xl">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">Editar Permissão</h3>
+                  <p className="text-[10px] text-gray-500 truncate max-w-[150px]">{editingUser.full_name || editingUser.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Novo Cargo / Permissão</label>
+                <select
+                  defaultValue={editingUser.role}
+                  onChange={e => handleUpdateRole(editingUser.id, e.target.value)}
+                  disabled={isUpdatingRole}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-medium appearance-none cursor-pointer text-sm"
+                >
+                  <option value="operator">Operador (Uso Padrão)</option>
+                  <option value="admin">Administrador (Total)</option>
+                  <option value="viewer">Visualizador (Apenas Leitura)</option>
+                  <option value="auditor">Auditor (Especial)</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 px-4 py-2.5 text-gray-500 rounded-xl hover:bg-gray-100 font-bold transition-all text-xs"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
