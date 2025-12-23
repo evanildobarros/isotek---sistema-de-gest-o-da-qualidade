@@ -27,7 +27,9 @@ import {
   LayoutDashboard,
   Lock,
   ArrowLeft,
-  Wallet
+  Wallet,
+  ChevronsUpDown,
+  ChevronsDownUp
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../../types';
 import { usePlanLimits } from '../../hooks/usePlanLimits';
@@ -573,6 +575,20 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
     );
   }, []);
 
+  const collapseAll = React.useCallback(() => {
+    setOpenGroups([]);
+  }, []);
+
+  const expandAll = React.useCallback(() => {
+    const allTitles: string[] = [];
+    displayedGroups.forEach(group => {
+      group.sections.forEach(section => {
+        allTitles.push(section.sectionTitle);
+      });
+    });
+    setOpenGroups(allTitles);
+  }, [displayedGroups]);
+
   const handleExitAuditorMode = React.useCallback(() => {
     exitAuditorMode();
     navigate('/app/portal-auditor');
@@ -687,11 +703,31 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-          {displayedGroups.map((group) => (
+          {displayedGroups.map((group, index) => (
             <div key={group.groupTitle} className="space-y-2">
-              <h3 className="px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                {group.groupTitle}
-              </h3>
+              <div className="flex items-center justify-between px-2">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  {group.groupTitle}
+                </h3>
+                {index === 0 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={expandAll}
+                      className="p-1 text-gray-400 hover:text-[#025159] transition-colors rounded-md hover:bg-gray-100"
+                      title="Expandir todas as seções"
+                    >
+                      <ChevronsUpDown size={14} />
+                    </button>
+                    <button
+                      onClick={collapseAll}
+                      className="p-1 text-gray-400 hover:text-[#025159] transition-colors rounded-md hover:bg-gray-100"
+                      title="Recolher todas as seções"
+                    >
+                      <ChevronsDownUp size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-1">
                 {group.sections.map((section) => (
@@ -710,25 +746,25 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
               </div>
             </div>
           ))}
-
-          {/* Settings Section (Only for Company Owner) */}
-          {!isAuditorUser && (
-            <div className="space-y-2 pt-4 border-t border-gray-100">
-              <h3 className="px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                {settingsGroup.sectionTitle}
-              </h3>
-              <SidebarGroup
-                title={settingsGroup.sectionTitle}
-                icon={settingsGroup.icon}
-                isOpen={openGroups.includes(settingsGroup.sectionTitle)}
-                onToggle={() => toggleGroup(settingsGroup.sectionTitle)}
-                isActive={settingsGroup.items.some(item => location.pathname === item.path)}
-              >
-                {settingsGroup.items.map(item => renderMenuItem(item))}
-              </SidebarGroup>
-            </div>
-          )}
         </div>
+
+        {/* Settings Section (Only for Company Owner) */}
+        {!isAuditorUser && (
+          <div className="space-y-2 pt-4 border-t border-gray-100">
+            <h3 className="px-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              {settingsGroup.sectionTitle}
+            </h3>
+            <SidebarGroup
+              title={settingsGroup.sectionTitle}
+              icon={settingsGroup.icon}
+              isOpen={openGroups.includes(settingsGroup.sectionTitle)}
+              onToggle={() => toggleGroup(settingsGroup.sectionTitle)}
+              isActive={settingsGroup.items.some(item => location.pathname === item.path)}
+            >
+              {settingsGroup.items.map(item => renderMenuItem(item))}
+            </SidebarGroup>
+          </div>
+        )}
 
         {/* Footer/Actions */}
         <div className="p-4 border-t border-gray-100 bg-gray-50">

@@ -459,11 +459,13 @@ export const SuperAdminPage: React.FC = () => {
                 .eq('id', company.id);
 
             if (error) throw error;
+            setToggleStatusModal({ isOpen: false, company: null });
             fetchCompanies();
             toast.success(`Empresa ${newStatus === 'active' ? 'ativada' : 'bloqueada'} com sucesso!`);
         } catch (error: any) {
             console.error('Error toggling status:', error);
             toast.error(`Erro ao alterar status: ${error.message}`);
+            setToggleStatusModal({ isOpen: false, company: null });
         }
     };
 
@@ -488,10 +490,12 @@ export const SuperAdminPage: React.FC = () => {
             if (error) throw error;
 
             toast.success('Empresa excluída com sucesso.');
+            setDeleteModal({ isOpen: false, company: null, step: 1 });
             fetchCompanies();
         } catch (error: any) {
             console.error('Error deleting company:', error);
             toast.error(`Erro ao excluir: ${error.message}`);
+            setDeleteModal({ isOpen: false, company: null, step: 1 });
         }
     };
 

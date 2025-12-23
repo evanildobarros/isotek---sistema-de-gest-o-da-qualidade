@@ -32,7 +32,7 @@ interface AuditAssignmentWithAuditor {
     auditor?: {
         id: string;
         full_name: string;
-        email: string;
+        email?: string;
     };
 }
 
@@ -74,12 +74,12 @@ export const CompanyFindingsResponsePage: React.FC = () => {
             // Buscar perfis dos auditores separadamente
             const auditorIds = [...new Set((assignmentsData || []).map(a => a.auditor_id).filter(Boolean))];
 
-            let auditorsMap: Record<string, { id: string; full_name: string; email: string }> = {};
+            let auditorsMap: Record<string, { id: string; full_name: string; email?: string }> = {};
 
             if (auditorIds.length > 0) {
                 const { data: auditorsData } = await supabase
                     .from('profiles')
-                    .select('id, full_name, email')
+                    .select('id, full_name')
                     .in('id', auditorIds);
 
                 (auditorsData || []).forEach(a => {

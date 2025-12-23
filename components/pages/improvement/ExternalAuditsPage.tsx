@@ -27,7 +27,7 @@ interface AuditAssignment {
     notes: string;
     auditor?: {
         full_name: string;
-        email: string;
+        email?: string;
         avatar_url: string;
     };
     created_at: string;
@@ -61,7 +61,7 @@ export const ExternalAuditsPage: React.FC = () => {
             // 1. Buscar auditorias
             const { data: auditsData, error: auditsError } = await supabase
                 .from('audit_assignments')
-                .select('id, auditor_id, company_id, status, start_date, end_date, notes')
+                .select('id, auditor_id, company_id, status, start_date, end_date, notes, created_at')
                 .eq('company_id', effectiveCompanyId)
                 .order('start_date', { ascending: false });
 
@@ -74,7 +74,7 @@ export const ExternalAuditsPage: React.FC = () => {
             if (auditorIds.length > 0) {
                 const { data: profilesData } = await supabase
                     .from('profiles')
-                    .select('id, full_name, email, avatar_url')
+                    .select('id, full_name, avatar_url')
                     .in('id', auditorIds);
 
                 if (profilesData) {

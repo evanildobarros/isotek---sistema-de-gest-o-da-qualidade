@@ -103,7 +103,12 @@ export const CorrectiveActionsPage: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('corrective_actions_with_details')
-                .select('id, code, origin, description, responsible_name, responsible_id, deadline, status, immediate_action, root_cause, effectiveness_verified, effectiveness_notes, created_at, company_id')
+                .select(`
+                    id, code, origin, description, responsible_name, responsible_id, 
+                    deadline, status, immediate_action, root_cause, 
+                    effectiveness_verified, effectiveness_notes, created_at, company_id,
+                    tasks:corrective_action_tasks(*)
+                `)
                 .eq('company_id', effectiveCompanyId)
                 .order('created_at', { ascending: false });
 

@@ -4,13 +4,13 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { ConfirmModal } from '../../common/ConfirmModal';
-import { QualityObjective } from '../../../types';
+import { QualityObjective, Process } from '../../../types';
 
 export const QualityObjectivesPage: React.FC = () => {
     const { user, company, loadingCompany, effectiveCompanyId, isAuditorMode } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [objectives, setObjectives] = useState<QualityObjective[]>([]);
-    const [processes, setProcesses] = useState<Process[]>([]);
+    const [processes, setProcesses] = useState<{ id: string; name: string }[]>([]);
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     // Modal States

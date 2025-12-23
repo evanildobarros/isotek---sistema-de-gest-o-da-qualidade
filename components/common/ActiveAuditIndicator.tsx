@@ -8,14 +8,23 @@ export const ActiveAuditIndicator = () => {
 
     useEffect(() => {
         const fetchAudit = async () => {
-            const { data } = await supabase
+            const { data: auditData, error } = await supabase
                 .from('audit_assignments')
-                .select('*, auditor:profiles!auditor_id(full_name)')
+                .select('*')
                 .eq('status', 'em_andamento')
-                .single();
+                .maybeSingle();
 
-            if (data) {
-                setActiveAudit(data);
+            if (auditData) {
+                // Fetch auditor profile separately to avoid join issues if FK is not formal
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', auditData.auditor_id)
+                    .single();
+
+                setActiveAudit({ ...auditData, auditor: profile });
+            } else {
+                setActiveAudit(null);
             }
         };
 

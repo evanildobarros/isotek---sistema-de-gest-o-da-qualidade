@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { PageHeader } from '../../common/PageHeader';
 import { usePlanLimits } from '../../../hooks/usePlanLimits';
+import { ConfirmModal } from '../../common/ConfirmModal';
 
 interface UserProfile {
   id: string;
@@ -28,6 +29,8 @@ export const UsersPage: React.FC = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -77,7 +80,19 @@ export const UsersPage: React.FC = () => {
       });
 
       if (error) {
-        const errorMsg = error.message || 'Erro ao enviar convite.';
+        console.error('Invoke error details:', error);
+        let errorMsg = error.message || 'Erro ao enviar convite.';
+
+        // Supabase FunctionsHttpError costuma ter o corpo da resposta
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body && body.error) errorMsg = body.error;
+          }
+        } catch (e) {
+          console.error('Error parsing error body:', e);
+        }
+
         throw new Error(errorMsg);
       }
 
@@ -94,26 +109,57 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita.')) return;
+  const openDeleteModal = (user: UserProfile) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
 
+  const closeDeleteModal = () => {
+    setUserToDelete(null);
+    setShowDeleteModal(false);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    const id = userToDelete.id;
+    setShowDeleteModal(false);
     setDeletingId(id);
+
     try {
-      const { error } = await supabase.functions.invoke('admin-delete-user', {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         body: { userId: id }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Tentar extrair a mensagem do erro
+        let errorMessage = error.message || 'Erro desconhecido';
+        if (error.context) {
+          try {
+            const jsonData = await error.context.json();
+            if (jsonData?.error) {
+              errorMessage = jsonData.error;
+            }
+          } catch (e) {
+            // Não conseguiu parsear o JSON
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       toast.success('Usuário removido com sucesso.');
       fetchUsers();
       refreshLimits();
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      toast.error('Erro ao remover usuário.');
+      toast.error(error.message || 'Erro ao remover usuário.');
     } finally {
-
       setDeletingId(null);
+      setUserToDelete(null);
     }
   };
 
@@ -282,7 +328,7 @@ export const UsersPage: React.FC = () => {
 
                             {canDelete && (
                               <button
-                                onClick={() => handleDeleteUser(profile.id)}
+                                onClick={() => openDeleteModal(profile)}
                                 disabled={deletingId === profile.id}
                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                 title="Remover usuário"
@@ -412,6 +458,18 @@ export const UsersPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteUser}
+        title="Remover Usuário"
+        message={`Tem certeza que deseja remover ${userToDelete?.full_name || userToDelete?.email || 'este usuário'}? Esta ação não pode ser desfeita.`}
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        variant="danger"
+      />
+
       {/* Edit Role Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+    AreaChart,
+    Area,
     LineChart,
     Line,
     XAxis,
@@ -75,6 +77,7 @@ export const IndicatorsPage: React.FC = () => {
             ]);
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
+            toast.error('Erro ao carregar dados dos indicadores');
         } finally {
             setLoading(false);
         }
@@ -86,7 +89,7 @@ export const IndicatorsPage: React.FC = () => {
         // Fetch objectives
         const { data: objs, error: objError } = await supabase
             .from('quality_objectives')
-            .select('id, name, target_value, metric_name, frequency, deadline, status, company_id')
+            .select('id, name, target_value, metric_name, deadline, company_id')
             .eq('company_id', effectiveCompanyId);
 
         if (objError) throw objError;
@@ -287,7 +290,12 @@ export const IndicatorsPage: React.FC = () => {
                     {!isAuditorMode && (
                         <button
                             onClick={() => openMeasurementModal()}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium text-sm"
+                            disabled={objectives.length === 0}
+                            className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors shadow-sm font-medium text-sm ${objectives.length === 0
+                                ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                            title={objectives.length === 0 ? "Cadastre objetivos primeiro" : "Lançar Medição"}
                         >
                             <Plus className="w-4 h-4" />
                             Lançar Medição
@@ -318,7 +326,10 @@ export const IndicatorsPage: React.FC = () => {
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <h3 className="font-semibold text-gray-900">{obj.name}</h3>
-                                            <p className="text-sm text-gray-500">Meta: {obj.target_value} {obj.metric_name} | Freq: {obj.frequency}</p>
+                                            <p className="text-sm text-gray-500">
+                                                Meta: {obj.target_value} {obj.metric_name && obj.metric_name !== obj.target_value.toString() ? obj.metric_name : ''}
+                                                {obj.frequency && ` | Freq: ${obj.frequency}`}
+                                            </p>
                                         </div>
                                         {!isAuditorMode && (
                                             <button
@@ -334,7 +345,13 @@ export const IndicatorsPage: React.FC = () => {
                                     <div className="h-64 w-full">
                                         {data.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                                                <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                                <AreaChart data={data} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id={`colorValue-${obj.id}`} x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.1} />
+                                                            <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                                                        </linearGradient>
+                                                    </defs>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
                                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
@@ -343,15 +360,17 @@ export const IndicatorsPage: React.FC = () => {
                                                         cursor={{ stroke: '#e5e7eb' }}
                                                     />
                                                     <ReferenceLine y={obj.target_value} stroke="#ef4444" strokeDasharray="3 3" label={{ value: 'Meta', position: 'right', fill: '#ef4444', fontSize: 10 }} />
-                                                    <Line
+                                                    <Area
                                                         type="monotone"
                                                         dataKey="value"
-                                                        stroke="#2563eb"
-                                                        strokeWidth={2}
-                                                        dot={{ fill: '#2563eb', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                                                        activeDot={{ r: 6 }}
+                                                        stroke="#7c3aed"
+                                                        strokeWidth={3}
+                                                        fillOpacity={1}
+                                                        fill={`url(#colorValue-${obj.id})`}
+                                                        dot={{ fill: '#7c3aed', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                                                        activeDot={{ r: 6, strokeWidth: 0 }}
                                                     />
-                                                </LineChart>
+                                                </AreaChart>
                                             </ResponsiveContainer>
                                         ) : (
                                             <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">

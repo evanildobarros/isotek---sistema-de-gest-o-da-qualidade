@@ -54,7 +54,7 @@ const PLAN_ACCESS_RULES: Record<PlanId, string[]> = {
  * Hook to check plan limits and feature access
  */
 export function usePlanLimits(): PlanLimits {
-    const { company } = useAuthContext();
+    const { company, isSuperAdmin } = useAuthContext();
     const [usersCount, setUsersCount] = useState(0);
     const [storageCount, setStorageCount] = useState(0);
 
@@ -94,7 +94,7 @@ export function usePlanLimits(): PlanLimits {
             enterprise: 'Enterprise'
         };
 
-        const canAddUser = usersCount < maxUsers;
+        const canAddUser = isSuperAdmin || usersCount < maxUsers;
 
         const canAccessModule = (moduleName: string): boolean => {
             const normalizedModule = moduleName.toLowerCase();

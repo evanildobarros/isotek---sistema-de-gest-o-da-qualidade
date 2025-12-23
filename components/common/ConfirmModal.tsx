@@ -93,7 +93,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         <button
                             onClick={() => {
                                 onConfirm();
-                                onClose();
                             }}
                             className={`px-4 py-2 text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md ${styles.buttonBg}`}
                         >

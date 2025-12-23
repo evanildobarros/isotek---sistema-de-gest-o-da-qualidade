@@ -344,9 +344,9 @@ export const SectionDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-4xl font-bold text-gray-900">{metrics.totalNc}</span>
             <div className="w-24 h-12" style={{ minWidth: 96, minHeight: 48 }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width={96} height={48}>
                 <AreaChart data={metrics.ncTrendData}>
-                  <Area type="monotone" dataKey="value" stroke="#ef4444" fill="#fee2e2" strokeWidth={2} />
+                  <Area type="monotone" dataKey="value" stroke="#ef4444" fill="#fee2e2" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -372,7 +372,7 @@ export const SectionDashboard: React.FC = () => {
             </div>
           </div>
           <div className="w-20 h-20" style={{ minWidth: 80, minHeight: 80 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width={80} height={80}>
               <PieChart>
                 <Pie
                   data={[
@@ -410,7 +410,7 @@ export const SectionDashboard: React.FC = () => {
             </div>
           </div>
           <div className="w-24 h-16" style={{ minWidth: 96, minHeight: 64 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width={96} height={64}>
               <BarChart data={[
                 { name: 'Abertas', value: metrics.actionsOpen },
                 { name: 'Fechadas', value: metrics.actionsClosed }
@@ -437,7 +437,7 @@ export const SectionDashboard: React.FC = () => {
             </button>
           </div>
           <div className="h-72 w-full" style={{ minHeight: 288 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={288}>
               <AreaChart data={metrics.ncByMonth}>
                 <defs>
                   <linearGradient id="colorNc" x1="0" y1="0" x2="0" y2="1">
@@ -451,7 +451,7 @@ export const SectionDashboard: React.FC = () => {
                 <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Area type="monotone" dataKey="value" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorNc)" strokeWidth={3} />
+                <Area type="monotone" dataKey="value" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorNc)" strokeWidth={4} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -468,7 +468,7 @@ export const SectionDashboard: React.FC = () => {
           <div className="flex items-center justify-center gap-8">
             {/* Donut Chart */}
             <div className="w-48 h-48" style={{ minWidth: 192, minHeight: 192 }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width={192} height={192}>
                 <PieChart>
                   <Pie
                     data={metrics.ncByDept}

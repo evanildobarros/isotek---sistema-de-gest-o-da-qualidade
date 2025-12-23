@@ -470,9 +470,9 @@ export interface QualityObjective {
   name: string;
   target_value: number;
   metric_name: string;
-  frequency: string;
+  frequency?: string;
   deadline: string;
-  status: 'pending' | 'on_track' | 'at_risk' | 'completed';
+  status?: 'pending' | 'on_track' | 'at_risk' | 'completed';
   process_id?: string | null;
   current_value?: number;
   action_plan?: string;
