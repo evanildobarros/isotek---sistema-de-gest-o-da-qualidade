@@ -134,6 +134,30 @@ export const SectionDashboard: React.FC = () => {
         extFindings = findingsData || [];
       }
 
+      // Fetch Internal Audit Findings (from checklist responses)
+      let intFindings: any[] = [];
+      const { data: companyAudits } = await supabase
+        .from('audits')
+        .select('id')
+        .eq('company_id', companyId);
+
+      if (companyAudits && companyAudits.length > 0) {
+        const auditIds = companyAudits.map(a => a.id);
+        const { data: intFindingsData } = await supabase
+          .from('audit_checklist_responses')
+          .select(`
+            id, 
+            status, 
+            evidence_text, 
+            audit_id,
+            audit_checklist_items(question, iso_clause)
+          `)
+          .in('audit_id', auditIds)
+          .eq('status', 'non_compliant');
+
+        intFindings = intFindingsData || [];
+      }
+
       const metricsData = metricsRes.data?.[0] || {
         total_ncs: 0,
         audits_completed: 0,
@@ -214,6 +238,7 @@ export const SectionDashboard: React.FC = () => {
           pendingTasks.push({
             id: `action-${a.id}`,
             title: `Ação Atrasada: ${a.code}`,
+            subtitle: `Origem: ${a.origin || 'Não informada'}`,
             type: 'action',
             status: 'critical',
             date: a.deadline
@@ -226,6 +251,7 @@ export const SectionDashboard: React.FC = () => {
         pendingTasks.push({
           id: `audit-${a.id}`,
           title: `Auditoria: ${a.type}`,
+          subtitle: `Auditoria Interna Agendada`,
           type: 'audit',
           status: 'warning',
           date: a.date
@@ -237,7 +263,8 @@ export const SectionDashboard: React.FC = () => {
         pendingTasks.push({
           id: `ext-audit-${a.id}`,
           title: `Auditoria Externa`,
-          type: 'audit',
+          subtitle: `Auditoria de Terceiros/Certificação`,
+          type: 'external-audit',
           status: 'warning',
           date: a.start_date
         });
@@ -247,9 +274,25 @@ export const SectionDashboard: React.FC = () => {
       (extFindings || []).forEach(f => {
         pendingTasks.push({
           id: `finding-${f.id}`,
-          title: `NC Auditoria: ${f.severity === 'nao_conformidade_maior' ? 'Maior' : 'Menor'}`,
+          title: `NC Auditoria Externa: ${f.severity === 'nao_conformidade_maior' ? 'Maior' : 'Menor'}`,
           subtitle: `Cláusula: ${f.iso_clause || 'Ver detalhes'}`,
-          type: 'action',
+          type: 'action', // This leads to plans of action page
+          status: 'critical',
+          date: new Date().toISOString()
+        });
+      });
+
+      // Internal Audit Findings (from checklist)
+      (intFindings || []).forEach(f => {
+        const itemData = f.audit_checklist_items;
+        const item = Array.isArray(itemData) ? itemData[0] : itemData;
+        const questionText = item?.question || 'Não conformidade identificada';
+
+        pendingTasks.push({
+          id: `int-finding-${f.id}`,
+          title: `NC Auditoria Interna: ${questionText.substring(0, 40)}${questionText.length > 40 ? '...' : ''}`,
+          subtitle: `Cláusula: ${item?.iso_clause || 'Ver detalhes'}`,
+          type: 'audit', // This leads to internal audits page
           status: 'critical',
           date: new Date().toISOString()
         });
@@ -262,7 +305,7 @@ export const SectionDashboard: React.FC = () => {
         pendingTasks.push({
           id: `risk-task-${task.id}`,
           title: `Tarefa: ${task.description.substring(0, 50)}${task.description.length > 50 ? '...' : ''}`,
-          subtitle: task.responsible_name || 'Sem responsável',
+          subtitle: `Responsável: ${task.responsible_name || 'Sem responsável'}`,
           type: 'risk-task',
           status: isOverdue ? 'critical' : 'normal',
           date: task.deadline || null
@@ -280,7 +323,13 @@ export const SectionDashboard: React.FC = () => {
         actionsClosed,
         ncByMonth: last6Months,
         ncByDept,
-        pendingTasks: pendingTasks.slice(0, 5) // Limit to 5 items
+        pendingTasks: pendingTasks
+          .sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA; // Descending
+          })
+          .slice(0, 10) // Increased limit to 10 items
       });
 
     } catch (error) {
@@ -532,31 +581,49 @@ export const SectionDashboard: React.FC = () => {
               <p>Tudo em dia! Nenhuma tarefa pendente.</p>
             </div>
           ) : (
-            metrics.pendingTasks.map((task) => (
-              <div key={task.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-2 h-2 rounded-full ${task.status === 'critical' ? 'bg-red-500' : task.status === 'normal' ? 'bg-blue-400' : 'bg-amber-400'}`}></div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">{task.title}</h4>
-                    {task.subtitle && (
-                      <p className="text-xs text-gray-400 mt-0.5">{task.subtitle}</p>
-                    )}
-                    {task.date && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Clock size={12} />
-                        {formatDate(task.date)}
-                      </p>
-                    )}
+            metrics.pendingTasks.map((task) => {
+              // Determinar a rota de navegação baseada no tipo de tarefa
+              const getTaskNavigationPath = () => {
+                switch (task.type) {
+                  case 'audit':
+                    return '/app/auditorias';
+                  case 'external-audit':
+                    return '/app/auditorias-externas';
+                  case 'action':
+                    return '/app/planos-de-acao';
+                  case 'risk-task':
+                    return '/app/planos-de-acao';
+                  default:
+                    return '/app/planos-de-acao';
+                }
+              };
+
+              return (
+                <div key={task.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-2 h-2 rounded-full ${task.status === 'critical' ? 'bg-red-500' : task.status === 'normal' ? 'bg-blue-400' : 'bg-amber-400'}`}></div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">{task.title}</h4>
+                      {task.subtitle && (
+                        <p className="text-xs text-gray-400 mt-0.5">{task.subtitle}</p>
+                      )}
+                      {task.date && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <Clock size={12} />
+                          {formatDate(task.date)}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => navigate(getTaskNavigationPath())}
+                    className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors"
+                  >
+                    <ArrowRight size={18} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigate('/app/planos-de-acao')}
-                  className="p-2 text-gray-400 hover:text-[#025159] hover:bg-[#F0F9FA] rounded-full transition-colors"
-                >
-                  <ArrowRight size={18} />
-                </button>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
