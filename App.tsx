@@ -14,6 +14,7 @@ import { DashboardLayout } from './components/layout';
 
 // Landing Page
 import { LandingPage } from './LandingPage';
+import { AuditorsPublicPage } from './AuditorsPublicPage';
 
 // Lazy Loaded Components
 
@@ -87,6 +88,7 @@ const App: React.FC = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/foco-auditores" element={<AuditorsPublicPage />} />
                 <Route path="/super-admin" element={<SuperAdminPage />} />
 
                 {/* Auditor Portal - Redirect to new route inside DashboardLayout */}

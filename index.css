@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #2D3773;
+  --color-primary-dark: #16558C;
+  --color-accent: #0AADBF;
+  --color-secondary: #4AD9D9;
+  --color-tertiary: #0378A6;
+  --color-dark: #0D0D0D;
+  --color-light: #F2F2F2;
+}
+
 @layer base {
   body {
     @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
@@ -11,16 +21,16 @@
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 3px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
   }
@@ -36,6 +46,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -52,6 +63,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -68,6 +80,7 @@
     opacity: 0;
     transform: translateX(100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -84,6 +97,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -106,7 +120,8 @@
     box-shadow: none !important;
   }
 
-  html, body {
+  html,
+  body {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -128,17 +143,26 @@
   }
 
   /* Ocultar UI do aplicativo */
-  aside, header, button, .no-print, .modal-backdrop, nav, footer {
+  aside,
+  header,
+  button,
+  .no-print,
+  .modal-backdrop,
+  nav,
+  footer {
     display: none !important;
   }
 
   /* Esconder scrollbars */
-  ::-webkit-scrollbar, ::-webkit-scrollbar-track, ::-webkit-scrollbar-thumb {
+  ::-webkit-scrollbar,
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-thumb {
     display: none !important;
   }
 
   /* Container raiz e main */
-  #root, main {
+  #root,
+  main {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -148,8 +172,10 @@
 
   /* Configurar área de impressão */
   .print-area {
-    width: 210mm !important; /* Largura A4 */
-    height: 297mm !important; /* Altura A4 */
+    width: 210mm !important;
+    /* Largura A4 */
+    height: 297mm !important;
+    /* Altura A4 */
     margin: 0 !important;
     padding: 10mm !important;
     background: white !important;
@@ -160,7 +186,15 @@
   }
 
   /* Bordas e tabelas */
-  .border, .border-b, .border-t, .border-l, .border-r, table, tr, td, th {
+  .border,
+  .border-b,
+  .border-t,
+  .border-l,
+  .border-r,
+  table,
+  tr,
+  td,
+  th {
     border-color: #000 !important;
     border-style: solid !important;
   }
@@ -170,7 +204,8 @@
     border-collapse: collapse;
   }
 
-  td, th {
+  td,
+  th {
     border: 1px solid #000;
     padding: 6pt;
     text-align: left;
@@ -182,7 +217,8 @@
   }
 
   /* Cores de fundo */
-  .bg-gray-50, .bg-gray-100 {
+  .bg-gray-50,
+  .bg-gray-100 {
     background-color: #f3f4f6 !important;
   }
 
@@ -199,7 +235,12 @@
   }
 
   /* Títulos e textos */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     color: #000 !important;
     font-weight: bold;
     margin-top: 10pt;
