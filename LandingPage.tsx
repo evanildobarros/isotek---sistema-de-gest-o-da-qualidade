@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Menu, X, Shield, BarChart3, Users, CheckCircle2, FileText, TrendingUp, ChevronDown } from 'lucide-react';
 import logo from './assets/isotek-logo.png';
 import aboutImg from './assets/about-executive.png';
+import heroNewImg from './assets/hero-new-design.png';
 import { supabase } from './lib/supabase';
 
 interface CompanyLogo {
@@ -84,8 +85,7 @@ export const LandingPage: React.FC = () => {
                             <img
                                 src={logo}
                                 alt="Isotek Logo"
-                                className={`h-8 sm:h-9 w-auto transition-all duration-300 ${!isScrolled ? 'brightness-0 invert' : ''
-                                    }`}
+                                className="h-8 sm:h-9 w-auto transition-all duration-300"
                             />
                         </div>
 
@@ -93,13 +93,13 @@ export const LandingPage: React.FC = () => {
                         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
                             <button
                                 onClick={() => scrollToSection('inicio')}
-                                className={`text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-blue-50 hover:text-blue-300'}`}
+                                className={`text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-[#2D3773]/70 hover:text-[#2D3773]'}`}
                             >
                                 Início
                             </button>
                             <button
                                 onClick={() => scrollToSection('sobre')}
-                                className={`text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-blue-50 hover:text-blue-300'}`}
+                                className={`text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-[#2D3773]/70 hover:text-[#2D3773]'}`}
                             >
                                 Sobre Nós
                             </button>
@@ -107,7 +107,7 @@ export const LandingPage: React.FC = () => {
                             {/* Serviços Dropdown */}
                             <div className="relative group" onMouseEnter={() => setIsServicesOpen(true)} onMouseLeave={() => setIsServicesOpen(false)}>
                                 <button
-                                    className={`flex items-center gap-1 text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-blue-50 hover:text-blue-300'}`}
+                                    className={`flex items-center gap-1 text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-[#2D3773]/70 hover:text-[#2D3773]'}`}
                                 >
                                     Serviços
                                     <ChevronDown size={14} className={`transition-transform duration-300 ${isServicesOpen ? 'rotate-180' : ''}`} />
@@ -135,15 +135,15 @@ export const LandingPage: React.FC = () => {
 
                             <button
                                 onClick={() => scrollToSection('contato')}
-                                className={`text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-blue-50 hover:text-blue-300'}`}
+                                className={`text-sm font-semibold transition-colors ${isScrolled ? 'text-[#2D3773] hover:text-[#4AD9D9]' : 'text-[#2D3773]/70 hover:text-[#2D3773]'}`}
                             >
                                 Contato
                             </button>
                             <button
                                 onClick={handleLoginClick}
-                                className={`px-6 py-2 border-2 text-sm font-bold rounded-full transition-all ${isScrolled
-                                    ? 'border-[#2D3773] text-[#2D3773] hover:bg-[#2D3773] hover:text-white'
-                                    : 'border-blue-50 text-blue-50 hover:bg-blue-50 hover:text-[#16558C]'
+                                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${isScrolled
+                                    ? 'bg-[#2D3773] text-white hover:bg-[#0AADBF] hover:shadow-lg'
+                                    : 'bg-[#2D3773]/5 text-[#2D3773] border border-[#2D3773]/10 hover:bg-[#2D3773] hover:text-white'
                                     }`}
                             >
                                 Entrar
@@ -190,42 +190,76 @@ export const LandingPage: React.FC = () => {
             </header>
 
             {/* A. HERO SECTION */}
-            <section id="inicio" className="pt-32 pb-20 lg:pt-40 lg:pb-28 relative overflow-hidden min-h-screen flex items-center bg-cover bg-center" style={{ backgroundImage: "url('/assets/hero-background.jpg')" }}>
-                {/* Dark Overlay for better text readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#2D3773]/90 to-[#2D3773]/60 z-0"></div>
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full animate-slide-up">
-                    {/* Text Content */}
-                    <div className="text-white max-w-3xl">
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8">
-                            Isotek: O Futuro do <br />
-                            seu <span className="text-[#0AADBF]">SGQ</span> Começa <br className="hidden sm:block" />
-                            Aqui.
-                        </h1>
-                        <p className="text-lg md:text-xl text-gray-200 mb-12 leading-relaxed max-w-2xl opacity-90">
-                            Transforme a gestão da qualidade da sua empresa com uma plataforma inteligente, integrada e pronta para escalar. Simplifique processos, garanta conformidade e tome decisões estratégicas com dados em tempo real.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-5">
-                            <button
-                                onClick={handleLoginClick}
-                                className="px-10 py-5 bg-[#0AADBF] hover:bg-[#0AADBF]/90 hover:scale-105 active:scale-95 transition-all shadow-2xl text-center group"
-                            >
-                                Comece Agora
-                                <TrendingUp className="inline-block ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-                            </button>
-                            <a
-                                href="#contato"
-                                className="px-10 py-5 border-2 border-white/30 backdrop-blur-sm text-white text-lg font-bold rounded-full hover:bg-white hover:text-[#16558C] transition-all text-center"
-                            >
-                                Fale com Vendas
-                            </a>
-                        </div>
-                    </div>
+            <section id="inicio" className="pt-32 pb-20 lg:pt-48 lg:pb-32 relative overflow-hidden min-h-screen flex items-center bg-[#F9FAFB]">
+                {/* Subtle Geometric Background Patterns */}
+                <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none">
+                    <svg className="absolute top-0 right-0 w-1/2 h-full" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M800 0L400 400L800 800V0Z" fill="#2D3773" />
+                        <circle cx="600" cy="200" r="150" stroke="#0AADBF" strokeWidth="2" />
+                        <rect x="500" y="500" width="200" height="200" transform="rotate(45 600 600)" stroke="#2D3773" strokeWidth="2" />
+                    </svg>
+                    <svg className="absolute bottom-0 left-0 w-1/3 h-1/2" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 400L200 200L0 0V400Z" fill="#0AADBF" />
+                    </svg>
                 </div>
 
-                {/* Subtle Floating Decorative Elements */}
-                <div className="absolute bottom-10 right-10 opacity-20 hidden lg:block animate-reveal">
-                    <Shield size={300} className="text-[#0AADBF]" />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full animate-slide-up">
+                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        {/* Text Content */}
+                        <div className="max-w-2xl">
+                            <div className="inline-block px-4 py-1.5 mb-6 bg-[#0AADBF]/10 text-[#0AADBF] rounded-full text-sm font-bold tracking-wide uppercase">
+                                Inteligência em Qualidade
+                            </div>
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-8 text-[#2D3773]">
+                                # Isotek: <br />
+                                Qualidade Inteligente. <br />
+                                <span className="text-[#0AADBF]">Resultados Reais.</span>
+                            </h1>
+                            <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed max-w-xl">
+                                Transforme a gestão da qualidade da sua empresa com nossa plataforma intuitiva e a assistente de IA exclusiva para SGQ.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-5">
+                                <button
+                                    onClick={handleLoginClick}
+                                    className="px-10 py-5 bg-[#0AADBF] text-white font-bold rounded-xl hover:bg-[#0AADBF]/90 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#0AADBF]/20 text-center"
+                                >
+                                    Agendar Demonstração Gratuita
+                                </button>
+                                <button
+                                    className="px-10 py-5 border-2 border-[#2D3773]/10 text-[#2D3773] text-lg font-bold rounded-xl hover:bg-gray-50 transition-all text-center flex items-center justify-center gap-2"
+                                >
+                                    <span>Ver Video de 1 Minuto</span>
+                                    <div className="w-8 h-8 rounded-full bg-[#2D3773]/5 flex items-center justify-center">
+                                        <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-[#2D3773] border-b-[5px] border-b-transparent ml-1"></div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Professional Team Image (Unsplash placeholder matching reference) */}
+                        <div className="relative group lg:block hidden">
+                            <div className="absolute -inset-4 bg-gradient-to-tr from-[#0AADBF]/10 to-transparent rounded-[3rem] -z-10 transform rotate-3"></div>
+                            <div className="relative overflow-hidden rounded-[2.5rem] shadow-2xl border-8 border-white">
+                                <img
+                                    src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80"
+                                    alt="Equipe Isotek analisando dados"
+                                    className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                />
+                                {/* Dashboard Overlay Element */}
+                                <div className="absolute bottom-8 left-8 right-8 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white/20 animate-slide-up">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-[#0AADBF] flex items-center justify-center text-white">
+                                            <BarChart3 size={24} />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-[#2D3773]">Performance Global</div>
+                                            <div className="text-xs text-gray-500">Aumentou 24% este mês</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
