@@ -76,7 +76,7 @@ export const AuditorsPublicPage: React.FC = () => {
                                                 onClick={() => { navigate('/'); setTimeout(() => document.getElementById('funcionalidades')?.scrollIntoView({ behavior: 'smooth' }), 100); setIsServicesOpen(false); }}
                                                 className="w-full text-left px-5 py-3 text-sm font-bold text-[#2D3773] hover:bg-[#E0F7F9]/40 hover:text-[#0AADBF] transition-all"
                                             >
-                                                Funcionalidades
+                                                Método
                                             </button>
                                             <button
                                                 onClick={() => { setIsServicesOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
@@ -119,7 +119,7 @@ export const AuditorsPublicPage: React.FC = () => {
 
                             <div className="space-y-1">
                                 <div className="px-4 py-2 text-xs font-black text-gray-400 uppercase tracking-widest">Serviços</div>
-                                <button onClick={() => { navigate('/'); setTimeout(() => document.getElementById('funcionalidades')?.scrollIntoView({ behavior: 'smooth' }), 100); }} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Funcionalidades</button>
+                                <button onClick={() => { navigate('/'); setTimeout(() => document.getElementById('funcionalidades')?.scrollIntoView({ behavior: 'smooth' }), 100); }} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Método</button>
                                 <button onClick={() => { setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="block w-full text-left px-8 py-2 text-base font-bold text-[#0AADBF] transition-all">Página dos Auditores</button>
                             </div>
 

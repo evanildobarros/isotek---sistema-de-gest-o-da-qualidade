@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, X, Shield, BarChart3, Users, CheckCircle2, FileText, TrendingUp, ChevronDown } from 'lucide-react';
 import logo from './assets/isotek-logo.png';
+import aboutImg from './assets/about-executive.png';
 import { supabase } from './lib/supabase';
 
 interface CompanyLogo {
@@ -119,7 +120,7 @@ export const LandingPage: React.FC = () => {
                                                 onClick={() => { scrollToSection('funcionalidades'); setIsServicesOpen(false); }}
                                                 className="w-full text-left px-5 py-3 text-sm font-bold text-[#2D3773] hover:bg-[#E0F7F9]/40 hover:text-[#0AADBF] transition-all"
                                             >
-                                                Funcionalidades
+                                                Método
                                             </button>
                                             <button
                                                 onClick={() => { navigate('/foco-auditores'); setIsServicesOpen(false); }}
@@ -169,7 +170,7 @@ export const LandingPage: React.FC = () => {
 
                             <div className="space-y-1">
                                 <div className="px-4 py-2 text-xs font-black text-gray-400 uppercase tracking-widest">Serviços</div>
-                                <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Funcionalidades</button>
+                                <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Método</button>
                                 <button onClick={() => navigate('/foco-auditores')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Página dos Auditores</button>
                             </div>
 
@@ -237,8 +238,8 @@ export const LandingPage: React.FC = () => {
                             <div className="absolute -left-4 -bottom-4 w-full h-full bg-[#4AD9D9]/20 rounded-3xl -z-10 group-hover:-translate-x-2 group-hover:translate-y-2 transition-transform duration-500"></div>
                             <div className="overflow-hidden rounded-3xl shadow-2xl">
                                 <img
-                                    src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80"
-                                    alt="Quality Control"
+                                    src={aboutImg}
+                                    alt="Auditória Executiva"
                                     className="w-full object-cover h-[350px] md:h-[450px] transform group-hover:scale-105 transition-transform duration-700"
                                 />
                             </div>
