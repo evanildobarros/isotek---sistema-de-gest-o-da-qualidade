@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, X, Shield, BarChart3, Users, CheckCircle2, FileText, TrendingUp, ChevronDown } from 'lucide-react';
+import { Menu, X, Shield, BarChart3, Users, CheckCircle2, FileText, TrendingUp, ChevronDown, Search } from 'lucide-react';
 import logo from './assets/isotek-logo.png';
 import aboutImg from './assets/about-executive.png';
 import heroNewImg from './assets/hero-new-design.png';
@@ -123,7 +123,7 @@ export const LandingPage: React.FC = () => {
                                                 Método
                                             </button>
                                             <button
-                                                onClick={() => { navigate('/foco-auditores'); setIsServicesOpen(false); }}
+                                                onClick={() => { scrollToSection('auditores'); setIsServicesOpen(false); }}
                                                 className="w-full text-left px-5 py-3 text-sm font-bold text-[#2D3773] hover:bg-[#E0F7F9]/40 hover:text-[#0AADBF] transition-all"
                                             >
                                                 Auditores
@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
                             <div className="space-y-1">
                                 <div className="px-4 py-2 text-xs font-black text-gray-400 uppercase tracking-widest">Serviços</div>
                                 <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Método</button>
-                                <button onClick={() => navigate('/foco-auditores')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Página dos Auditores</button>
+                                <button onClick={() => scrollToSection('auditores')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Página dos Auditores</button>
                             </div>
 
                             <button onClick={() => scrollToSection('contato')} className="block w-full text-left px-4 py-3 text-lg font-bold text-[#2D3773] hover:bg-[#E0F7F9]/40 rounded-xl transition-all">Contato</button>
@@ -313,6 +313,36 @@ export const LandingPage: React.FC = () => {
                                     <span className="text-[#2D3773] font-bold">Risco Zero</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* SEÇÃO AUDITORES (NOVA) */}
+            <section id="auditores" className="relative py-24 lg:py-32 bg-[#2D3773] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#2D3773] via-[#16558C] to-[#0378A6] opacity-90"></div>
+                <div className="absolute -right-20 -bottom-20 opacity-10">
+                    <Search size={500} className="text-white" />
+                </div>
+
+                <div className="max-w-7xl mx-auto px-4 relative z-10 text-center lg:text-left">
+                    <div className="max-w-3xl">
+                        <div className="inline-block px-4 py-1.5 bg-[#4AD9D9]/20 text-[#4AD9D9] text-xs font-bold uppercase tracking-widest rounded-full mb-6">
+                            Especialistas em Qualidade
+                        </div>
+                        <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-8">
+                            Auditores: Os Guardiões da <span className="text-[#0AADBF]">Excelência</span>
+                        </h2>
+                        <p className="text-xl text-blue-100/80 mb-10 leading-relaxed">
+                            Mais do que verificadores, os auditores são agentes de mudança. Conheça como a Isotek empodera esses profissionais para transformar conformidade em vantagem competitiva.
+                        </p>
+                        <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                            <button
+                                onClick={handleLoginClick}
+                                className="px-8 py-4 bg-[#0AADBF] text-white font-bold rounded-xl hover:bg-[#0AADBF]/90 transition-all shadow-xl hover:scale-105 active:scale-95"
+                            >
+                                Começar Agora
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -470,7 +500,7 @@ export const LandingPage: React.FC = () => {
                             <button onClick={() => scrollToSection('contato')} className="text-left text-sm font-bold hover:text-[#E8FAF5] transition-colors flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-[#0AADBF] rounded-full"></span> Contato
                             </button>
-                            <button onClick={() => navigate('/foco-auditores')} className="text-left text-sm font-bold text-[#4AD9D9] hover:text-white transition-colors flex items-center gap-2">
+                            <button onClick={() => scrollToSection('auditores')} className="text-left text-sm font-bold text-[#4AD9D9] hover:text-white transition-colors flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-[#4AD9D9] rounded-full"></span> Para Auditores
                             </button>
                         </nav>
