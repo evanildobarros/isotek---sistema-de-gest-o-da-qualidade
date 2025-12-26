@@ -67,23 +67,23 @@ export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({ risks, onRiskClick }) 
     };
 
     return (
-        <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-            <div className="w-full min-w-[600px]">
-                <div className="grid grid-cols-[auto_1fr] gap-4 md:gap-6">
+        <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent -mx-2 px-2">
+            <div className="w-full min-w-[320px]">
+                <div className="grid grid-cols-[auto_1fr] gap-2 md:gap-6">
                     {/* Eixo Y: Título Vertical */}
-                    <div className="flex items-center justify-center">
-                        <span className="-rotate-90 text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] whitespace-nowrap">
-                            Probabilidade (Y)
+                    <div className="flex items-center justify-center w-6 md:w-auto">
+                        <span className="-rotate-90 text-[8px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] md:tracking-[0.2em] whitespace-nowrap">
+                            Prob.
                         </span>
                     </div>
 
                     {/* Grid Principal */}
-                    <div className="flex flex-col gap-2 md:gap-3">
+                    <div className="flex flex-col gap-1.5 md:gap-3">
                         {/* Linhas da Matriz */}
                         {PROBABILITY_LEVELS.map((prob) => (
-                            <div key={`row-${prob}`} className="grid grid-cols-[40px_repeat(5,1fr)] md:grid-cols-[50px_repeat(5,1fr)] gap-2 md:gap-3">
+                            <div key={`row-${prob}`} className="grid grid-cols-[28px_repeat(5,1fr)] md:grid-cols-[50px_repeat(5,1fr)] gap-1.5 md:gap-3">
                                 {/* Rótulo do Eixo Y (Número) */}
-                                <div className="flex items-center justify-center font-black text-xs md:text-sm text-gray-500 bg-white border-2 border-gray-100 rounded-lg md:rounded-xl shadow-sm hover:border-[#025159]/20 transition-colors">
+                                <div className="flex items-center justify-center font-black text-[10px] md:text-sm text-gray-500 bg-white border border-gray-100 md:border-2 rounded-md md:rounded-xl shadow-sm">
                                     {prob}
                                 </div>
 
@@ -93,22 +93,22 @@ export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({ risks, onRiskClick }) 
                                     const score = prob * imp;
                                     const hasOpportunities = cellRisks.some(r => r.type === 'opportunity');
                                     const hasRisks = cellRisks.some(r => r.type === 'risk');
-                                    const isCrowded = cellRisks.length > 3;
+                                    const isCrowded = cellRisks.length > 2;
 
                                     return (
                                         <div
                                             key={`cell-${prob}-${imp}`}
                                             className={`
-                                                relative w-full aspect-square min-h-[60px] sm:min-h-[80px] md:min-h-[110px] 
-                                                border-2 rounded-lg md:rounded-2xl p-1 md:p-3 transition-all duration-500 ease-out
-                                                flex flex-col gap-1 md:gap-2 shadow-sm hover:shadow-xl hover:-translate-y-1
+                                                relative w-full aspect-square min-h-[44px] md:min-h-[110px] 
+                                                border md:border-2 rounded-md md:rounded-2xl p-0.5 md:p-3 transition-all duration-300 ease-out
+                                                flex flex-col shadow-sm hover:shadow-lg md:hover:-translate-y-1
                                                 group/cell overflow-hidden
                                                 ${getCellColor(prob, imp, hasOpportunities && !hasRisks)}
                                             `}
                                         >
                                             {/* Badge de Score no canto */}
-                                            <div className="absolute top-1 right-1.5 md:top-2 md:right-3 flex flex-col items-end gap-0.5 pointer-events-none">
-                                                <span className="text-[10px] md:text-[14px] font-black text-gray-900/10 group-hover/cell:text-gray-900/20 transition-colors">
+                                            <div className="absolute top-0.5 right-1 md:top-2 md:right-3 flex flex-col items-end gap-0.5 pointer-events-none">
+                                                <span className="text-[9px] md:text-[14px] font-black text-gray-900/15 group-hover/cell:text-gray-900/25 transition-colors">
                                                     {score}
                                                 </span>
                                                 <span className="hidden md:block text-[8px] font-bold uppercase tracking-widest text-gray-900/10 group-hover/cell:text-gray-900/30 transition-colors">
@@ -117,8 +117,8 @@ export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({ risks, onRiskClick }) 
                                             </div>
 
                                             {/* Lista de Riscos (Badges/Pills) */}
-                                            <div className="mt-auto md:mt-4 flex flex-wrap gap-1 md:gap-1.5 justify-center md:justify-start overflow-hidden max-h-[60%]">
-                                                {cellRisks.slice(0, 6).map((risk) => (
+                                            <div className="mt-auto flex flex-wrap gap-0.5 md:gap-1.5 justify-center overflow-hidden">
+                                                {cellRisks.slice(0, isCrowded ? 2 : 4).map((risk) => (
                                                     <button
                                                         key={risk.id}
                                                         onClick={(e) => {
@@ -126,63 +126,59 @@ export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({ risks, onRiskClick }) 
                                                             onRiskClick?.(risk);
                                                         }}
                                                         className={`
-                                                            group relative transition-all flex items-center gap-1 md:gap-1.5
-                                                            hover:scale-[1.05] active:scale-[0.95]
-                                                            /* Estilo Badge/Pill */
-                                                            px-1.5 py-0.5 md:px-2 md:py-0.5 rounded-full border shadow-sm
+                                                            transition-all flex items-center justify-center
+                                                            active:scale-[0.9]
+                                                            w-3 h-3 md:w-auto md:h-auto md:px-2 md:py-0.5 rounded-full border shadow-sm
                                                             ${risk.type === 'risk'
-                                                                ? 'bg-red-50/90 border-red-200/50 hover:bg-red-100 hover:border-red-300'
-                                                                : 'bg-blue-50/90 border-blue-200/50 hover:bg-blue-100 hover:border-blue-300'
+                                                                ? 'bg-red-100 border-red-300 md:bg-red-50/90 md:border-red-200/50 hover:bg-red-100'
+                                                                : 'bg-blue-100 border-blue-300 md:bg-blue-50/90 md:border-blue-200/50 hover:bg-blue-100'
                                                             }
                                                         `}
                                                         title={risk.description}
                                                     >
-                                                        {/* Dot Indicador dentro do Badge */}
+                                                        {/* Mobile: apenas dot colorido */}
                                                         <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full shrink-0 ${risk.type === 'risk'
-                                                                ? 'bg-red-500 animate-pulse'
-                                                                : 'bg-blue-500'
+                                                            ? 'bg-red-500'
+                                                            : 'bg-blue-500'
                                                             }`} />
 
-                                                        {/* Texto curto/truncado */}
+                                                        {/* Desktop: texto truncado */}
                                                         <span className={`
-                                                            truncate max-w-[35px] sm:max-w-[50px] md:max-w-[80px] font-bold text-[8px] md:text-[10px]
+                                                            hidden md:inline truncate max-w-[80px] font-bold text-[10px] ml-1.5
                                                             ${risk.type === 'risk' ? 'text-red-700' : 'text-blue-700'}
                                                         `}>
                                                             {risk.description}
                                                         </span>
                                                     </button>
                                                 ))}
-                                            </div>
 
-                                            {/* Indicador de "Ver Mais" */}
-                                            {isCrowded && (
-                                                <div className="mt-auto pb-0.5 text-center md:pt-1">
-                                                    <span className="text-[8px] md:text-[10px] font-black text-gray-500 bg-white/40 backdrop-blur-sm px-1 md:px-3 py-0.5 md:py-1 rounded-full border border-white/20 shadow-sm">
-                                                        <span className="md:hidden">+{cellRisks.length - 5}</span>
-                                                        <span className="hidden md:inline">{cellRisks.length - 5} itens extras</span>
+                                                {/* Contador mobile inline */}
+                                                {isCrowded && (
+                                                    <span className="text-[7px] md:text-[10px] font-bold text-gray-500 bg-white/60 px-1 rounded-full">
+                                                        +{cellRisks.length - 2}
                                                     </span>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })}
                             </div>
                         ))}
 
-                        {/* Eixo X: Rótulos e Título */}
-                        <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-3 mt-2">
+                        {/* Eixo X: Rótulos */}
+                        <div className="grid grid-cols-[28px_repeat(5,1fr)] md:grid-cols-[50px_repeat(5,1fr)] gap-1.5 md:gap-3 mt-1 md:mt-2">
                             <div></div>
                             {IMPACT_LEVELS.map((imp) => (
-                                <div key={`header-${imp}`} className="flex items-center justify-center font-black text-gray-500 bg-white border-2 border-gray-100 rounded-xl py-2 shadow-sm hover:border-[#025159]/20 transition-colors">
+                                <div key={`header-${imp}`} className="flex items-center justify-center font-black text-[10px] md:text-sm text-gray-500 bg-white border border-gray-100 md:border-2 rounded-md md:rounded-xl py-1.5 md:py-2 shadow-sm">
                                     {imp}
                                 </div>
                             ))}
                         </div>
 
                         {/* Título do Eixo X */}
-                        <div className="text-center mt-2">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                Impacto / Severidade (X)
+                        <div className="text-center mt-1 md:mt-2">
+                            <span className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-wider md:tracking-widest">
+                                Impacto (X)
                             </span>
                         </div>
                     </div>

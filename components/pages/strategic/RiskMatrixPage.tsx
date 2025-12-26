@@ -583,65 +583,66 @@ export const RiskMatrixPage: React.FC = () => {
             </div>
 
             {/* Heatmap Visualization 5x5 */}
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-                <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider flex items-center gap-2">
-                    <ShieldAlert size={18} className="text-[#025159]" />
-                    Mapa de Calor de Riscos e Oportunidades
+            <div className="bg-white p-3 md:p-6 rounded-xl shadow-sm border border-gray-100 mb-4 md:mb-6 overflow-hidden">
+                <h3 className="text-xs md:text-sm font-bold text-gray-700 mb-4 md:mb-6 uppercase tracking-wider flex items-center gap-2">
+                    <ShieldAlert size={16} className="text-[#025159]" />
+                    <span className="hidden sm:inline">Mapa de Calor de Riscos e Oportunidades</span>
+                    <span className="sm:hidden">Mapa de Calor</span>
                 </h3>
                 <RiskHeatmap
                     risks={filteredRisks}
                     onRiskClick={openEditModal}
                 />
 
-                <div className="mt-8 pt-6 border-t border-gray-100 grid md:grid-cols-2 gap-8">
+                <div className="mt-4 md:mt-8 pt-4 md:pt-6 border-t border-gray-100 grid md:grid-cols-2 gap-4 md:gap-8">
                     {/* Legend Risks */}
-                    <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <AlertTriangle size={14} className="text-red-500" />
-                            Escala de Riscos (Ameaças)
+                    <div className="space-y-2 md:space-y-4">
+                        <h4 className="text-[10px] md:text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5 md:gap-2">
+                            <AlertTriangle size={12} className="text-red-500" />
+                            Escala de Riscos
                         </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-100">
-                                <div className="w-3 h-3 rounded-full bg-red-500" />
-                                <span className="text-[10px] font-bold text-red-700">Crítico (17-25)</span>
+                        <div className="grid grid-cols-4 gap-1.5 md:gap-3">
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-red-50 rounded-md md:rounded-lg border border-red-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-500" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-red-700 text-center">Crítico</span>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100">
-                                <div className="w-3 h-3 rounded-full bg-orange-500" />
-                                <span className="text-[10px] font-bold text-orange-700">Alto (10-16)</span>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-orange-50 rounded-md md:rounded-lg border border-orange-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-orange-500" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-orange-700 text-center">Alto</span>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg border border-yellow-100">
-                                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                                <span className="text-[10px] font-bold text-yellow-700">Moderado (5-9)</span>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-yellow-50 rounded-md md:rounded-lg border border-yellow-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-yellow-400" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-yellow-700 text-center">Moderado</span>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                                <span className="text-[10px] font-bold text-emerald-700">Baixo (1-4)</span>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-emerald-50 rounded-md md:rounded-lg border border-emerald-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-emerald-700 text-center">Baixo</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Legend Opportunities */}
-                    <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <TrendingUp size={14} className="text-blue-500" />
+                    <div className="space-y-2 md:space-y-4">
+                        <h4 className="text-[10px] md:text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5 md:gap-2">
+                            <TrendingUp size={12} className="text-blue-500" />
                             Escala de Oportunidades
                         </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="flex items-center gap-2 p-2 bg-blue-100 rounded-lg border border-blue-200">
-                                <div className="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
-                                <span className="text-[10px] font-bold text-blue-800">Excelente (17-25)</span>
+                        <div className="grid grid-cols-4 gap-1.5 md:gap-3">
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-blue-100 rounded-md md:rounded-lg border border-blue-200">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-blue-600 shadow-[0_0_6px_rgba(37,99,235,0.4)]" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-blue-800 text-center">Excelente</span>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
-                                <div className="w-3 h-3 rounded-full bg-blue-400" />
-                                <span className="text-[10px] font-bold text-blue-700">Estratégica (10-16)</span>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-blue-50 rounded-md md:rounded-lg border border-blue-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-blue-400" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-blue-700 text-center">Estratégica</span>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-cyan-50 rounded-lg border border-cyan-100">
-                                <div className="w-3 h-3 rounded-full bg-cyan-400" />
-                                <span className="text-[10px] font-bold text-cyan-700">Promissora (5-9)</span>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-cyan-50 rounded-md md:rounded-lg border border-cyan-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-cyan-400" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-cyan-700 text-center">Promissora</span>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                <div className="w-3 h-3 rounded-full bg-slate-400" />
-                                <span className="text-[10px] font-bold text-slate-700">Baixa (1-4)</span>
+                            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-slate-50 rounded-md md:rounded-lg border border-slate-100">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-slate-400" />
+                                <span className="text-[8px] md:text-[10px] font-bold text-slate-700 text-center">Baixa</span>
                             </div>
                         </div>
                     </div>
