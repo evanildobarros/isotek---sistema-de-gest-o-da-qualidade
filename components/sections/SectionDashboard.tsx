@@ -20,8 +20,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis,
-} from 'recharts';
+  YAxis } from 'recharts';
 import { supabase } from '../../lib/supabase';
 
 // Helper to format date
@@ -42,10 +41,12 @@ const COLORS = {
 };
 
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuditor } from '../../contexts/AuditorContext';
 
 export const SectionDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { effectiveCompanyId } = useAuthContext();
+  const {} = useAuthContext();
+    const { effectiveCompanyId } = useAuditor();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     npsScore: 0,

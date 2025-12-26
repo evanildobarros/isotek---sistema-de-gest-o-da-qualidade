@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuditor } from '../../contexts/AuditorContext';
 import { Notification, NotificationType } from '../../types';
 
 interface Alert {
@@ -26,7 +27,8 @@ interface Alert {
 
 export const NotificationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const navigate = useNavigate();
-    const { company, effectiveCompanyId } = useAuthContext();
+    const { company } = useAuthContext();
+    const { effectiveCompanyId } = useAuditor();
     const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [systemAlerts, setSystemAlerts] = useState<Alert[]>([]);

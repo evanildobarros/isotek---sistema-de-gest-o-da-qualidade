@@ -531,8 +531,8 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
   const { canAccessModule } = planLimits;
 
   // Auditor Context
-  const { isAuditorMode, targetCompany, exitAuditorMode } = useAuditor();
-  const { auditorAssignments, company } = useAuthContext(); // Removed unused 'user'
+  const { isAuditorMode, targetCompany, exitAuditorMode, auditorAssignments } = useAuditor();
+  const { company } = useAuthContext(); // Removed unused 'user'
 
   const isAuditorUser = auditorAssignments?.length > 0;
 
@@ -575,19 +575,25 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
     );
   }, []);
 
-  const collapseAll = React.useCallback(() => {
-    setOpenGroups([]);
-  }, []);
-
-  const expandAll = React.useCallback(() => {
-    const allTitles: string[] = [];
+  const allSectionTitles = React.useMemo(() => {
+    const titles: string[] = [];
     displayedGroups.forEach(group => {
       group.sections.forEach(section => {
-        allTitles.push(section.sectionTitle);
+        titles.push(section.sectionTitle);
       });
     });
-    setOpenGroups(allTitles);
+    return titles;
   }, [displayedGroups]);
+
+  const isAllExpanded = openGroups.length >= allSectionTitles.length && allSectionTitles.length > 0;
+
+  const toggleAll = React.useCallback(() => {
+    if (isAllExpanded) {
+      setOpenGroups([]);
+    } else {
+      setOpenGroups(allSectionTitles);
+    }
+  }, [isAllExpanded, allSectionTitles]);
 
   const handleExitAuditorMode = React.useCallback(() => {
     exitAuditorMode();
@@ -710,22 +716,18 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
                   {group.groupTitle}
                 </h3>
                 {index === 0 && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={expandAll}
-                      className="p-1 text-gray-400 hover:text-[#025159] transition-colors rounded-md hover:bg-gray-100"
-                      title="Expandir todas as seções"
-                    >
-                      <ChevronsUpDown size={14} />
-                    </button>
-                    <button
-                      onClick={collapseAll}
-                      className="p-1 text-gray-400 hover:text-[#025159] transition-colors rounded-md hover:bg-gray-100"
-                      title="Recolher todas as seções"
-                    >
-                      <ChevronsDownUp size={14} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={toggleAll}
+                    className={`
+                      p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5
+                      ${isAllExpanded
+                        ? 'text-[#025159] bg-[#025159]/5 hover:bg-[#025159]/10'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}
+                    `}
+                    title={isAllExpanded ? "Recolher tudo" : "Expandir tudo"}
+                  >
+                    {isAllExpanded ? <ChevronsDownUp size={14} /> : <ChevronsUpDown size={14} />}
+                  </button>
                 )}
               </div>
 

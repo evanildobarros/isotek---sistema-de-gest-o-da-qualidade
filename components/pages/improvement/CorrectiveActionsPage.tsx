@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { getStatusLabel } from '../../../lib/utils/format';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { CorrectiveAction, CorrectiveActionTask } from '../../../types';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
@@ -29,7 +30,8 @@ import { EmptyState } from '../../common/EmptyState';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const CorrectiveActionsPage: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [actions, setActions] = useState<CorrectiveAction[]>([]);
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);

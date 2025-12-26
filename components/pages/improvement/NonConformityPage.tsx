@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { NonConformityProduct } from '../../../types';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
@@ -25,7 +26,8 @@ import { EmptyState } from '../../common/EmptyState';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const NonConformityPage: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [ncProducts, setNcProducts] = useState<NonConformityProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

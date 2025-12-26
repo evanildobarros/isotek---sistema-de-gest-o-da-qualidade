@@ -28,13 +28,15 @@ import {
 } from 'recharts';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { QualityObjective, KpiMeasurement, CustomerSurvey } from '../../../types';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
 
 export const IndicatorsPage: React.FC = () => {
-    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [loading, setLoading] = useState(true);
 
     // Data states

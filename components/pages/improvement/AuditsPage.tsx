@@ -3,13 +3,15 @@ import { Pencil, Trash2, PlayCircle, Calendar, User, CheckCircle, Clock, Message
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { Audit } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
 import { AuditChecklist } from '../auditor/AuditChecklist';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 const AuditsPageContent: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [audits, setAudits] = useState<Audit[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAudit, setSelectedAudit] = useState<Audit | null>(null);
@@ -452,7 +454,7 @@ const AuditsPageContent: React.FC = () => {
                                             {new Date(audit.date).toLocaleDateString('pt-BR')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline - flex items - center gap - 1.5 px - 3 py - 1 rounded - full text - xs font - semibold ${getStatusStyle(audit.status)} `}>
+                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(audit.status)}`}>
                                                 {getStatusIcon(audit.status)}
                                                 {audit.status}
                                             </span>
@@ -461,13 +463,13 @@ const AuditsPageContent: React.FC = () => {
                                             <div className="space-y-1">
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className={`h - 2 rounded - full transition - all ${audit.progress === 100
+                                                        className={`h-2 rounded-full transition-all ${audit.progress === 100
                                                             ? 'bg-green-500'
                                                             : audit.progress > 0
                                                                 ? 'bg-yellow-500'
                                                                 : 'bg-blue-500'
-                                                            } `}
-                                                        style={{ width: `${audit.progress}% ` }}
+                                                            }`}
+                                                        style={{ width: `${audit.progress}%` }}
                                                     />
                                                 </div>
                                                 <span className="text-xs text-gray-600">{audit.progress}%</span>
@@ -530,7 +532,7 @@ const AuditsPageContent: React.FC = () => {
                                 <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 font-medium">
                                     {audit.type}
                                 </span>
-                                <span className={`inline - flex items - center gap - 1.5 px - 2 py - 1 rounded - full text - xs font - semibold ${getStatusStyle(audit.status)} `}>
+                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${getStatusStyle(audit.status)}`}>
                                     {getStatusIcon(audit.status)}
                                     {audit.status}
                                 </span>
@@ -564,13 +566,13 @@ const AuditsPageContent: React.FC = () => {
                                 </div>
                                 <div className="w-full bg-gray-100 rounded-full h-2">
                                     <div
-                                        className={`h - 2 rounded - full transition - all ${audit.progress === 100
+                                        className={`h-2 rounded-full transition-all ${audit.progress === 100
                                             ? 'bg-green-500'
                                             : audit.progress > 0
                                                 ? 'bg-yellow-500'
                                                 : 'bg-blue-500'
-                                            } `}
-                                        style={{ width: `${audit.progress}% ` }}
+                                            }`}
+                                        style={{ width: `${audit.progress}%` }}
                                     />
                                 </div>
                             </div>

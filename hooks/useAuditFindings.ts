@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuditor } from '../contexts/AuditorContext';
 
 /**
  * Finding - Constatação de auditoria
@@ -30,11 +30,14 @@ export function useAuditFindings(entityType?: Finding['entity_type']) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const { company } = useAuthContext();
+    // Consumir effectiveCompanyId do AuditorContext (suporta modo auditor e modo padrão)
+    const { effectiveCompanyId } = useAuditor();
 
     useEffect(() => {
         const fetchFindings = async () => {
-            if (!company?.id) {
+            if (!effectiveCompanyId) {
+                setFindings([]);
+                setFindingsMap({});
                 setLoading(false);
                 return;
             }
@@ -43,18 +46,34 @@ export function useAuditFindings(entityType?: Finding['entity_type']) {
                 setLoading(true);
                 setError(null);
 
-                // Buscar constatações em aberto (não fechadas)
+                // 1. Buscar os IDs dos vínculos da empresa para filtrar constatações
+                const { data: assignments } = await supabase
+                    .from('audit_assignments')
+                    .select('id')
+                    .eq('company_id', effectiveCompanyId);
+
+                if (!assignments || assignments.length === 0) {
+                    setFindings([]);
+                    setFindingsMap({});
+                    setLoading(false);
+                    return;
+                }
+
+                const assignmentIds = assignments.map(a => a.id);
+
+                // 2. Buscar constatações em aberto (não fechadas) filtrando pelos IDs obtidos
                 let query = supabase
                     .from('audit_findings')
                     .select(`
-            id,
-            entity_id,
-            entity_type,
-            severity,
-            auditor_notes,
-            status,
-            company_response
-          `)
+                        id,
+                        entity_id,
+                        entity_type,
+                        severity,
+                        auditor_notes,
+                        status,
+                        company_response
+                    `)
+                    .in('audit_assignment_id', assignmentIds)
                     .neq('status', 'closed');
 
                 // Filtrar por tipo de entidade se especificado
@@ -65,7 +84,7 @@ export function useAuditFindings(entityType?: Finding['entity_type']) {
                 const { data, error: fetchError } = await query;
 
                 if (fetchError) {
-                    console.error('Erro ao buscar constatações:', fetchError);
+                    console.error('[useAuditFindings] Erro ao buscar constatações:', fetchError);
                     setError(fetchError.message);
                     return;
                 }
@@ -81,7 +100,7 @@ export function useAuditFindings(entityType?: Finding['entity_type']) {
                 setFindings((data as Finding[]) || []);
                 setFindingsMap(map);
             } catch (err) {
-                console.error('Erro inesperado ao buscar constatações:', err);
+                console.error('[useAuditFindings] Erro inesperado:', err);
                 setError('Erro ao carregar constatações');
             } finally {
                 setLoading(false);
@@ -89,7 +108,7 @@ export function useAuditFindings(entityType?: Finding['entity_type']) {
         };
 
         fetchFindings();
-    }, [company?.id, entityType]);
+    }, [effectiveCompanyId, entityType]);
 
     /**
      * Verifica se uma entidade tem constatação pendente

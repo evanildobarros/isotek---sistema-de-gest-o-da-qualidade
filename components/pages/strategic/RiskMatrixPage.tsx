@@ -14,15 +14,19 @@ import {
     Plus,
     Check,
     Calendar,
-    User
+    User,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { RiskTask } from '../../../types';
 import { useAuditFindings } from '../../../hooks/useAuditFindings';
 import { AuditIndicator } from '../../common/AuditIndicator';
 import { ConfirmModal } from '../../common/ConfirmModal';
+import { RiskHeatmap } from './RiskHeatmap';
 
 
 type RiskType = 'risk' | 'opportunity';
@@ -45,7 +49,8 @@ interface SwotItem {
 }
 
 export const RiskMatrixPage: React.FC = () => {
-    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [loading, setLoading] = useState(true);
     const [risks, setRisks] = useState<RiskItem[]>([]);
     const [swotItems, setSwotItems] = useState<SwotItem[]>([]);
@@ -69,6 +74,8 @@ export const RiskMatrixPage: React.FC = () => {
         type: 'all' as 'all' | 'risk' | 'opportunity',
         severity: 'all' as 'all' | 'low' | 'medium' | 'high' | 'critical'
     });
+
+    const [showOnlyPending, setShowOnlyPending] = useState(true);
 
     // Task management states
     const [tasks, setTasks] = useState<RiskTask[]>([]);
@@ -148,14 +155,15 @@ export const RiskMatrixPage: React.FC = () => {
 
     const getSeverityLevel = (score: number, type: RiskType) => {
         if (type === 'opportunity') {
-            if (score >= 15) return { label: 'Excelente', color: 'bg-green-100 text-green-800 border-green-200' };
-            if (score >= 8) return { label: 'Bom', color: 'bg-blue-100 text-blue-800 border-blue-200' };
-            return { label: 'Baixo', color: 'bg-gray-100 text-gray-800 border-gray-200' };
+            if (score >= 17) return { label: 'Excelente', color: 'bg-blue-600 text-white border-amber-400 border-2' }; // Azul + Borda Dourada
+            if (score >= 10) return { label: 'Estratégica', color: 'bg-blue-400 text-white border-blue-500' };
+            if (score >= 5) return { label: 'Promissora', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' };
+            return { label: 'Baixa', color: 'bg-gray-100 text-gray-800 border-gray-200' };
         } else {
-            if (score >= 15) return { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' };
-            if (score >= 8) return { label: 'Alto', color: 'bg-orange-100 text-orange-800 border-orange-200' };
-            if (score >= 4) return { label: 'Médio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
-            return { label: 'Baixo', color: 'bg-green-100 text-green-800 border-green-200' };
+            if (score >= 17) return { label: 'Crítico', color: 'bg-red-500 text-white border-red-600' };
+            if (score >= 10) return { label: 'Alto', color: 'bg-orange-500 text-white border-orange-600' };
+            if (score >= 5) return { label: 'Moderado', color: 'bg-yellow-400 text-gray-900 border-yellow-500' };
+            return { label: 'Baixo', color: 'bg-green-500 text-white border-green-600' };
         }
     };
 
@@ -403,24 +411,32 @@ export const RiskMatrixPage: React.FC = () => {
 
 
     const filteredRisks = risks.filter(risk => {
+        const planText = (risk.action_plan || '').trim();
+        const description = (risk.description || '').toLowerCase();
+        const search = searchTerm.toLowerCase();
+
         // Search filter
-        const matchesSearch = risk.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            risk.action_plan.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = description.includes(search) ||
+            planText.toLowerCase().includes(search);
 
         // Type filter
         const matchesType = filters.type === 'all' || risk.type === filters.type;
 
         // Severity filter
-        const severity = calculateSeverity(risk.probability, risk.impact);
+        const score = calculateSeverity(risk.probability, risk.impact);
         let matchesSeverity = true;
         if (filters.severity !== 'all') {
-            if (filters.severity === 'critical') matchesSeverity = severity >= 15;
-            else if (filters.severity === 'high') matchesSeverity = severity >= 8 && severity < 15;
-            else if (filters.severity === 'medium') matchesSeverity = severity >= 4 && severity < 8;
-            else if (filters.severity === 'low') matchesSeverity = severity < 4;
+            if (filters.severity === 'critical') matchesSeverity = score >= 17;
+            else if (filters.severity === 'high') matchesSeverity = score >= 10 && score < 17;
+            else if (filters.severity === 'medium') matchesSeverity = score >= 5 && score < 10;
+            else if (filters.severity === 'low') matchesSeverity = score < 5;
         }
 
-        return matchesSearch && matchesType && matchesSeverity;
+        // Action Plan filter
+        const isActionDefined = planText !== '' && !planText.toLowerCase().includes('definir plano');
+        const matchesPending = !showOnlyPending || !isActionDefined;
+
+        return matchesSearch && matchesType && matchesSeverity && matchesPending;
     });
 
     if (loading) {
@@ -456,8 +472,8 @@ export const RiskMatrixPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2 md:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <ShieldAlert className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
+                        <div className="p-1 md:p-2 bg-[#025159]/10 rounded-lg">
+                            <ShieldAlert className="w-5 h-5 md:w-6 md:h-6 text-[#025159]" />
                         </div>
                         <h1 className="text-lg md:text-2xl font-bold text-[#025159]">Matriz de Riscos e Oportunidades</h1>
                     </div>
@@ -470,10 +486,62 @@ export const RiskMatrixPage: React.FC = () => {
                         onClick={() => setIsImportModalOpen(true)}
                         className="flex items-center justify-center gap-2 bg-[#025159] text-white px-4 py-2.5 rounded-lg hover:bg-[#3F858C] transition-colors shadow-sm font-medium w-full md:w-auto"
                     >
-                        <Download size={20} />
+                        <Plus size={20} />
                         <span>Importar da SWOT</span>
                     </button>
                 )}
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-[#025159]/10 flex items-center justify-center text-[#025159]">
+                        <ShieldAlert size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total</p>
+                        <p className="text-2xl font-black text-gray-900">{risks.length}</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+                        <AlertTriangle size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Críticos</p>
+                        <p className="text-2xl font-black text-red-600">
+                            {risks.filter(r => r.type === 'risk' && calculateSeverity(r.probability, r.impact) >= 17).length}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                        <TrendingUp size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Oportunidades</p>
+                        <p className="text-2xl font-black text-blue-600">
+                            {risks.filter(r => r.type === 'opportunity').length}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+                        <Calendar size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Pendentes</p>
+                        <p className="text-2xl font-black text-amber-600">
+                            {risks.filter(r => {
+                                const plan = (r.action_plan || '').toLowerCase();
+                                return plan === '' || plan.includes('definir plano');
+                            }).length}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Filters */}
@@ -500,6 +568,84 @@ export const RiskMatrixPage: React.FC = () => {
                         </span>
                     )}
                 </button>
+
+                {/* Mostrar Apenas Pendentes Icon Button */}
+                <button
+                    onClick={() => setShowOnlyPending(!showOnlyPending)}
+                    className={`flex items-center justify-center p-2 rounded-lg border transition-all ${showOnlyPending
+                        ? 'bg-green-50 border-green-200 text-green-600'
+                        : 'bg-gray-50 border-gray-200 text-gray-400'
+                        }`}
+                    title={showOnlyPending ? "Mostrando apenas sem plano de ação" : "Mostrando todos"}
+                >
+                    {showOnlyPending ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
+
+            {/* Heatmap Visualization 5x5 */}
+            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
+                <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider flex items-center gap-2">
+                    <ShieldAlert size={18} className="text-[#025159]" />
+                    Mapa de Calor de Riscos e Oportunidades
+                </h3>
+                <RiskHeatmap
+                    risks={filteredRisks}
+                    onRiskClick={openEditModal}
+                />
+
+                <div className="mt-8 pt-6 border-t border-gray-100 grid md:grid-cols-2 gap-8">
+                    {/* Legend Risks */}
+                    <div className="space-y-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                            <AlertTriangle size={14} className="text-red-500" />
+                            Escala de Riscos (Ameaças)
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-100">
+                                <div className="w-3 h-3 rounded-full bg-red-500" />
+                                <span className="text-[10px] font-bold text-red-700">Crítico (17-25)</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100">
+                                <div className="w-3 h-3 rounded-full bg-orange-500" />
+                                <span className="text-[10px] font-bold text-orange-700">Alto (10-16)</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg border border-yellow-100">
+                                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                                <span className="text-[10px] font-bold text-yellow-700">Moderado (5-9)</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                <span className="text-[10px] font-bold text-emerald-700">Baixo (1-4)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Legend Opportunities */}
+                    <div className="space-y-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                            <TrendingUp size={14} className="text-blue-500" />
+                            Escala de Oportunidades
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="flex items-center gap-2 p-2 bg-blue-100 rounded-lg border border-blue-200">
+                                <div className="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
+                                <span className="text-[10px] font-bold text-blue-800">Excelente (17-25)</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                                <div className="w-3 h-3 rounded-full bg-blue-400" />
+                                <span className="text-[10px] font-bold text-blue-700">Estratégica (10-16)</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-cyan-50 rounded-lg border border-cyan-100">
+                                <div className="w-3 h-3 rounded-full bg-cyan-400" />
+                                <span className="text-[10px] font-bold text-cyan-700">Promissora (5-9)</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                <div className="w-3 h-3 rounded-full bg-slate-400" />
+                                <span className="text-[10px] font-bold text-slate-700">Baixa (1-4)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Table - Desktop Only */}
@@ -507,7 +653,7 @@ export const RiskMatrixPage: React.FC = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
+                            <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase text-gray-400 font-black tracking-[0.1em]">
                                 <th className="px-6 py-4">Tipo</th>
                                 <th className="px-6 py-4 w-1/3">Descrição do Risco/Oportunidade</th>
                                 <th className="px-6 py-4 text-center">Prob.</th>
@@ -1043,7 +1189,7 @@ export const RiskMatrixPage: React.FC = () => {
                                             onChange={() => setFilters({ ...filters, severity: 'critical' })}
                                             className="text-[#025159]"
                                         />
-                                        <span className="text-sm">Crítico (≥15)</span>
+                                        <span className="text-sm">Crítico (≥17)</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -1052,7 +1198,7 @@ export const RiskMatrixPage: React.FC = () => {
                                             onChange={() => setFilters({ ...filters, severity: 'high' })}
                                             className="text-[#025159]"
                                         />
-                                        <span className="text-sm">Alto (8-14)</span>
+                                        <span className="text-sm">Alto (10-16)</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -1061,7 +1207,7 @@ export const RiskMatrixPage: React.FC = () => {
                                             onChange={() => setFilters({ ...filters, severity: 'medium' })}
                                             className="text-[#025159]"
                                         />
-                                        <span className="text-sm">Médio (4-7)</span>
+                                        <span className="text-sm">Médio (5-9)</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -1070,7 +1216,7 @@ export const RiskMatrixPage: React.FC = () => {
                                             onChange={() => setFilters({ ...filters, severity: 'low' })}
                                             className="text-[#025159]"
                                         />
-                                        <span className="text-sm">Baixo (&lt;4)</span>
+                                        <span className="text-sm">Baixo (1-4)</span>
                                     </label>
                                 </div>
                             </div>

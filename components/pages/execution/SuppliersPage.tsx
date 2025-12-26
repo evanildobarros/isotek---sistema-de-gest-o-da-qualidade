@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { Supplier, SupplierEvaluation } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
 import { ConfirmModal } from '../../common/ConfirmModal';
@@ -36,7 +37,8 @@ const formatCNPJ = (value: string): string => {
 };
 
 const SuppliersPageContent: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [activeTab, setActiveTab] = useState<'directory' | 'evaluations'>('directory');
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);

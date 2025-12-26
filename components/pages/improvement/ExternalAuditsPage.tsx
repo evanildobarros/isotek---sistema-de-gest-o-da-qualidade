@@ -13,6 +13,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { AuditorPublicProfile } from '../../auditor/AuditorPublicProfile';
@@ -39,7 +40,8 @@ interface AuditAssignment {
 }
 
 export const ExternalAuditsPage: React.FC = () => {
-    const { effectiveCompanyId } = useAuthContext();
+    const {} = useAuthContext();
+    const { effectiveCompanyId } = useAuditor();
     const navigate = useNavigate();
     const [audits, setAudits] = useState<AuditAssignment[]>([]);
     const [loading, setLoading] = useState(true);

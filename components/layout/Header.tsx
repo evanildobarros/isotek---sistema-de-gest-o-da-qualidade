@@ -25,8 +25,8 @@ interface SearchResult {
 
 export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
-  const { company, user, viewingAsCompanyName, auditorAssignments } = useAuthContext();
-  const { isAuditorMode, exitAuditorMode } = useAuditor();
+  const { company, user } = useAuthContext();
+  const { isAuditorMode, exitAuditorMode, viewingAsCompanyName, auditorAssignments } = useAuditor();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);

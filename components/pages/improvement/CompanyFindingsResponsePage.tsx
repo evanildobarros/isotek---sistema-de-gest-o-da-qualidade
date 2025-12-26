@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { AuditFinding, AuditFindingSeverity, AuditFindingWorkflowStatus } from '../../../types';
 
 interface AuditAssignmentWithAuditor {
@@ -41,7 +42,8 @@ interface FindingWithEntity extends AuditFinding {
 }
 
 export const CompanyFindingsResponsePage: React.FC = () => {
-    const { effectiveCompanyId } = useAuthContext();
+    const {} = useAuthContext();
+    const { effectiveCompanyId } = useAuditor();
     const [assignments, setAssignments] = useState<AuditAssignmentWithAuditor[]>([]);
     const [selectedAssignment, setSelectedAssignment] = useState<AuditAssignmentWithAuditor | null>(null);
     const [findings, setFindings] = useState<FindingWithEntity[]>([]);
@@ -250,8 +252,7 @@ export const CompanyFindingsResponsePage: React.FC = () => {
         waiting: findings.filter(f => f.status === 'waiting_validation').length,
         closed: findings.filter(f => f.status === 'closed').length,
         ncMaior: findings.filter(f => f.severity === 'nao_conformidade_maior').length,
-        ncMenor: findings.filter(f => f.severity === 'nao_conformidade_menor').length,
-    };
+        ncMenor: findings.filter(f => f.severity === 'nao_conformidade_menor').length };
 
     if (loading) {
         return (

@@ -3,9 +3,11 @@ import { Target, Telescope, Diamond, Save, Loader2, Upload, Camera } from 'lucid
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 
 export const StrategicDefinitionPage: React.FC = () => {
-    const { user, effectiveCompanyId } = useAuthContext();
+    const { user } = useAuthContext();
+    const { effectiveCompanyId } = useAuditor();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);

@@ -3,11 +3,13 @@ import { Save, Plus, ArrowRight, User, Settings, Layers, Trash2, Edit2, X, FileT
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { QualityManual, Process } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const ScopePage: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [loading, setLoading] = useState(true);
     const [savingScope, setSavingScope] = useState(false);
     const [isEditingScope, setIsEditingScope] = useState(false);

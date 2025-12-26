@@ -16,17 +16,19 @@ import { DashboardLayout } from './components/layout';
 import { LandingPage } from './LandingPage';
 import { AuditorsPublicPage } from './AuditorsPublicPage';
 
-// Lazy Loaded Components
+// ============================================================================
+// Lazy Loaded Components (Grouped by Module)
+// ============================================================================
 
-// Section components
+// --- Core & Shared ---
 const SectionDashboard = React.lazy(() => import('./components/sections/SectionDashboard').then(m => ({ default: m.SectionDashboard })));
 const SectionPerfil = React.lazy(() => import('./components/sections/SectionPerfil').then(m => ({ default: m.SectionPerfil })));
 
-// Page components - Auditor
+// --- Auditor Module ---
 const AuditorPortal = React.lazy(() => import('./components/pages/auditor/AuditorPortal').then(m => ({ default: m.AuditorPortal })));
 const AuditorWalletPage = React.lazy(() => import('./components/pages/auditor/AuditorWalletPage').then(m => ({ default: m.AuditorWalletPage })));
 
-// Page components - Strategic
+// --- Strategic Module (Plan) ---
 const SwotAnalysis = React.lazy(() => import('./components/pages/strategic/SwotAnalysis').then(m => ({ default: m.SwotAnalysis })));
 const StakeholdersPage = React.lazy(() => import('./components/pages/strategic/StakeholdersPage').then(m => ({ default: m.StakeholdersPage })));
 const ScopePage = React.lazy(() => import('./components/pages/strategic/ScopePage').then(m => ({ default: m.ScopePage })));
@@ -36,15 +38,14 @@ const RiskMatrixPage = React.lazy(() => import('./components/pages/strategic/Ris
 const QualityObjectivesPage = React.lazy(() => import('./components/pages/strategic/QualityObjectivesPage').then(m => ({ default: m.QualityObjectivesPage })));
 const ActionPlansPage = React.lazy(() => import('./components/pages/strategic/ActionPlansPage').then(m => ({ default: m.ActionPlansPage })));
 
-// Page components - Execution
+// --- Execution Module (Do) ---
 const DocumentsPage = React.lazy(() => import('./components/pages/execution/DocumentsPage').then(m => ({ default: m.DocumentsPage })));
 const CompetenciesPage = React.lazy(() => import('./components/pages/execution/CompetenciesPage').then(m => ({ default: m.CompetenciesPage })));
 const SalesRequirementsPage = React.lazy(() => import('./components/pages/execution/SalesRequirementsPage').then(m => ({ default: m.SalesRequirementsPage })));
 const SuppliersPage = React.lazy(() => import('./components/pages/execution/SuppliersPage').then(m => ({ default: m.SuppliersPage })));
 const ProductionControlPage = React.lazy(() => import('./components/pages/execution/ProductionControlPage').then(m => ({ default: m.ProductionControlPage })));
-const DocumentationPage = React.lazy(() => import('./components/pages/settings/DocumentationPage').then(m => ({ default: m.DocumentationPage }))); // Moved from execution/settings index mix
 
-// Page components - Improvement
+// --- Improvement Module (Check/Act) ---
 const NonConformityPage = React.lazy(() => import('./components/pages/improvement/NonConformityPage').then(m => ({ default: m.NonConformityPage })));
 const CorrectiveActionsPage = React.lazy(() => import('./components/pages/improvement/CorrectiveActionsPage').then(m => ({ default: m.CorrectiveActionsPage })));
 const IndicatorsPage = React.lazy(() => import('./components/pages/improvement/IndicatorsPage').then(m => ({ default: m.IndicatorsPage })));
@@ -54,13 +55,14 @@ const ExternalAuditsPage = React.lazy(() => import('./components/pages/improveme
 const ExternalAuditDetailsPage = React.lazy(() => import('./components/pages/improvement/ExternalAuditDetailsPage').then(m => ({ default: m.ExternalAuditDetailsPage })));
 const CompanyFindingsResponsePage = React.lazy(() => import('./components/pages/improvement/CompanyFindingsResponsePage').then(m => ({ default: m.CompanyFindingsResponsePage })));
 
-// Page components - Settings
+// --- Settings & Support ---
 const UsersPage = React.lazy(() => import('./components/pages/settings/UsersPage').then(m => ({ default: m.UsersPage })));
 const UnitsPage = React.lazy(() => import('./components/pages/settings/UnitsPage').then(m => ({ default: m.UnitsPage })));
 const CompanyProfilePage = React.lazy(() => import('./components/pages/settings/CompanyProfilePage').then(m => ({ default: m.CompanyProfilePage })));
 const SuperAdminPage = React.lazy(() => import('./components/pages/settings/SuperAdminPage').then(m => ({ default: m.SuperAdminPage })));
 const SupportPage = React.lazy(() => import('./components/pages/settings/SupportPage').then(m => ({ default: m.SupportPage })));
 const AuditAssignmentsPage = React.lazy(() => import('./components/pages/settings/AuditAssignmentsPage').then(m => ({ default: m.AuditAssignmentsPage })));
+const DocumentationPage = React.lazy(() => import('./components/pages/settings/DocumentationPage').then(m => ({ default: m.DocumentationPage })));
 
 const DynamicToaster: React.FC = () => {
   const { isAuditorMode } = useAuditor();

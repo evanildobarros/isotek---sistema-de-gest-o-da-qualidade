@@ -12,6 +12,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { supabase } from '../../../lib/supabase';
 import { ProductionOrder, SalesOrder } from '../../../types';
 import { EmptyState } from '../../common/EmptyState';
@@ -19,7 +20,8 @@ import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 
 export const ProductionControlPage: React.FC = () => {
-    const { company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [orders, setOrders] = useState<ProductionOrder[]>([]);
     const [salesOrders, setSalesOrders] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(true);

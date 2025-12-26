@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AuditContextInfo } from '../types';
+import { supabase } from '../lib/supabase';
+import { AuditAssignment, AuditContextInfo } from '../types';
 import { AUDIT_ROUTE_MAP } from '../lib/constants';
 import { useAuthContext } from './AuthContext';
 
@@ -10,79 +11,182 @@ interface TargetCompany {
     name: string;
 }
 
+interface DatabaseAssignment {
+    id: string;
+    auditor_id: string;
+    company_id: string;
+    start_date: string;
+    end_date: string | null;
+    status: AuditAssignment['status'];
+    notes: string | null;
+    created_by: string | null;
+    created_at: string;
+    updated_at: string;
+    company: {
+        id: string;
+        name: string;
+    } | null;
+}
+
 interface AuditorContextType {
     isAuditorMode: boolean;
-    targetCompany: TargetCompany | null;
+    auditorAssignments: AuditAssignment[];
+    viewingAsCompanyId: string | null;
+    viewingAsCompanyName: string | null;
+    effectiveCompanyId: string | null;
     currentContext: AuditContextInfo | null;
+    targetCompany: TargetCompany | null;
+    setViewingAsCompany: (companyId: string | null, companyName?: string | null) => void;
     enterAuditorMode: (company: TargetCompany) => void;
     exitAuditorMode: () => void;
+    refreshAssignments: () => Promise<void>;
 }
 
 const AuditorContext = createContext<AuditorContextType | undefined>(undefined);
 
 export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { setViewingAsCompany } = useAuthContext();
-    const [isAuditorMode, setIsAuditorMode] = useState(false);
-    const [targetCompany, setTargetCompany] = useState<TargetCompany | null>(null);
+    const { user, company } = useAuthContext();
+    const [auditorAssignments, setAuditorAssignments] = useState<AuditAssignment[]>([]);
+    const [viewingAsCompanyId, setViewingAsCompanyId] = useState<string | null>(null);
+    const [viewingAsCompanyName, setViewingAsCompanyName] = useState<string | null>(null);
     const [currentContext, setCurrentContext] = useState<AuditContextInfo | null>(null);
     const location = useLocation();
 
-    // Context detecting effect
+    // 1. Memoize counts and basic status
+    const isAuditorMode = !!viewingAsCompanyId;
+    const isActuallyAuditor = user?.role === 'auditor';
+    const effectiveCompanyId = viewingAsCompanyId || (isActuallyAuditor ? null : company?.id) || null;
+
+    // 2. Fetch Assignments logically separated from Auth
+    const fetchAuditorAssignments = useCallback(async () => {
+        if (!user) {
+            setAuditorAssignments([]);
+            return;
+        }
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from('audit_assignments')
+                .select(`
+                    id, auditor_id, company_id, start_date, end_date, status, notes, created_by, created_at, updated_at,
+                    company:company_info(id, name)
+                `)
+                .eq('auditor_id', user.id)
+                .in('status', ['agendada', 'em_andamento'])
+                .lte('start_date', today)
+                .or(`end_date.is.null,end_date.gte.${today}`);
+
+            if (error) {
+                console.error('[AuditorContext] Erro ao buscar vínculos:', error);
+                setAuditorAssignments([]);
+                return;
+            }
+
+            const mappedAssignments: AuditAssignment[] = (data as unknown as DatabaseAssignment[] || []).map((item) => ({
+                id: item.id,
+                auditor_id: item.auditor_id,
+                company_id: item.company_id,
+                start_date: item.start_date,
+                end_date: item.end_date,
+                status: item.status,
+                notes: item.notes || undefined,
+                created_by: item.created_by || undefined,
+                created_at: item.created_at,
+                updated_at: item.updated_at,
+                company_name: item.company?.name || 'Empresa'
+            }));
+
+            setAuditorAssignments(mappedAssignments);
+        } catch (error) {
+            console.error('[AuditorContext] Erro inesperado:', error);
+            setAuditorAssignments([]);
+        }
+    }, [user]);
+
+    // Initial load and whenever user changes
+    useEffect(() => {
+        fetchAuditorAssignments();
+    }, [fetchAuditorAssignments]);
+
+    // RESTORE selection from storage
+    useEffect(() => {
+        const savedCompany = localStorage.getItem('isotek_target_company');
+        const savedMode = localStorage.getItem('isotek_auditor_mode');
+
+        if (savedCompany && savedMode === 'true') {
+            try {
+                const companyData = JSON.parse(savedCompany);
+                setViewingAsCompanyId(companyData.id);
+                setViewingAsCompanyName(companyData.name);
+            } catch (e) {
+                console.error('[AuditorContext] Erro ao restaurar empresa:', e);
+                localStorage.removeItem('isotek_target_company');
+                localStorage.removeItem('isotek_auditor_mode');
+            }
+        }
+    }, []);
+
+    // 3. Route detection context
     useEffect(() => {
         if (!isAuditorMode) {
             setCurrentContext(null);
             return;
         }
-
-        const path = location.pathname;
-        const context = AUDIT_ROUTE_MAP[path] || null;
+        const context = AUDIT_ROUTE_MAP[location.pathname] || null;
         setCurrentContext(context);
     }, [location.pathname, isAuditorMode]);
 
-    // Initial load from storage
-    useEffect(() => {
-        const storedMode = localStorage.getItem('isotek_auditor_mode');
-        const storedCompany = localStorage.getItem('isotek_target_company');
+    const setViewingAsCompany = useCallback((companyId: string | null, companyName?: string | null) => {
+        setViewingAsCompanyId(companyId);
+        setViewingAsCompanyName(companyName || null);
 
-        if (storedMode === 'true' && storedCompany) {
-            try {
-                const company = JSON.parse(storedCompany);
-                setIsAuditorMode(true);
-                setTargetCompany(company);
-                setViewingAsCompany(company.id, company.name);
-            } catch (e) {
-                console.error('Error parsing stored auditor context', e);
-                localStorage.removeItem('isotek_auditor_mode');
-                localStorage.removeItem('isotek_target_company');
-            }
+        if (companyId) {
+            localStorage.setItem('isotek_target_company', JSON.stringify({ id: companyId, name: companyName }));
+            localStorage.setItem('isotek_auditor_mode', 'true');
+        } else {
+            localStorage.removeItem('isotek_target_company');
+            localStorage.removeItem('isotek_auditor_mode');
         }
-    }, [setViewingAsCompany]);
+    }, []);
 
     const enterAuditorMode = (company: TargetCompany) => {
-        setIsAuditorMode(true);
-        setTargetCompany(company);
-        localStorage.setItem('isotek_auditor_mode', 'true');
-        localStorage.setItem('isotek_target_company', JSON.stringify(company));
         setViewingAsCompany(company.id, company.name);
         toast.success(`Modo auditor ativado: Visualizando ${company.name}`);
     };
 
     const exitAuditorMode = () => {
-        setIsAuditorMode(false);
-        setTargetCompany(null);
-        localStorage.removeItem('isotek_auditor_mode');
-        localStorage.removeItem('isotek_target_company');
         setViewingAsCompany(null);
         toast.info('Modo auditor encerrado');
     };
 
-    const value = React.useMemo(() => ({
+    const targetCompany = useMemo(() =>
+        viewingAsCompanyId ? { id: viewingAsCompanyId, name: viewingAsCompanyName || 'Empresa' } : null
+        , [viewingAsCompanyId, viewingAsCompanyName]);
+
+    const value = useMemo(() => ({
         isAuditorMode,
         targetCompany,
+        auditorAssignments,
+        viewingAsCompanyId,
+        viewingAsCompanyName,
+        effectiveCompanyId,
         currentContext,
+        setViewingAsCompany,
         enterAuditorMode,
-        exitAuditorMode
-    }), [isAuditorMode, targetCompany, currentContext]);
+        exitAuditorMode,
+        refreshAssignments: fetchAuditorAssignments
+    }), [
+        isAuditorMode,
+        targetCompany,
+        auditorAssignments,
+        viewingAsCompanyId,
+        viewingAsCompanyName,
+        effectiveCompanyId,
+        currentContext,
+        setViewingAsCompany,
+        fetchAuditorAssignments
+    ]);
 
     return (
         <AuditorContext.Provider value={value}>

@@ -17,11 +17,13 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { RiskTask } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const ActionPlansPage: React.FC = () => {
-    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [loading, setLoading] = useState(true);
     const [tasks, setTasks] = useState<RiskTask[]>([]);
     const [risks, setRisks] = useState<any[]>([]);

@@ -11,6 +11,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { supabase } from '../../../lib/supabase';
 import { SalesOrder } from '../../../types';
 import { EmptyState } from '../../common/EmptyState';
@@ -18,7 +19,8 @@ import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 
 export const SalesRequirementsPage: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [orders, setOrders] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

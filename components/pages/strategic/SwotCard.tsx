@@ -2,6 +2,7 @@ import { AlertCircle, Plus, Trash2, X, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
@@ -95,7 +96,8 @@ const getMockData = (type: string): SwotItem[] => {
 
 export const SwotCard: React.FC<SwotCardProps> = ({ type }) => {
     const config = typeConfig[type];
-    const { user, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
 
     const [items, setItems] = useState<SwotItem[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);

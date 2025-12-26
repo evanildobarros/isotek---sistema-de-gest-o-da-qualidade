@@ -4,11 +4,13 @@ import { Plus, Users, Building, Briefcase, Globe, Shield, Edit2, Trash2, X, Targ
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { Stakeholder } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const StakeholdersPage: React.FC = () => {
-    const { user, company, loadingCompany, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company, loadingCompany } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);

@@ -297,7 +297,7 @@ export const LandingPage: React.FC = () => {
                             <p className="text-lg text-gray-600 leading-relaxed mb-10">
                                 A Isotek une tecnologia de ponta e expertise normativa para guiar sua empresa rumo à excelência.
                                 Eliminamos a complexidade para que você possa focar no que realmente importa:
-                                a qualidade do seu product e a satisfação do seu cliente.
+                                a qualidade do seu produto e a satisfação do seu cliente.
                             </p>
                             <div className="grid sm:grid-cols-2 gap-6">
                                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#4AD9D9] transition-colors">

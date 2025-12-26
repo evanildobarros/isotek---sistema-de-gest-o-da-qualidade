@@ -20,11 +20,13 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { Employee, EmployeeTraining } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
 
 export const CompetenciesPage: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [trainings, setTrainings] = useState<EmployeeTraining[]>([]);

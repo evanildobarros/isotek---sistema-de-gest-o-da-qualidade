@@ -38,7 +38,7 @@ interface Document {
 }
 
 export const DocumentsPage: React.FC = () => {
-    const { user, company, effectiveCompanyId, isAuditorMode, viewingAsCompanyName } = useAuthContext();
+    const { user, company, viewingAsCompanyName } = useAuthContext();
     const location = useLocation();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);

@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { Modal } from '../../common/Modal';
 import { PageHeader } from '../../common/PageHeader';
 import { EmptyState } from '../../common/EmptyState';
@@ -39,7 +40,8 @@ interface ManagementReview {
 }
 
 export const ManagementReviewPage: React.FC = () => {
-    const { company, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { company } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [reviews, setReviews] = useState<ManagementReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);

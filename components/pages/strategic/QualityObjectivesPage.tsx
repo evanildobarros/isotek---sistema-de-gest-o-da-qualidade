@@ -3,11 +3,13 @@ import { Target, Plus, Edit2, Trash2, Loader2, TrendingUp, Calendar, Rocket, Che
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAuditor } from '../../../contexts/AuditorContext';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import { QualityObjective, Process } from '../../../types';
 
 export const QualityObjectivesPage: React.FC = () => {
-    const { user, company, loadingCompany, effectiveCompanyId, isAuditorMode } = useAuthContext();
+    const { user, company, loadingCompany } = useAuthContext();
+    const { effectiveCompanyId, isAuditorMode } = useAuditor();
     const [loading, setLoading] = useState(true);
     const [objectives, setObjectives] = useState<QualityObjective[]>([]);
     const [processes, setProcesses] = useState<{ id: string; name: string }[]>([]);
