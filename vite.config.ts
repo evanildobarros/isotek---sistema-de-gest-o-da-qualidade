@@ -17,11 +17,16 @@ export default defineConfig(({ mode }) => {
     define: {
       // API keys são gerenciadas pelo Supabase Edge Function (backend)
       // Não expor chaves sensíveis no frontend
+      global: 'globalThis',
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        buffer: 'buffer/',
       }
-    }
+    },
+    optimizeDeps: {
+      include: ['buffer'],
+    },
   };
 });
