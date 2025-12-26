@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ISO_RISK_THRESHOLDS, ISO_RISK_LABELS, getRiskLevel } from '../../../lib/constants';
 
 type RiskType = 'risk' | 'opportunity';
 
@@ -21,6 +22,22 @@ interface RiskHeatmapProps {
 const PROBABILITY_LEVELS = [5, 4, 3, 2, 1];
 const IMPACT_LEVELS = [1, 2, 3, 4, 5];
 
+// Cores de células do heatmap (gradientes para visualização)
+const CELL_COLORS = {
+    risk: {
+        CRITICAL: 'bg-gradient-to-br from-red-100 to-red-50 border-red-300 hover:from-red-200 hover:to-red-100 shadow-red-100/50',
+        HIGH: 'bg-gradient-to-br from-orange-100 to-orange-50 border-orange-300 hover:from-orange-200 hover:to-orange-100 shadow-orange-50/50',
+        MODERATE: 'bg-gradient-to-br from-yellow-100 to-yellow-50 border-yellow-300 hover:from-yellow-200 hover:to-yellow-100 shadow-yellow-50/50',
+        LOW: 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-300 hover:from-emerald-200 hover:to-emerald-100 shadow-emerald-50/50'
+    },
+    opportunity: {
+        CRITICAL: 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-300 hover:from-blue-200 hover:to-blue-100 shadow-blue-100/50',
+        HIGH: 'bg-gradient-to-br from-blue-50 to-white border-blue-200 hover:from-blue-100 hover:to-blue-50',
+        MODERATE: 'bg-gradient-to-br from-cyan-50 to-white border-cyan-200 hover:from-cyan-100 hover:to-cyan-50',
+        LOW: 'bg-gradient-to-br from-slate-50 to-white border-slate-200 hover:from-slate-100 hover:to-slate-50'
+    }
+} as const;
+
 export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({ risks, onRiskClick }) => {
 
     // 1. Agrupar riscos por célula para performance (useMemo)
@@ -37,33 +54,22 @@ export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({ risks, onRiskClick }) 
     // 2. Lógica de Cores ISO 9001 (Multiplicação P x I)
     const getCellColor = (prob: number, imp: number, hasOpportunities: boolean) => {
         const score = prob * imp;
+        const level = getRiskLevel(score);
 
         // Se a célula contém apenas oportunidades, usamos tons de azul
         if (hasOpportunities) {
-            if (score >= 17) return 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-300 hover:from-blue-200 hover:to-blue-100 shadow-blue-100/50';      // Excelente
-            if (score >= 10) return 'bg-gradient-to-br from-blue-50 to-white border-blue-200 hover:from-blue-100 hover:to-blue-50';      // Estratégica
-            if (score >= 5) return 'bg-gradient-to-br from-cyan-50 to-white border-cyan-200 hover:from-cyan-100 hover:to-cyan-50';       // Promissora
-            return 'bg-gradient-to-br from-slate-50 to-white border-slate-200 hover:from-slate-100 hover:to-slate-50';                   // Baixa
+            return CELL_COLORS.opportunity[level];
         }
 
         // Zonas de Calor (Heatmap) para Riscos/Ameaças
-        if (score >= 17) return 'bg-gradient-to-br from-red-100 to-red-50 border-red-300 hover:from-red-200 hover:to-red-100 shadow-red-100/50';      // Crítico
-        if (score >= 10) return 'bg-gradient-to-br from-orange-100 to-orange-50 border-orange-300 hover:from-orange-200 hover:to-orange-100 shadow-orange-50/50'; // Alto
-        if (score >= 5) return 'bg-gradient-to-br from-yellow-100 to-yellow-50 border-yellow-300 hover:from-yellow-200 hover:to-yellow-100 shadow-yellow-50/50'; // Moderado
-        return 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-300 hover:from-emerald-200 hover:to-emerald-100 shadow-emerald-50/50';           // Baixo
+        return CELL_COLORS.risk[level];
     };
 
     const getScoreLabel = (score: number, hasOnlyOpportunities: boolean) => {
-        if (hasOnlyOpportunities) {
-            if (score >= 17) return 'Excelente';
-            if (score >= 10) return 'Estratégica';
-            if (score >= 5) return 'Promissora';
-            return 'Baixa';
-        }
-        if (score >= 17) return 'Crítico';
-        if (score >= 10) return 'Alto';
-        if (score >= 5) return 'Moderado';
-        return 'Baixo';
+        const level = getRiskLevel(score);
+        return hasOnlyOpportunities
+            ? ISO_RISK_LABELS.opportunity[level]
+            : ISO_RISK_LABELS.risk[level];
     };
 
     return (

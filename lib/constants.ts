@@ -83,8 +83,70 @@ export const AUDITOR_RATES = {
     diamond: { label: 'Diamante', rate: 0.85 }
 };
 
-
 export const AUDIT_BASE_PRICE = 1200; // Preço base diária sugerida
+
+// ============================================================================
+// ISO 9001:2015 - Matriz de Riscos e Oportunidades
+// ============================================================================
+
+/**
+ * Thresholds de severidade para a Matriz de Riscos (P x I)
+ * Baseado na norma ISO 9001:2015 - Cláusula 6.1
+ */
+export const ISO_RISK_THRESHOLDS = {
+    CRITICAL: 17,  // Score >= 17: Crítico/Excelente
+    HIGH: 10,      // Score >= 10: Alto/Estratégico
+    MODERATE: 5,   // Score >= 5: Moderado/Promissor
+    LOW: 1         // Score >= 1: Baixo
+} as const;
+
+/**
+ * Cores padronizadas para níveis de risco (Tailwind CSS)
+ */
+export const ISO_RISK_COLORS = {
+    // Estilos para RISCOS (Ameaças)
+    risk: {
+        CRITICAL: 'bg-red-50 border-red-200 text-red-700',
+        HIGH: 'bg-orange-50 border-orange-200 text-orange-700',
+        MODERATE: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+        LOW: 'bg-emerald-50 border-emerald-200 text-emerald-700'
+    },
+    // Estilos para OPORTUNIDADES
+    opportunity: {
+        CRITICAL: 'bg-blue-100 border-blue-300 text-blue-800',
+        HIGH: 'bg-blue-50 border-blue-200 text-blue-700',
+        MODERATE: 'bg-cyan-50 border-cyan-200 text-cyan-700',
+        LOW: 'bg-slate-50 border-slate-200 text-slate-700'
+    }
+} as const;
+
+/**
+ * Labels para níveis de risco/oportunidade
+ */
+export const ISO_RISK_LABELS = {
+    risk: {
+        CRITICAL: 'Crítico',
+        HIGH: 'Alto',
+        MODERATE: 'Moderado',
+        LOW: 'Baixo'
+    },
+    opportunity: {
+        CRITICAL: 'Excelente',
+        HIGH: 'Estratégica',
+        MODERATE: 'Promissora',
+        LOW: 'Baixa'
+    }
+} as const;
+
+/**
+ * Retorna o nível de severidade baseado no score (P x I)
+ */
+export const getRiskLevel = (score: number): keyof typeof ISO_RISK_THRESHOLDS => {
+    if (score >= ISO_RISK_THRESHOLDS.CRITICAL) return 'CRITICAL';
+    if (score >= ISO_RISK_THRESHOLDS.HIGH) return 'HIGH';
+    if (score >= ISO_RISK_THRESHOLDS.MODERATE) return 'MODERATE';
+    return 'LOW';
+};
 
 // Mapeamento de Contexto ISO 9001:2015 por Rota (Dicas de Auditoria)
 export const AUDIT_ROUTE_MAP: Record<string, AuditContextInfo> = {
