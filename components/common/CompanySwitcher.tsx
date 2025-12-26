@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuditor } from '../../contexts/AuditorContext';
 
 /**
  * CompanySwitcher - Link direto para o Portal do Auditor
@@ -13,11 +13,11 @@ interface CompanySwitcherProps {
 }
 
 export const CompanySwitcher: React.FC<CompanySwitcherProps> = ({ fullWidth, variant = 'default' }) => {
-    const { auditorAssignments } = useAuthContext();
+    const { auditorAssignments } = useAuditor();
     const navigate = useNavigate();
 
     // Se não há vínculos de auditor, não mostrar o componente
-    if (auditorAssignments.length === 0) {
+    if (!auditorAssignments || auditorAssignments.length === 0) {
         return null;
     }
 

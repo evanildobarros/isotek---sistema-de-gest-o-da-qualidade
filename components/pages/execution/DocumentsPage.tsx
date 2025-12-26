@@ -38,7 +38,7 @@ interface Document {
 }
 
 export const DocumentsPage: React.FC = () => {
-    const { user, company, viewingAsCompanyName } = useAuthContext();
+    const { user, company } = useAuthContext();
     const location = useLocation();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
@@ -115,8 +115,8 @@ export const DocumentsPage: React.FC = () => {
     // Audit findings hook - busca constatações pendentes para documentos
     const { findingsMap, loading: loadingFindings } = useAuditFindings('document');
 
-    // Auditor context para painel de ações
-    const { isAuditorMode: auditorModeActive, targetCompany } = useAuditor();
+    // Auditor context para painel de ações e effectiveCompanyId
+    const { isAuditorMode: auditorModeActive, isAuditorMode, targetCompany, effectiveCompanyId, viewingAsCompanyName } = useAuditor();
 
     // Estado para armazenar o ID do audit_assignment ativo (quando em modo auditor)
     const [activeAuditAssignmentId, setActiveAuditAssignmentId] = useState<string | null>(null);
@@ -1171,18 +1171,7 @@ export const DocumentsPage: React.FC = () => {
                                     {/* Bloco 2: Painel de Ações do Auditor - Posicionado à direita no modo horizontal */}
                                     {auditorModeActive && activeAuditAssignmentId && (
                                         <div className="md:w-1/2 lg:w-[600px] flex flex-col border-l border-amber-100 bg-amber-50/10">
-                                            <AuditActionPanel
-                                                entityId={doc.id}
-                                                entityType="document"
-                                                entityName={doc.title}
-                                                auditAssignmentId={activeAuditAssignmentId}
-                                                existingFinding={findingsMap[doc.id] ? {
-                                                    id: findingsMap[doc.id].id,
-                                                    severity: findingsMap[doc.id].severity as any,
-                                                    auditor_notes: findingsMap[doc.id].auditor_notes,
-                                                    status: findingsMap[doc.id].status
-                                                } : null}
-                                            />
+                                            <AuditActionPanel />
                                         </div>
                                     )}
                                 </div>

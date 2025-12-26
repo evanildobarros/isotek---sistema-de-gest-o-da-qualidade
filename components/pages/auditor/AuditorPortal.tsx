@@ -105,13 +105,12 @@ export const AuditorPortal: React.FC = () => {
     };
 
     const getProgressDisplay = (assignment: Assignment) => {
-        // Se temos um progresso calculado (vincular ao checklist real futuramente ou via campo progress)
-        // Por enquanto, usamos a coluna 'progress' que será atualizada pelo Checklist
-        if (assignment.template_id) {
-            return assignment.progress || 0;
+        // Prioridade 1: Progresso real do banco de dados (Checklist ou Painel Auditor)
+        if (assignment.progress !== undefined && assignment.progress !== null) {
+            return assignment.progress;
         }
 
-        // Fallback para estático se não houver template (vínculos antigos)
+        // Fallback para estático baseado no status se não houver progresso definido
         switch (assignment.status) {
             case 'agendada': return 10;
             case 'em_andamento': return 50;

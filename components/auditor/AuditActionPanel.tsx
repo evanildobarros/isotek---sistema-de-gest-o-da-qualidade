@@ -30,7 +30,7 @@ const MOCK_QUESTIONS = [
 ];
 
 export const AuditActionPanel: React.FC = () => {
-    const { isAuditorMode, currentContext, targetCompany } = useAuditor();
+    const { isAuditorMode, currentContext, targetCompany, activeAssignmentId } = useAuditor();
     const [isExpanded, setIsExpanded] = useState(false);
     const [questions, setQuestions] = useState<Question[]>(
         MOCK_QUESTIONS.map(q => ({ ...q, status: null }))
@@ -39,10 +39,29 @@ export const AuditActionPanel: React.FC = () => {
 
     if (!isAuditorMode) return null;
 
-    const handleAnswer = (questionId: number, status: AuditResponseStatus) => {
-        setQuestions(prev => prev.map(q =>
+    const handleAnswer = async (questionId: number, status: AuditResponseStatus) => {
+        const newQuestions = questions.map(q =>
             q.id === questionId ? { ...q, status } : q
-        ));
+        );
+        setQuestions(newQuestions);
+
+        // Calcular e atualizar progresso no banco
+        if (activeAssignmentId) {
+            const answeredCount = newQuestions.filter(q => q.status !== null).length;
+            const progress = Math.round((answeredCount / MOCK_QUESTIONS.length) * 100);
+
+            try {
+                await supabase
+                    .from('audit_assignments')
+                    .update({
+                        progress,
+                        status: 'em_andamento' // Muda status automaticamente ao iniciar coleta
+                    })
+                    .eq('id', activeAssignmentId);
+            } catch (error) {
+                console.error('Erro ao atualizar progresso:', error);
+            }
+        }
 
         if (status === 'non_compliant') {
             setActiveNCItem(questionId);

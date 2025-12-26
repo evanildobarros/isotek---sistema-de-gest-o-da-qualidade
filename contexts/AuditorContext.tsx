@@ -36,6 +36,8 @@ interface AuditorContextType {
     effectiveCompanyId: string | null;
     currentContext: AuditContextInfo | null;
     targetCompany: TargetCompany | null;
+    activeAssignment: AuditAssignment | null;
+    activeAssignmentId: string | null;
     setViewingAsCompany: (companyId: string | null, companyName?: string | null) => void;
     enterAuditorMode: (company: TargetCompany) => void;
     exitAuditorMode: () => void;
@@ -164,6 +166,13 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
         viewingAsCompanyId ? { id: viewingAsCompanyId, name: viewingAsCompanyName || 'Empresa' } : null
         , [viewingAsCompanyId, viewingAsCompanyName]);
 
+    const activeAssignment = useMemo(() => {
+        if (!viewingAsCompanyId || auditorAssignments.length === 0) return null;
+        return auditorAssignments.find(a => a.company_id === viewingAsCompanyId) || null;
+    }, [viewingAsCompanyId, auditorAssignments]);
+
+    const activeAssignmentId = activeAssignment?.id || null;
+
     const value = useMemo(() => ({
         isAuditorMode,
         targetCompany,
@@ -172,6 +181,8 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
         viewingAsCompanyName,
         effectiveCompanyId,
         currentContext,
+        activeAssignment,
+        activeAssignmentId,
         setViewingAsCompany,
         enterAuditorMode,
         exitAuditorMode,
@@ -184,6 +195,8 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
         viewingAsCompanyName,
         effectiveCompanyId,
         currentContext,
+        activeAssignment,
+        activeAssignmentId,
         setViewingAsCompany,
         fetchAuditorAssignments
     ]);

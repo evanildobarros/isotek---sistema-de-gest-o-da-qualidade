@@ -260,7 +260,7 @@ export const CorrectiveActionsPage: React.FC = () => {
 
         try {
             setIsSaving(true);
-            const loadingToast = toast.loading(selectedAction ? 'Atualizando...' : 'Salvando...');
+            const toastId = toast.loading(selectedAction ? 'Atualizando...' : 'Salvando...');
             const payload: any = {
                 company_id: effectiveCompanyId,
                 ...form
@@ -326,14 +326,14 @@ export const CorrectiveActionsPage: React.FC = () => {
             if (currentStep === 4) {
                 fetchActions();
                 setIsModalOpen(false);
-                toast.success('Ação salva com sucesso!', { id: 'save-rnc' });
+                toast.success('Ação salva com sucesso!', { id: toastId });
             } else {
                 setCurrentStep(currentStep + 1);
-                toast.dismiss();
+                toast.dismiss(toastId);
             }
         } catch (error: any) {
             console.error('Erro ao salvar:', error);
-            toast.error('Erro ao salvar: ' + (error.message || error.error_description || 'Erro desconhecido'), { id: 'save-rnc' });
+            toast.error('Erro ao salvar: ' + (error.message || error.error_description || 'Erro desconhecido'));
         } finally {
             setIsSaving(false);
         }
