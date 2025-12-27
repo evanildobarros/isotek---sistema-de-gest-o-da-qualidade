@@ -22,6 +22,7 @@ interface DatabaseAssignment {
     created_by: string | null;
     created_at: string;
     updated_at: string;
+    progress: number | null;
     company: {
         id: string;
         name: string;
@@ -71,7 +72,7 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
             const { data, error } = await supabase
                 .from('audit_assignments')
                 .select(`
-                    id, auditor_id, company_id, start_date, end_date, status, notes, created_by, created_at, updated_at,
+                    id, auditor_id, company_id, start_date, end_date, status, notes, created_by, created_at, updated_at, progress,
                     company:company_info(id, name)
                 `)
                 .eq('auditor_id', user.id)
@@ -92,6 +93,7 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
                 start_date: item.start_date,
                 end_date: item.end_date,
                 status: item.status,
+                progress: (item as any).progress,
                 notes: item.notes || undefined,
                 created_by: item.created_by || undefined,
                 created_at: item.created_at,

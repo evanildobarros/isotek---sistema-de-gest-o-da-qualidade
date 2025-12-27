@@ -30,7 +30,7 @@ const MOCK_QUESTIONS = [
 ];
 
 export const AuditActionPanel: React.FC = () => {
-    const { isAuditorMode, currentContext, targetCompany, activeAssignmentId } = useAuditor();
+    const { isAuditorMode, currentContext, targetCompany, activeAssignmentId, refreshAssignments } = useAuditor();
     const [isExpanded, setIsExpanded] = useState(false);
     const [questions, setQuestions] = useState<Question[]>(
         MOCK_QUESTIONS.map(q => ({ ...q, status: null }))
@@ -100,14 +100,19 @@ export const AuditActionPanel: React.FC = () => {
             const progress = Math.round((answeredCount / MOCK_QUESTIONS.length) * 100);
 
             try {
-                // 1. Atualizar progresso geral
+                // 1. Atualizar progresso geral e status
+                const newStatus = progress === 100 ? 'concluida' : 'em_andamento';
+
                 await supabase
                     .from('audit_assignments')
                     .update({
                         progress,
-                        status: 'em_andamento'
+                        status: newStatus
                     })
                     .eq('id', activeAssignmentId);
+
+                // Recarregar status global
+                refreshAssignments?.();
 
                 // 2. Se for conforme, registrar no histórico de constatações
                 if (status === 'compliant') {
@@ -155,7 +160,7 @@ export const AuditActionPanel: React.FC = () => {
                 // 1. Buscar owner da empresa e usuário atual
                 const { data: { user } } = await supabase.auth.getUser();
                 const { data: companyData, error: companyError } = await supabase
-                    .from('companies')
+                    .from('company_info')
                     .select('owner_id')
                     .eq('id', targetCompany.id)
                     .maybeSingle();
@@ -200,7 +205,13 @@ export const AuditActionPanel: React.FC = () => {
                         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 dias de prazo
                     });
 
-                if (rncError) console.error('Erro ao registrar RNC:', rncError);
+                if (rncError) {
+                    console.error('Erro ao registrar RNC:', rncError);
+                    throw rncError;
+                }
+
+                // Recarregar status global
+                refreshAssignments?.();
 
                 // 4. Enviar Notificação
                 if (companyData?.owner_id) {
