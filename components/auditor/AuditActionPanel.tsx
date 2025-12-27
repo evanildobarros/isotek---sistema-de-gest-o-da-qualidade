@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ClipboardCheck,
     X,
@@ -36,6 +36,52 @@ export const AuditActionPanel: React.FC = () => {
         MOCK_QUESTIONS.map(q => ({ ...q, status: null }))
     );
     const [activeNCItem, setActiveNCItem] = useState<number | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    // Carregar respostas existentes (Persistência)
+    useEffect(() => {
+        const loadExistingFindings = async () => {
+            if (!activeAssignmentId || !currentContext) return;
+
+            setLoading(true);
+            try {
+                const { data: findings, error } = await supabase
+                    .from('audit_findings')
+                    .select('auditor_notes, severity, status')
+                    .eq('audit_assignment_id', activeAssignmentId)
+                    .eq('iso_clause', currentContext.clause);
+
+                if (error) throw error;
+
+                if (findings && findings.length > 0) {
+                    setQuestions(prev => prev.map(q => {
+                        // Tentar encontrar um finding que comece com o texto da questão
+                        const finding = findings.find(f => f.auditor_notes.startsWith(q.text));
+                        if (finding) {
+                            return {
+                                ...q,
+                                status: finding.severity === 'conforme' ? 'compliant' : 'non_compliant',
+                                // Se for NC, extrair a evidência (texto após o ": ")
+                                evidence: finding.severity === 'nao_conformidade_menor'
+                                    ? finding.auditor_notes.split(': ')[1]
+                                    : undefined
+                            };
+                        }
+                        return q;
+                    }));
+                } else {
+                    // Reset if no findings for this context
+                    setQuestions(MOCK_QUESTIONS.map(q => ({ ...q, status: null })));
+                }
+            } catch (error) {
+                console.error('Erro ao carregar constatações:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadExistingFindings();
+    }, [activeAssignmentId, currentContext]);
 
     if (!isAuditorMode) return null;
 
@@ -45,21 +91,39 @@ export const AuditActionPanel: React.FC = () => {
         );
         setQuestions(newQuestions);
 
+        const question = questions.find(q => q.id === questionId);
+        const questionText = question?.text || 'Questão de Auditoria';
+
         // Calcular e atualizar progresso no banco
         if (activeAssignmentId) {
             const answeredCount = newQuestions.filter(q => q.status !== null).length;
             const progress = Math.round((answeredCount / MOCK_QUESTIONS.length) * 100);
 
             try {
+                // 1. Atualizar progresso geral
                 await supabase
                     .from('audit_assignments')
                     .update({
                         progress,
-                        status: 'em_andamento' // Muda status automaticamente ao iniciar coleta
+                        status: 'em_andamento'
                     })
                     .eq('id', activeAssignmentId);
+
+                // 2. Se for conforme, registrar no histórico de constatações
+                if (status === 'compliant') {
+                    await supabase
+                        .from('audit_findings')
+                        .insert({
+                            audit_assignment_id: activeAssignmentId,
+                            entity_type: 'general',
+                            severity: 'conforme',
+                            auditor_notes: `${questionText}: Verificado e conforme.`,
+                            status: 'closed',
+                            iso_clause: currentContext?.clause || 'ISO'
+                        });
+                }
             } catch (error) {
-                console.error('Erro ao atualizar progresso:', error);
+                console.error('Erro ao atualizar progresso e registros:', error);
             }
         }
 
@@ -77,35 +141,83 @@ export const AuditActionPanel: React.FC = () => {
             return;
         }
 
+        const question = questions.find(q => q.id === questionId);
+        const questionText = question?.text || 'Questão de Auditoria';
+
         setQuestions(prev => prev.map(q =>
             q.id === questionId ? { ...q, evidence } : q
         ));
         setActiveNCItem(null);
 
-        // Notificar empresa
+        // Notificar empresa e REGISTRAR no sistema
         try {
-            if (targetCompany?.id) {
-                // 1. Buscar owner da empresa
-                const { data: companyData } = await supabase
+            if (targetCompany?.id && activeAssignmentId) {
+                // 1. Buscar owner da empresa e usuário atual
+                const { data: { user } } = await supabase.auth.getUser();
+                const { data: companyData, error: companyError } = await supabase
                     .from('companies')
                     .select('owner_id')
                     .eq('id', targetCompany.id)
+                    .maybeSingle();
+
+                if (companyError) console.error('Erro ao buscar dados da empresa:', companyError);
+
+                // Fallback para o usuário atual caso não encontre o dono da empresa
+                const finalResponsibleId = companyData?.owner_id || user?.id;
+
+                if (!finalResponsibleId) {
+                    throw new Error('Não foi possível determinar um responsável válido para a RNC.');
+                }
+
+                // 2. Registrar o Apontamento (Audit Finding)
+                const { data: findingData, error: findingError } = await supabase
+                    .from('audit_findings')
+                    .insert({
+                        audit_assignment_id: activeAssignmentId,
+                        entity_type: 'general',
+                        severity: 'nao_conformidade_menor',
+                        auditor_notes: `${questionText}: ${evidence}`,
+                        status: 'open',
+                        iso_clause: currentContext?.clause || 'ISO'
+                    })
+                    .select()
                     .single();
 
+                if (findingError) throw findingError;
+
+                // 3. Gerar código RNC e Registrar a Ação Corretiva
+                const { data: nextCode } = await supabase.rpc('generate_next_rnc_code', { p_company_id: targetCompany.id });
+
+                const { error: rncError } = await supabase
+                    .from('corrective_actions')
+                    .insert({
+                        company_id: targetCompany.id,
+                        code: nextCode || `RNC-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                        origin: 'Auditoria',
+                        description: `${questionText}: ${evidence}`,
+                        status: 'open',
+                        responsible_id: finalResponsibleId,
+                        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 dias de prazo
+                    });
+
+                if (rncError) console.error('Erro ao registrar RNC:', rncError);
+
+                // 4. Enviar Notificação
                 if (companyData?.owner_id) {
                     await supabase.from('notifications').insert({
                         company_id: targetCompany.id,
                         recipient_id: companyData.owner_id,
                         title: 'Nova Não Conformidade',
-                        message: `O auditor apontou uma falha no requisito ${currentContext?.clause || 'ISO'}.`,
-                        type: 'warning', // 'alert' mapeado para 'warning' do sistema
+                        message: `O auditor apontou uma falha no requisito ${currentContext?.clause || 'ISO'}: ${questionText}`,
+                        type: 'warning',
                         link: '/app/melhoria/nao-conformidades',
                         read: false
                     });
                 }
             }
         } catch (error) {
-            console.error('Erro ao enviar notificação:', error);
+            console.error('Erro ao processar ação de auditoria:', error);
+            toast.error('Erro ao registrar NC no banco de dados.');
         }
 
         toast.warning('Não Conformidade registrada com evidência.');
@@ -165,6 +277,11 @@ export const AuditActionPanel: React.FC = () => {
                         <p className="text-gray-500 text-sm italic">
                             Navegue para uma área auditável para iniciar a coleta de evidências.
                         </p>
+                    </div>
+                ) : loading ? (
+                    <div className="text-center py-10">
+                        <div className="w-8 h-8 border-2 border-[#025159] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                        <p className="text-gray-400 text-xs">Carregando coletas...</p>
                     </div>
                 ) : (
                     <>
