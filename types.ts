@@ -124,6 +124,8 @@ export interface Profile {
   gamification_level?: GamificationLevel;
   reputation_score?: number;
   audits_completed?: number;
+  commission_tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  custom_commission_rate?: number;
 }
 
 // ===========================================

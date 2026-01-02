@@ -32,6 +32,10 @@ export const AuditorWalletPage: React.FC = () => {
         pending: 0
     });
     const [auditorLevel, setAuditorLevel] = useState('bronze');
+    const [commissionSettings, setCommissionSettings] = useState<{ tier: string; customRate: number | null }>({
+        tier: 'bronze',
+        customRate: null
+    });
 
     useEffect(() => {
         if (user) {
@@ -43,15 +47,19 @@ export const AuditorWalletPage: React.FC = () => {
         try {
             setLoading(true);
 
-            // 1. Buscar Perfil para saber o Nível
+            // 1. Buscar Perfil para saber o Nível e Comissões
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('gamification_level')
+                .select('gamification_level, commission_tier, custom_commission_rate')
                 .eq('id', user?.id)
                 .single();
 
             const currentLevel = profile?.gamification_level || 'bronze';
+            const tier = profile?.commission_tier || currentLevel;
+            const customRate = profile?.custom_commission_rate || null;
+
             setAuditorLevel(currentLevel);
+            setCommissionSettings({ tier, customRate });
 
             // 2. Buscar Auditorias (Assignments)
             // Assumimos que auditorias concluídas geraram receita
@@ -73,9 +81,11 @@ export const AuditorWalletPage: React.FC = () => {
                 const auditValue = AUDIT_BASE_PRICE;
 
                 // Calcular breakdown para ESTA transação
-                // Importante: Se o auditor subir de nível, auditorias antigas deveriam manter a taxa antiga.
-                // Como não temos histórico de taxa no banco ainda, usamos o nível atual para simulação.
-                const financials = calculateAuditEarnings(auditValue, currentLevel);
+                const financials = calculateAuditEarnings(
+                    auditValue,
+                    tier,
+                    customRate || undefined
+                );
 
                 // Computar Totais
                 if (audit.status === 'concluida') {
@@ -200,8 +210,8 @@ export const AuditorWalletPage: React.FC = () => {
                                                 </p>
                                             </div>
                                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'concluida' ? 'bg-green-100 text-green-700' :
-                                                    t.status === 'cancelada' ? 'bg-red-100 text-red-700' :
-                                                        'bg-amber-100 text-amber-700'
+                                                t.status === 'cancelada' ? 'bg-red-100 text-red-700' :
+                                                    'bg-amber-100 text-amber-700'
                                                 }`}>
                                                 {t.status.toUpperCase().replace('_', ' ')}
                                             </span>

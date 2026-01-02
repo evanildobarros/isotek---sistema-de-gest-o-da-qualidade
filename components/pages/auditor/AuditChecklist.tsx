@@ -23,6 +23,7 @@ import {
     AuditChecklistResponse,
     AuditResponseStatus
 } from '../../../types';
+import { rewardXP } from '../../../lib/utils/gamification';
 
 interface AuditChecklistProps {
     audit?: Audit;
@@ -224,10 +225,31 @@ export const AuditChecklist: React.FC<AuditChecklistProps> = ({ audit, assignmen
                 const answered = newResponses.size;
                 const progress = total > 0 ? Math.round((answered / total) * 100) : 0;
 
+                // Buscar status atual para evitar recompensar XP duas vezes
+                const { data: currentAssignment } = await supabase
+                    .from('audit_assignments')
+                    .select('status, auditor_id')
+                    .eq('id', assignmentId)
+                    .single();
+
                 await supabase
                     .from('audit_assignments')
                     .update({ progress })
                     .eq('id', assignmentId);
+
+                // Se chegou a 100% e ainda não estava concluída, marca como concluída e dá XP
+                if (progress === 100 && currentAssignment && currentAssignment.status !== 'concluida') {
+                    await supabase
+                        .from('audit_assignments')
+                        .update({ status: 'concluida' })
+                        .eq('id', assignmentId);
+
+                    const auditorId = currentAssignment.auditor_id;
+                    if (auditorId) {
+                        await rewardXP(auditorId, 100, 'audit_completed');
+                        toast.success('🎉 +100 XP! Auditoria concluída com sucesso.');
+                    }
+                }
             }
 
             toast.success('Resposta registrada!');

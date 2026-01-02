@@ -80,7 +80,8 @@ export const AUDITOR_RATES = {
     bronze: { label: 'Bronze', rate: 0.70 },
     silver: { label: 'Prata', rate: 0.75 },
     gold: { label: 'Ouro', rate: 0.80 },
-    diamond: { label: 'Diamante', rate: 0.85 }
+    platinum: { label: 'Platina', rate: 0.85 },
+    diamond: { label: 'Diamante', rate: 0.90 }
 };
 
 export const AUDIT_BASE_PRICE = 1200; // Preço base diária sugerida

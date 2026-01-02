@@ -8,6 +8,7 @@ import { Audit } from '../../../types';
 import { PlanGuard } from '../../auth/PlanGuard';
 import { AuditChecklist } from '../auditor/AuditChecklist';
 import { ConfirmModal } from '../../common/ConfirmModal';
+import { rewardXP } from '../../../lib/utils/gamification';
 
 const AuditsPageContent: React.FC = () => {
     const { user, company } = useAuthContext();
@@ -172,7 +173,14 @@ const AuditsPageContent: React.FC = () => {
 
             if (error) throw error;
 
-            toast.success('Auditoria concluída com sucesso!');
+            // Se quem concluiu foi um auditor, ganha XP
+            if (user?.role === 'auditor') {
+                await rewardXP(user.id, 50, 'audit_completed');
+                toast.success('🎉 +50 XP! Auditoria concluída com sucesso.');
+            } else {
+                toast.success('Auditoria concluída com sucesso!');
+            }
+
             setChecklistAudit(null);
             fetchAudits();
         } catch (error) {

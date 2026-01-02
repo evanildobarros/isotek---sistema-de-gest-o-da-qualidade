@@ -81,7 +81,7 @@ export const AuditorPortal: React.FC = () => {
             const concluidas = allData?.filter(a => a.status === 'concluida').length || 0;
             setStats({ agendadas, emAndamento, concluidas });
 
-            const activeAssignments = allData?.filter(a => ['agendada', 'em_andamento'].includes(a.status)) || [];
+            const activeAssignments = allData?.filter(a => ['agendada', 'em_andamento', 'concluida'].includes(a.status)) || [];
             setAssignments(activeAssignments);
         } catch (error: any) {
             console.error('Erro ao buscar auditorias:', error);
@@ -208,9 +208,15 @@ export const AuditorPortal: React.FC = () => {
                                         </div>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${assignment.status === 'em_andamento'
                                             ? 'bg-blue-100 text-blue-800'
-                                            : 'bg-yellow-100 text-yellow-800'
+                                            : assignment.status === 'concluida'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-yellow-100 text-yellow-800'
                                             }`}>
-                                            {assignment.status === 'em_andamento' ? 'Em Andamento' : 'Agendada'}
+                                            {assignment.status === 'em_andamento'
+                                                ? 'Em Andamento'
+                                                : assignment.status === 'concluida'
+                                                    ? 'Concluída'
+                                                    : 'Agendada'}
                                         </span>
                                     </div>
 
@@ -237,7 +243,9 @@ export const AuditorPortal: React.FC = () => {
                                             <div
                                                 className={`h-full rounded-full transition-all ${assignment.status === 'em_andamento'
                                                     ? 'bg-blue-500'
-                                                    : 'bg-yellow-500'
+                                                    : assignment.status === 'concluida'
+                                                        ? 'bg-green-500'
+                                                        : 'bg-yellow-500'
                                                     }`}
                                                 style={{ width: `${getProgressDisplay(assignment)}%` }}
                                             />
@@ -250,7 +258,7 @@ export const AuditorPortal: React.FC = () => {
                                         onClick={() => handleEnterEnvironment(assignment)}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#025159] text-white rounded-lg hover:bg-[#013d42] transition-colors font-medium group"
                                     >
-                                        Acessar Ambiente de Auditoria
+                                        {assignment.status === 'concluida' ? 'Visualizar Auditoria' : 'Acessar Ambiente de Auditoria'}
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </button>
                                 </div>

@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
     Shield, Users, DollarSign, Activity, Plus, Search,
     MoreVertical, Lock, Unlock, ExternalLink, Building2, Mail, Key, AlertCircle,
-    ClipboardCheck, UserPlus, Link2, Calendar, X, Loader2
+    ClipboardCheck, UserPlus, Link2, Calendar, X, Loader2, Settings, Globe, Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { Company, AuditAssignment } from '../../../types';
 import { ConfirmModal } from '../../common/ConfirmModal';
-import { AUDIT_BASE_PRICE } from '../../../lib/constants';
+import { AUDIT_BASE_PRICE, AUDITOR_RATES } from '../../../lib/constants';
 import { calculateAuditEarnings } from '../../../lib/utils/finance';
 
 // Interface para Auditores
@@ -24,6 +24,8 @@ interface Auditor {
     status: 'livre' | 'em_auditoria';
     active_assignments?: number;
     estimated_payout?: number;
+    commission_tier?: string;
+    custom_commission_rate?: number;
 }
 
 // Função para formatar CNPJ: XX.XXX.XXX/XXXX-XX
@@ -64,6 +66,17 @@ export const SuperAdminPage: React.FC = () => {
     const [selectedAuditor, setSelectedAuditor] = useState<Auditor | null>(null);
     const [assignForm, setAssignForm] = useState({ companyId: '', startDate: '', endDate: '', notes: '' });
     const [savingAssign, setSavingAssign] = useState(false);
+
+    // Modal: Configuração de Comissão
+    const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
+    const [commissionForm, setCommissionForm] = useState({ tier: 'bronze', customRate: '' as string | number });
+    const [savingCommission, setSavingCommission] = useState(false);
+
+    // Global Settings
+    const [isGlobalSettingsModalOpen, setIsGlobalSettingsModalOpen] = useState(false);
+    const [globalRates, setGlobalRates] = useState<Record<string, number>>({});
+    const [savingGlobalSettings, setSavingGlobalSettings] = useState(false);
+    const [loadingGlobalSettings, setLoadingGlobalSettings] = useState(false);
 
     // Wizard State
     const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -116,6 +129,7 @@ export const SuperAdminPage: React.FC = () => {
             if (isEvanildo) {
                 setLoading(false);
                 fetchCompanies();
+                fetchGlobalSettings();
                 return;
             }
 
@@ -128,6 +142,7 @@ export const SuperAdminPage: React.FC = () => {
             if (profile?.is_super_admin) {
                 setLoading(false);
                 fetchCompanies();
+                fetchGlobalSettings();
             } else {
                 navigate('/app/dashboard');
             }
@@ -157,7 +172,7 @@ export const SuperAdminPage: React.FC = () => {
             // Buscar usuários com role = auditor
             const { data: profiles, error: profilesError } = await supabase
                 .from('profiles')
-                .select('id, full_name, role, created_at')
+                .select('id, full_name, role, created_at, commission_tier, custom_commission_rate')
                 .eq('role', 'auditor')
                 .order('created_at', { ascending: false });
 
@@ -167,30 +182,52 @@ export const SuperAdminPage: React.FC = () => {
             const { data: usersWithEmails } = await supabase.rpc('get_users_with_emails');
             const emailMap = new Map<string, string>(usersWithEmails?.map((u: any) => [u.id, u.email as string]) || []);
 
-            // Buscar assignments ativos para cada auditor
-            const { data: activeAssignments } = await supabase
+            // Buscar assignments ativos para cada auditor (exclui apenas concluídas e canceladas)
+            const { data: activeAssignments, error: assignmentsError } = await supabase
                 .from('audit_assignments')
-                .select('auditor_id')
-                .in('status', ['agendada', 'em_andamento']);
+                .select('auditor_id, status');
 
+            console.log('Active Assignments:', activeAssignments, 'Error:', assignmentsError);
+
+            // Contar auditorias ativas (não concluídas/canceladas)
             const assignmentCount = new Map<string, number>();
+            // Contar auditorias concluídas para cálculo de ganhos
+            const completedCount = new Map<string, number>();
+
             activeAssignments?.forEach((a: any) => {
-                assignmentCount.set(a.auditor_id, (assignmentCount.get(a.auditor_id) || 0) + 1);
+                if (a.status === 'concluida') {
+                    completedCount.set(a.auditor_id, (completedCount.get(a.auditor_id) || 0) + 1);
+                } else if (a.status !== 'cancelada') {
+                    assignmentCount.set(a.auditor_id, (assignmentCount.get(a.auditor_id) || 0) + 1);
+                }
             });
 
-            const mappedAuditors: Auditor[] = (profiles || []).map((p: any) => ({
-                id: p.id,
-                full_name: p.full_name || 'Sem nome',
-                email: emailMap.get(p.id) || 'N/A',
-                role: p.role,
-                created_at: p.created_at,
-                status: assignmentCount.get(p.id) ? 'em_auditoria' : 'livre',
-                active_assignments: assignmentCount.get(p.id) || 0,
-                estimated_payout: calculateAuditEarnings(
-                    (assignmentCount.get(p.id) || 0) * AUDIT_BASE_PRICE,
-                    'bronze'
-                ).auditorShare
-            }));
+            const mappedAuditors: Auditor[] = (profiles || []).map((p: any) => {
+                const tier = p.commission_tier || 'bronze';
+                const customRate = p.custom_commission_rate;
+                const completedAudits = completedCount.get(p.id) || 0;
+                const activeAudits = assignmentCount.get(p.id) || 0;
+
+                // Calcular ganhos de auditorias CONCLUÍDAS
+                const earnings = calculateAuditEarnings(
+                    completedAudits * AUDIT_BASE_PRICE,
+                    tier,
+                    customRate
+                );
+
+                return {
+                    id: p.id,
+                    full_name: p.full_name || 'Sem nome',
+                    email: emailMap.get(p.id) || 'N/A',
+                    role: p.role,
+                    created_at: p.created_at,
+                    commission_tier: tier,
+                    custom_commission_rate: customRate,
+                    status: activeAudits > 0 ? 'em_auditoria' : 'livre',
+                    active_assignments: activeAudits + completedAudits, // Total de auditorias
+                    estimated_payout: earnings.auditorShare // Valor de auditorias concluídas
+                };
+            });
 
             setAuditors(mappedAuditors);
         } catch (error: any) {
@@ -272,6 +309,62 @@ export const SuperAdminPage: React.FC = () => {
         }
     };
 
+    // Global Settings Functions
+    const fetchGlobalSettings = async () => {
+        setLoadingGlobalSettings(true);
+        const { data, error } = await supabase
+            .from('global_settings')
+            .select('value')
+            .eq('key', 'auditor_rates')
+            .single();
+
+        if (error) {
+            console.error('Error fetching global settings:', error);
+            // Fallback para constantes se falhar
+            setGlobalRates({
+                bronze: 0.70,
+                silver: 0.75,
+                gold: 0.80,
+                platinum: 0.85,
+                diamond: 0.90
+            });
+        } else if (data) {
+            // Se as chaves platinum/diamond estiverem faltando no dado legado, garante que existam
+            const rates = {
+                bronze: 0.70,
+                silver: 0.75,
+                gold: 0.80,
+                platinum: 0.85,
+                diamond: 0.90,
+                ...data.value
+            };
+            setGlobalRates(rates);
+        }
+        setLoadingGlobalSettings(false);
+    };
+
+    const handleUpdateGlobalSettings = async () => {
+        setSavingGlobalSettings(true);
+        const { error } = await supabase
+            .from('global_settings')
+            .upsert({
+                key: 'auditor_rates',
+                value: globalRates,
+                updated_at: new Date().toISOString(),
+                updated_by: user?.id
+            });
+
+        if (error) {
+            toast.error('Erro ao salvar configurações globais');
+            console.error('Error updating global settings:', error);
+        } else {
+            toast.success('Configurações globais atualizadas com sucesso!');
+            setIsGlobalSettingsModalOpen(false);
+            fetchAuditors(); // Recarregar para atualizar os cálculos
+        }
+        setSavingGlobalSettings(false);
+    };
+
     // Open assign modal
     const openAssignModal = (auditor: Auditor) => {
         setSelectedAuditor(auditor);
@@ -282,6 +375,43 @@ export const SuperAdminPage: React.FC = () => {
             notes: ''
         });
         setIsAssignModalOpen(true);
+    };
+
+    // Open commission modal
+    const openCommissionModal = (auditor: Auditor) => {
+        setSelectedAuditor(auditor);
+        setCommissionForm({
+            tier: auditor.commission_tier || 'bronze',
+            customRate: auditor.custom_commission_rate || ''
+        });
+        setIsCommissionModalOpen(true);
+    };
+
+    // Update commission settings
+    const handleUpdateCommission = async () => {
+        if (!selectedAuditor) return;
+
+        setSavingCommission(true);
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    commission_tier: commissionForm.tier,
+                    custom_commission_rate: commissionForm.customRate === '' ? null : Number(commissionForm.customRate)
+                })
+                .eq('id', selectedAuditor.id);
+
+            if (error) throw error;
+
+            toast.success(`Configurações de ${selectedAuditor.full_name} atualizadas!`);
+            setIsCommissionModalOpen(false);
+            fetchAuditors();
+        } catch (error: any) {
+            console.error('Erro ao atualizar comissão:', error);
+            toast.error('Erro ao atualizar: ' + error.message);
+        } finally {
+            setSavingCommission(false);
+        }
     };
 
     // Helper function to get avatar color based on company name
@@ -820,16 +950,25 @@ export const SuperAdminPage: React.FC = () => {
                                     className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
                                 />
                             </div>
-                            <button
-                                onClick={() => {
-                                    setNewAuditorForm({ name: '', email: '', password: Math.random().toString(36).slice(-8) });
-                                    setIsNewAuditorModalOpen(true);
-                                }}
-                                className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
-                            >
-                                <UserPlus className="w-5 h-5" />
-                                Novo Auditor
-                            </button>
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <button
+                                    onClick={() => setIsGlobalSettingsModalOpen(true)}
+                                    className="flex-1 sm:flex-none border border-amber-200 text-amber-700 hover:bg-amber-50 px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Globe className="w-5 h-5" />
+                                    Taxas Globais
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setNewAuditorForm({ name: '', email: '', password: Math.random().toString(36).slice(-8) });
+                                        setIsNewAuditorModalOpen(true);
+                                    }}
+                                    className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
+                                >
+                                    <UserPlus className="w-5 h-5" />
+                                    Novo Auditor
+                                </button>
+                            </div>
                         </div>
 
                         {/* Auditors Table */}
@@ -845,7 +984,8 @@ export const SuperAdminPage: React.FC = () => {
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Auditor</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">E-mail</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Auditorias Ativas</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider text-center">Auditorias</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Nível / Taxa</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Valor Previsto</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider">Cadastrado em</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-amber-700 uppercase tracking-wider text-right">Ações</th>
@@ -879,6 +1019,21 @@ export const SuperAdminPage: React.FC = () => {
                                                     <td className="px-6 py-4 text-sm text-gray-600 text-center">
                                                         {auditor.active_assignments || 0}
                                                     </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit ${auditor.commission_tier === 'gold' ? 'bg-amber-100 text-amber-700' :
+                                                                auditor.commission_tier === 'silver' ? 'bg-slate-100 text-slate-700' :
+                                                                    'bg-orange-100 text-orange-700'
+                                                                }`}>
+                                                                {auditor.commission_tier || 'bronze'}
+                                                            </span>
+                                                            {auditor.custom_commission_rate && (
+                                                                <span className="text-[10px] font-semibold text-blue-600">
+                                                                    Taxa: {auditor.custom_commission_rate}%
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
                                                     <td className="px-6 py-4 text-sm font-medium text-emerald-600">
                                                         {(auditor.estimated_payout || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                     </td>
@@ -886,19 +1041,28 @@ export const SuperAdminPage: React.FC = () => {
                                                         {new Date(auditor.created_at).toLocaleDateString('pt-BR')}
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button
-                                                            onClick={() => openAssignModal(auditor)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
-                                                        >
-                                                            <Link2 className="w-4 h-4" />
-                                                            Designar
-                                                        </button>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => openCommissionModal(auditor)}
+                                                                className="p-2 text-gray-400 hover:text-slate-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                                title="Configurações de Taxa"
+                                                            >
+                                                                <Settings className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openAssignModal(auditor)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                                                            >
+                                                                <Link2 className="w-4 h-4" />
+                                                                Designar
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
                                         {auditors.length === 0 && (
                                             <tr>
-                                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                                                     Nenhum auditor cadastrado. Clique em "Novo Auditor" para começar.
                                                 </td>
                                             </tr>
@@ -1212,89 +1376,144 @@ export const SuperAdminPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Modal: Designar Auditor */}
-            {isAssignModalOpen && selectedAuditor && (
+            {/* Modal: Configuração de Comissão */}
+            {isCommissionModalOpen && selectedAuditor && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="px-6 py-4 border-b border-gray-100 bg-amber-50 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-amber-900 flex items-center gap-2">
-                                <Link2 className="w-5 h-5" />
-                                Designar Auditor
+                        <div className="px-6 py-4 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <Settings className="w-5 h-5 text-slate-500" />
+                                Taxas do Auditor
                             </h2>
-                            <button onClick={() => setIsAssignModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsCommissionModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                            <div className="bg-amber-50 p-4 rounded-lg">
-                                <p className="text-sm text-amber-800">
-                                    <strong>Auditor:</strong> {selectedAuditor.full_name}
-                                </p>
-                                <p className="text-xs text-amber-600">{selectedAuditor.email}</p>
+                        <div className="p-6 space-y-6">
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-sm font-bold text-slate-800">{selectedAuditor.full_name}</p>
+                                <p className="text-xs text-slate-500">{selectedAuditor.email}</p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa Cliente</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Nível do Auditor</label>
                                 <select
-                                    value={assignForm.companyId}
-                                    onChange={e => setAssignForm({ ...assignForm, companyId: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                    value={commissionForm.tier}
+                                    onChange={e => setCommissionForm({ ...commissionForm, tier: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                                 >
-                                    <option value="">Selecione a empresa...</option>
-                                    {companies.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
+                                    <option value="bronze">Bronze ({Math.round((globalRates.bronze || 0.70) * 100)}%)</option>
+                                    <option value="silver">Prata ({Math.round((globalRates.silver || 0.75) * 100)}%)</option>
+                                    <option value="gold">Ouro ({Math.round((globalRates.gold || 0.80) * 100)}%)</option>
+                                    <option value="platinum">Platina ({Math.round((globalRates.platinum || 0.85) * 100)}%)</option>
+                                    <option value="diamond">Diamante ({Math.round((globalRates.diamond || 0.90) * 100)}%)</option>
                                 </select>
+                                <p className="text-[10px] text-gray-500 mt-1.5 px-1">
+                                    Níveis padrão conforme política de gamificação.
+                                </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                            <div className="pt-2">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Taxa Personalizada (%)</label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                        %
+                                    </div>
                                     <input
-                                        type="date"
-                                        value={assignForm.startDate}
-                                        onChange={e => setAssignForm({ ...assignForm, startDate: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
+                                        type="number"
+                                        value={commissionForm.customRate}
+                                        onChange={e => setCommissionForm({ ...commissionForm, customRate: e.target.value })}
+                                        placeholder="Ex: 72.5"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                                    <input
-                                        type="date"
-                                        value={assignForm.endDate}
-                                        onChange={e => setAssignForm({ ...assignForm, endDate: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
-                                    />
-                                </div>
+                                <p className="text-[10px] text-amber-600 mt-2 flex items-start gap-1 px-1 leading-relaxed">
+                                    <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+                                    <span>Preencher apenas se desejar sobrescrever a regra do nível. Deixe vazio para usar a taxa padrão do nível selecionado.</span>
+                                </p>
                             </div>
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
-                                <textarea
-                                    value={assignForm.notes}
-                                    onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none"
-                                    rows={2}
-                                    placeholder="Ex: Auditoria ISO 9001:2015"
-                                />
+                    <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+                        <button
+                            onClick={() => setIsCommissionModalOpen(false)}
+                            className="px-4 py-2 text-gray-600 hover:text-gray-900 font-bold text-sm"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleUpdateCommission}
+                            disabled={savingCommission}
+                            className="px-6 py-2 bg-[#025159] text-white rounded-xl font-bold text-sm hover:bg-[#013d42] disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all"
+                        >
+                            {savingCommission ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            )}
+
+            {/* Modal: Configurações Globais de Taxas */}
+            {isGlobalSettingsModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-amber-50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-amber-900 flex items-center gap-2">
+                                <Globe className="w-5 h-5 text-amber-600" />
+                                Taxas Globais de Comissão
+                            </h2>
+                            <button onClick={() => setIsGlobalSettingsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <p className="text-sm text-gray-600">
+                                Estas são as taxas padrão para cada nível de auditor. Alterações aqui afetarão todos os auditores que não possuem uma taxa personalizada definida.
+                            </p>
+
+                            <div className="space-y-4">
+                                {Object.keys(globalRates).map((tier) => (
+                                    <div key={tier} className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-100 bg-gray-50/50">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-gray-900 uppercase tracking-wider">{tier}</span>
+                                            <span className="text-xs text-gray-500">Taxa padrão do nível</span>
+                                        </div>
+                                        <div className="relative w-32">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="100"
+                                                value={Math.round(globalRates[tier] * 100)}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) / 100;
+                                                    setGlobalRates({ ...globalRates, [tier]: val });
+                                                }}
+                                                className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none font-medium text-right"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
                         <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
                             <button
-                                onClick={() => setIsAssignModalOpen(false)}
+                                onClick={() => setIsGlobalSettingsModalOpen(false)}
                                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium"
                             >
                                 Cancelar
                             </button>
                             <button
-                                onClick={handleAssignAuditor}
-                                disabled={savingAssign || !assignForm.companyId || !assignForm.startDate}
+                                onClick={handleUpdateGlobalSettings}
+                                disabled={savingGlobalSettings}
                                 className="px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
                             >
-                                {savingAssign ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-                                {savingAssign ? 'Salvando...' : 'Designar'}
+                                {savingGlobalSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                {savingGlobalSettings ? 'Salvando...' : 'Salvar Taxas Globais'}
                             </button>
                         </div>
                     </div>
@@ -1303,3 +1522,5 @@ export const SuperAdminPage: React.FC = () => {
         </div>
     );
 };
+
+export default SuperAdminPage;

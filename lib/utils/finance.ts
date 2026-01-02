@@ -10,7 +10,11 @@ export interface EarningsSimulation {
     auditorLevel: string;
 }
 
-export const calculateAuditEarnings = (grossTotal: number, auditorLevel: string = 'bronze'): EarningsSimulation => {
+export const calculateAuditEarnings = (
+    grossTotal: number,
+    auditorLevel: string = 'bronze',
+    customRate?: number
+): EarningsSimulation => {
     // 1. Calcular custo financeiro (Dinheiro que vai para o Banco/Stripe)
     const gatewayCost = (grossTotal * FINANCIAL_FEES.GATEWAY_PERCENT) + FINANCIAL_FEES.FIXED_TRANSACTION;
 
@@ -18,9 +22,18 @@ export const calculateAuditEarnings = (grossTotal: number, auditorLevel: string 
     const netBasis = Math.max(0, grossTotal - gatewayCost);
 
     // 3. Identificar a taxa do auditor
-    const levelKey = auditorLevel.toLowerCase() as keyof typeof AUDITOR_RATES;
-    const rateConfig = (AUDITOR_RATES as any)[levelKey] || AUDITOR_RATES.bronze;
-    const auditorRate = rateConfig.rate;
+    let auditorRate: number;
+    let label: string;
+
+    if (customRate !== undefined && customRate !== null) {
+        auditorRate = customRate / 100; // Converte de porcentagem (ex: 72.5) para decimal (0.725)
+        label = 'Personalizada';
+    } else {
+        const levelKey = auditorLevel.toLowerCase() as keyof typeof AUDITOR_RATES;
+        const rateConfig = (AUDITOR_RATES as any)[levelKey] || AUDITOR_RATES.bronze;
+        auditorRate = rateConfig.rate;
+        label = rateConfig.label;
+    }
 
     // 4. Realizar o Split
     const auditorShare = netBasis * auditorRate;
@@ -33,7 +46,7 @@ export const calculateAuditEarnings = (grossTotal: number, auditorLevel: string 
         auditorShare,
         platformShare,
         auditorRate,
-        auditorLevel: rateConfig.label
+        auditorLevel: label
     };
 };
 

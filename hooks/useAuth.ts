@@ -2,7 +2,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 export const useAuth = () => {
-    const { user, session, loading, signOut } = useAuthContext();
+    const { user, session, role, loading, signOut } = useAuthContext();
 
     // Helper functions that wrap Supabase auth methods
     const signIn = async (email: string, password: string) => {
@@ -25,6 +25,7 @@ export const useAuth = () => {
     return {
         user,
         session,
+        role,
         loading,
         error: null, // Context doesn't track global error, but we keep the field for compatibility
         isAuthenticated: !!user,

@@ -19,7 +19,8 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Badge, UserBadge, GamificationLevel } from '../../types';
-import { AUDITOR_RATES } from '../../lib/constants';
+import { AUDITOR_RATES, AUDIT_BASE_PRICE } from '../../lib/constants';
+import { calculateAuditEarnings } from '../../lib/utils/finance';
 import { Percent } from 'lucide-react';
 
 // Mapeamento de ícones por slug
@@ -69,11 +70,20 @@ const levelConfigs: Record<GamificationLevel, LevelConfig> = {
     gold: {
         name: 'Ouro',
         minXp: 1000,
-        maxXp: 5000,
+        maxXp: 2500,
         color: 'text-yellow-700',
         progressColor: 'bg-yellow-500',
         borderColor: 'border-yellow-200',
         bgStyle: 'bg-gradient-to-br from-yellow-50 to-white'
+    },
+    platinum: {
+        name: 'Platina',
+        minXp: 2500,
+        maxXp: 5000,
+        color: 'text-cyan-700',
+        progressColor: 'bg-cyan-600',
+        borderColor: 'border-cyan-200',
+        bgStyle: 'bg-gradient-to-br from-cyan-50 to-white'
     },
     diamond: {
         name: 'Diamante',
@@ -87,7 +97,7 @@ const levelConfigs: Record<GamificationLevel, LevelConfig> = {
 };
 
 const getNextLevel = (current: GamificationLevel): GamificationLevel | null => {
-    const levels: GamificationLevel[] = ['bronze', 'silver', 'gold', 'diamond'];
+    const levels: GamificationLevel[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
     const idx = levels.indexOf(current);
     return idx < levels.length - 1 ? levels[idx + 1] : null;
 };
@@ -168,29 +178,53 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
                 .eq('user_id', user?.id);
 
             if (earnedError) throw earnedError;
-            setUserBadges(earned || []);
+
+            // Garantir que a join de badge seja tratada como objeto único
+            const mappedBadges = (earned || []).map(ub => ({
+                ...ub,
+                badge: Array.isArray(ub.badge) ? ub.badge[0] : ub.badge
+            })) as UserBadge[];
+
+            setUserBadges(mappedBadges);
 
             // Buscar dados financeiros (Total Earnings)
             // Tenta buscar da view, se falhar (por permissão ou não existência), calcula manual
             const { data: financialData, error: financialError } = await supabase
                 .from('auditor_financial_summary')
-                .select('total_earnings')
+                .select('total_earnings, total_audits')
                 .eq('auditor_id', user?.id)
                 .single();
 
-            if (financialData) {
-                setTotalEarnings(financialData.total_earnings || 0);
+            if (financialData && financialData.total_earnings > 0) {
+                setTotalEarnings(financialData.total_earnings);
+
+                // Sempre atualizar o contador de auditorias a partir da view se disponível
+                if ((financialData as any).total_audits > 0) {
+                    setProfile(prev => prev ? { ...prev, audits_completed: (financialData as any).total_audits } : null);
+                }
             } else {
-                // Fallback: Calcular via audit_assignments se view falhar
+                // Fallback: Calcular via audit_assignments se view falhar ou retornar 0
+                // Usamos a mesma lógica da AuditorWalletPage para consistência
                 const { data: assignments } = await supabase
                     .from('audit_assignments')
-                    .select('auditor_payout')
+                    .select('status, auditor_payout')
                     .eq('auditor_id', user?.id)
-                    .neq('status', 'cancelled'); // Ignora canceladas
+                    .eq('status', 'concluida');
 
-                if (assignments) {
-                    const total = assignments.reduce((acc, curr) => acc + (curr.auditor_payout || 0), 0);
+                if (assignments && assignments.length > 0) {
+                    // Sempre atualizar localmente se o número de auditorias for diferente do perfil
+                    // para garantir que o dashboard mostre o dado real imediato
+                    setProfile(prev => prev ? { ...prev, audits_completed: assignments.length } : null);
+
+                    const total = assignments.reduce((acc, curr) => {
+                        // Se tiver payout no banco usa ele, senão calcula com base no nível atual
+                        const payout = curr.auditor_payout ||
+                            calculateAuditEarnings(AUDIT_BASE_PRICE, level).auditorShare;
+                        return acc + payout;
+                    }, 0);
                     setTotalEarnings(total);
+                } else {
+                    setTotalEarnings(0);
                 }
             }
 
@@ -290,18 +324,6 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
                                 </div>
                             </div>
 
-                            {/* Auditorias */}
-                            <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-gray-100">
-                                <div className="p-1.5 bg-green-100 rounded-lg">
-                                    <ClipboardCheck className="w-4 h-4 text-green-600" />
-                                </div>
-                                <div>
-                                    <p className="text-base font-bold text-gray-900 leading-tight">
-                                        {auditsCompleted}
-                                    </p>
-                                    <p className="text-[10px] text-gray-500">Auditorias</p>
-                                </div>
-                            </div>
 
                             {/* Auditoria Taxa de Repasse */}
                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border border-gray-100">

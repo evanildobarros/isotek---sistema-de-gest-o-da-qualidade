@@ -7,13 +7,17 @@ import { supabase } from '../../lib/supabase';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
-    const { session } = useAuth();
+    const { session, role } = useAuth();
 
     useEffect(() => {
-        if (session) {
-            navigate('/app/dashboard', { replace: true });
+        if (session && role) {
+            if (role === 'auditor') {
+                navigate('/app/auditor-portal', { replace: true });
+            } else {
+                navigate('/app/dashboard', { replace: true });
+            }
         }
-    }, [session, navigate]);
+    }, [session, role, navigate]);
 
     // Form Fields
     const [email, setEmail] = useState('');

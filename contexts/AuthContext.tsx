@@ -8,6 +8,7 @@ interface AuthContextType {
     user: User | null;
     company: Company | null;
     isSuperAdmin: boolean;
+    role: string | null;
     loading: boolean;
     loadingCompany: boolean;
     signOut: () => Promise<void>;
@@ -21,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [company, setCompany] = useState<Company | null>(null);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingCompany, setLoadingCompany] = useState(true);
 
@@ -29,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setCompany(null);
             setLoadingCompany(false);
             setIsSuperAdmin(false);
+            setRole(null);
             return;
         }
 
@@ -38,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 1. Get profile
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('company_id, is_super_admin')
+                .select('company_id, is_super_admin, role')
                 .eq('id', currentSession.user.id)
                 .single();
 
@@ -49,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             setIsSuperAdmin(!!profile?.is_super_admin);
+            setRole(profile?.role || null);
 
             if (!profile?.company_id) {
                 setCompany(null);
@@ -107,6 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setCompany(null);
         setIsSuperAdmin(false);
+        setRole(null);
         localStorage.removeItem('isotek_target_company');
         localStorage.removeItem('isotek_auditor_mode');
     }, []);
@@ -120,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         company,
         isSuperAdmin,
+        role,
         loading,
         loadingCompany,
         signOut,

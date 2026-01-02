@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { useAuditor } from '../../contexts/AuditorContext';
 import { AuditResponseStatus } from '../../types';
+import { rewardXP } from '../../lib/utils/gamification';
 
 interface Question {
     id: number;
@@ -103,6 +104,13 @@ export const AuditActionPanel: React.FC = () => {
                 // 1. Atualizar progresso geral e status
                 const newStatus = progress === 100 ? 'concluida' : 'em_andamento';
 
+                // Buscar status atual para evitar recompensar XP duas vezes
+                const { data: currentAssignment } = await supabase
+                    .from('audit_assignments')
+                    .select('status, auditor_id')
+                    .eq('id', activeAssignmentId)
+                    .single();
+
                 await supabase
                     .from('audit_assignments')
                     .update({
@@ -110,6 +118,15 @@ export const AuditActionPanel: React.FC = () => {
                         status: newStatus
                     })
                     .eq('id', activeAssignmentId);
+
+                // Se acabou de concluir e ainda não estava concluída, ganha XP
+                if (newStatus === 'concluida' && currentAssignment && currentAssignment.status !== 'concluida') {
+                    const auditorId = currentAssignment.auditor_id;
+                    if (auditorId) {
+                        await rewardXP(auditorId, 100, 'audit_completed');
+                        toast.success('🎉 +100 XP! Auditoria concluída com sucesso.');
+                    }
+                }
 
                 // Recarregar status global
                 refreshAssignments?.();

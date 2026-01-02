@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuditorProvider, useAuditor } from './contexts/AuditorContext';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
@@ -78,6 +78,12 @@ const DynamicToaster: React.FC = () => {
   );
 };
 
+const RoleRedirect: React.FC = () => {
+  const { role, loadingCompany } = useAuthContext();
+  if (loadingCompany) return <LoadingSpinner />;
+  return <Navigate to={role === 'auditor' ? "/app/auditor-portal" : "/app/dashboard"} replace />;
+};
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -99,7 +105,7 @@ const App: React.FC = () => {
                 {/* Protected Routes */}
                 <Route path="/app" element={<ProtectedRoute />}>
                   <Route element={<DashboardLayout />}>
-                    <Route index element={<Navigate to="/app/dashboard" replace />} />
+                    <Route index element={<RoleRedirect />} />
                     <Route path="dashboard" element={<SectionDashboard />} />
                     <Route path="auditor-portal" element={<AuditorPortal />} />
                     <Route path="minha-carteira" element={<AuditorWalletPage />} />
@@ -161,7 +167,7 @@ const App: React.FC = () => {
                     <Route path="operacao-controle" element={<Navigate to="/app/producao" replace />} />
 
                     {/* Fallback */}
-                    <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+                    <Route path="*" element={<RoleRedirect />} />
                   </Route>
                 </Route>
 

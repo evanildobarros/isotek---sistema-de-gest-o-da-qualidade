@@ -532,9 +532,9 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
 
   // Auditor Context
   const { isAuditorMode, targetCompany, exitAuditorMode, auditorAssignments } = useAuditor();
-  const { company } = useAuthContext(); // Removed unused 'user'
+  const { role, company } = useAuthContext();
 
-  const isAuditorUser = auditorAssignments?.length > 0;
+  const isAuditorUser = role === 'auditor';
 
   // Determine which menu to show
   const displayedGroups = React.useMemo(() => {
@@ -666,9 +666,25 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
 
         {/* Header */}
         <div className="p-6 border-b border-gray-100">
-          {auditorAssignments?.length > 0 ? (
+          {isAuditorUser ? (
             <div className="w-full space-y-3">
-              <CompanySwitcher fullWidth variant="sidebar" />
+              {isAuditorMode ? (
+                <CompanySwitcher fullWidth variant="sidebar" />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#BF7B54] rounded-lg">
+                    <UserCog className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-lg font-bold text-gray-900 truncate">
+                      Painel do Auditor
+                    </h1>
+                    <p className="text-xs text-[#BF7B54] truncate">
+                      Gestão de Auditorias
+                    </p>
+                  </div>
+                </div>
+              )}
               {isAuditorMode && (
                 <button
                   onClick={() => {
