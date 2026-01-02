@@ -20,7 +20,7 @@ export const UserDropdown: React.FC = () => {
         const fetchProfile = async () => {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('full_name, role, avatar_url, is_super_admin')
+                .select('*')
                 .eq('id', user.id)
                 .single();
 

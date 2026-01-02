@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, ChevronRight, Sun, Moon, X, ExternalLink, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check, Eye } from 'lucide-react';
+import { Bell, Search, ChevronRight, Sun, Moon, X, ExternalLink, Menu, FileText, Info, AlertTriangle, CheckCircle, XCircle, Check, Eye, Building2, UserCog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserDropdown } from './UserDropdown';
 import { CompanySwitcher } from '../common/CompanySwitcher';
@@ -25,8 +25,8 @@ interface SearchResult {
 
 export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
-  const { company, user } = useAuthContext();
-  const { isAuditorMode, exitAuditorMode, viewingAsCompanyName, auditorAssignments } = useAuditor();
+  const { company, user, role } = useAuthContext();
+  const { isAuditorMode, exitAuditorMode, viewingAsCompanyName, auditorAssignments, targetCompany } = useAuditor();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -103,11 +103,12 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
   };
 
   return (
-    <header className={`h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed ${isAuditorMode ? 'top-10 md:top-12' : 'top-0'} right-0 lg:left-72 left-0 z-40 px-4 md:px-8 flex items-center justify-between transition-all duration-200`}>
+    <header className={`h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed ${isAuditorMode ? 'top-12' : 'top-0'} right-0 lg:left-72 left-0 z-40 px-4 md:px-8 flex items-center justify-between transition-all duration-200`}>
       {/* Mobile Menu Button */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden p-2 text-gray-600 hover:text-[#025159] hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        className="lg:hidden p-2 text-gray-400 hover:text-[#025159] hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors shrink-0"
+        title="Abrir Menu"
       >
         <Menu size={24} />
       </button>
@@ -217,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onMenuClick }) =>
 
 
         {/* User Dropdown */}
-        <div className="ml-2 pl-4 border-l border-gray-200 dark:border-gray-700">
+        <div className="ml-2 pl-2 md:pl-4 border-l border-gray-200 dark:border-gray-700 flex items-center">
           <UserDropdown />
         </div>
       </div>

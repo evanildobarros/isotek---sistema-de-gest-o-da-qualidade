@@ -12,7 +12,10 @@ import {
     Users,
     CheckCircle,
     Info,
-    X
+    X,
+    Twitter,
+    Linkedin,
+    Instagram
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Badge, UserBadge, GamificationLevel } from '../../types';
@@ -81,6 +84,9 @@ interface AuditorProfile {
     reputation_score: number;
     audits_completed: number;
     created_at: string;
+    twitter_url?: string | null;
+    linkedin_url?: string | null;
+    instagram_url?: string | null;
 }
 
 interface AuditorPublicProfileProps {
@@ -199,6 +205,45 @@ const ProfileCard: React.FC<{
                 </div>
             )}
 
+            {/* Redes Sociais */}
+            {(profile.twitter_url || profile.linkedin_url || profile.instagram_url) && (
+                <div className="px-3 py-3 border-b border-gray-100 flex gap-2">
+                    {profile.twitter_url && (
+                        <a
+                            href={profile.twitter_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
+                            title="Twitter"
+                        >
+                            <Twitter size={14} />
+                        </a>
+                    )}
+                    {profile.linkedin_url && (
+                        <a
+                            href={profile.linkedin_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            title="LinkedIn"
+                        >
+                            <Linkedin size={14} />
+                        </a>
+                    )}
+                    {profile.instagram_url && (
+                        <a
+                            href={profile.instagram_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors"
+                            title="Instagram"
+                        >
+                            <Instagram size={14} />
+                        </a>
+                    )}
+                </div>
+            )}
+
             {/* Footer */}
             <div className="p-3 bg-gray-50">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -230,10 +275,31 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
         try {
             setLoading(true);
 
+            // Mock data for Isotekapp Auditor
+            if (auditorId === 'isotekapp-auditor') {
+                const mockProfile: AuditorProfile = {
+                    id: 'isotekapp-auditor',
+                    full_name: 'Evanildo Barros',
+                    avatar_url: null, // O componente mostrará as iniciais
+                    gamification_xp: 2500,
+                    gamification_level: 'diamond',
+                    reputation_score: 5.0,
+                    audits_completed: 48,
+                    created_at: new Date().toISOString(),
+                    twitter_url: 'https://twitter.com/auditorisotek',
+                    linkedin_url: '',
+                    instagram_url: 'https://instagram.com/auditor_isotek'
+                };
+                setProfile(mockProfile);
+                setBadges([]);
+                setLoading(false);
+                return;
+            }
+
             // Buscar perfil
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, gamification_xp, gamification_level, reputation_score, audits_completed, created_at')
+                .select('*')
                 .eq('id', auditorId)
                 .single();
 

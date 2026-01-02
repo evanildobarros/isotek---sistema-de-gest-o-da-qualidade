@@ -119,6 +119,10 @@ export interface Profile {
   company_id: string;
   unit_id?: string;
   is_super_admin?: boolean;
+  // Redes Sociais
+  twitter_url?: string;
+  linkedin_url?: string;
+  instagram_url?: string;
   // Campos de Gamificação
   gamification_xp?: number;
   gamification_level?: GamificationLevel;

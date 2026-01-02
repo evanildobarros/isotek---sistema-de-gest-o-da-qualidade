@@ -8,6 +8,16 @@
   --color-tertiary: #0378A6;
   --color-dark: #0D0D0D;
   --color-light: #F2F2F2;
+  --color-isotek-50: #f5f7fb;
+  --color-isotek-100: #D5DCF2;
+  --color-isotek-200: #b6c4e8;
+  --color-isotek-300: #8FB2BF;
+  --color-isotek-400: #7790A6;
+  --color-isotek-500: #03A6A6;
+  --color-isotek-600: #028a8a;
+  --color-isotek-700: #026e6e;
+  --color-isotek-800: #015252;
+  --color-isotek-900: #013636;
 }
 
 @layer base {

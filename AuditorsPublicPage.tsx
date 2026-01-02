@@ -12,15 +12,42 @@ import {
     BarChart,
     ChevronDown,
     Menu,
-    X
+    X,
+    Github,
+    Linkedin,
+    ExternalLink,
+    Twitter,
+    Instagram,
+    User as UserIcon
 } from 'lucide-react';
 import logo from './assets/isotek-logo.png';
+import { AuditorPublicProfile } from './components/auditor/AuditorPublicProfile';
+import { supabase } from './lib/supabase';
+import { useAuthContext } from './contexts/AuthContext';
 
 export const AuditorsPublicPage: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuthContext();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isServicesOpen, setIsServicesOpen] = useState(false);
+    const [featuredAvatar, setFeaturedAvatar] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchFeaturedProfile = async () => {
+            if (user) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('avatar_url')
+                    .eq('id', user.id)
+                    .single();
+                if (data?.avatar_url) {
+                    setFeaturedAvatar(data.avatar_url);
+                }
+            }
+        };
+        fetchFeaturedProfile();
+    }, [user]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -32,6 +59,10 @@ export const AuditorsPublicPage: React.FC = () => {
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleLoginClick = () => {
+        navigate('/login');
     };
 
     return (
@@ -90,7 +121,7 @@ export const AuditorsPublicPage: React.FC = () => {
                             </div>
 
                             <button
-                                onClick={scrollToTop}
+                                onClick={handleLoginClick}
                                 className={`px-6 py-2 border-2 text-sm font-bold rounded-full transition-all ${isScrolled
                                     ? 'border-[#2D3773] text-[#2D3773] hover:bg-[#2D3773] hover:text-white'
                                     : 'border-white text-white hover:bg-white hover:text-[#2D3773]'
@@ -166,11 +197,101 @@ export const AuditorsPublicPage: React.FC = () => {
                 </div>
             </section>
 
+            {/* SEÇÃO NOSSO TIME - CONFORME MODELO DA IMAGEM */}
+            <section className="py-24 bg-white border-y border-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col lg:flex-row gap-16">
+                        {/* Lado Esquerdo: Texto de Introdução */}
+                        <div className="lg:w-1/3">
+                            <h2 className="text-4xl font-extrabold text-[#2D3773] mb-6">Nosso Time</h2>
+                            <p className="text-gray-500 text-lg leading-relaxed">
+                                Somos um grupo dinâmico de indivíduos apaixonados pelo que fazemos e dedicados a entregar os melhores resultados para nossos clientes e parceiros.
+                            </p>
+                            <p className="text-gray-400 mt-6 text-sm">
+                                Explore os perfis oficiais de nossos auditores certificados e veja sua reputação na rede Isotek.
+                            </p>
+                        </div>
+
+                        {/* Lado Direito: Grid de Cards */}
+                        <div className="lg:w-2/3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                {[
+                                    {
+                                        id: 'isotekapp-auditor',
+                                        name: "Evanildo Barros",
+                                        role: "Auditor",
+                                        bio: "Especialista em processos de auditoria digital e gestão da qualidade, focado em automação e excelência técnica.",
+                                        image: logo,
+                                        twitter: "https://twitter.com/auditorisotek",
+                                        linkedin: "",
+                                        instagram: "https://instagram.com/auditor_isotek"
+                                    }
+                                ].map((auditor, idx) => (
+                                    <div key={idx} className="flex flex-col md:flex-row gap-8 items-start group">
+                                        <div className="w-full md:w-48 flex-shrink-0">
+                                            <div className="relative overflow-hidden rounded-3xl shadow-sm aspect-square bg-gray-50 flex items-center justify-center border border-gray-100">
+                                                {featuredAvatar ? (
+                                                    <img
+                                                        src={featuredAvatar}
+                                                        alt={auditor.name}
+                                                        className="w-full h-full object-contain p-4 transform transition-transform duration-500 group-hover:scale-110"
+                                                    />
+                                                ) : auditor.image && auditor.id !== 'isotekapp-auditor' ? (
+                                                    <img
+                                                        src={auditor.image}
+                                                        alt={auditor.name}
+                                                        className="max-w-full max-h-full p-6 object-contain transform transition-transform duration-500 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-[#0AADBF] to-[#2D3773] flex items-center justify-center text-white text-5xl font-bold">
+                                                        {auditor.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="mb-1">
+                                                <AuditorPublicProfile
+                                                    auditorId={auditor.id}
+                                                    auditorName={auditor.name}
+                                                    className="text-2xl font-bold text-[#2D3773]"
+                                                />
+                                            </div>
+                                            <p className="text-gray-500 font-medium text-base mb-4">{auditor.role}</p>
+                                            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                                                {auditor.bio}
+                                            </p>
+                                            <div className="flex gap-4 text-gray-300 group-hover:text-gray-400 transition-colors">
+                                                {auditor.twitter && (
+                                                    <a href={auditor.twitter} target="_blank" rel="noopener noreferrer">
+                                                        <Twitter size={18} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
+                                                    </a>
+                                                )}
+                                                {auditor.linkedin && (
+                                                    <a href={auditor.linkedin} target="_blank" rel="noopener noreferrer">
+                                                        <Linkedin size={18} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
+                                                    </a>
+                                                )}
+                                                {auditor.instagram && (
+                                                    <a href={auditor.instagram} target="_blank" rel="noopener noreferrer">
+                                                        <Instagram size={18} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* PERFIS DE AUDITORES */}
             <section className="py-24 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-20">
-                        <h2 className="text-3xl md:text-5xl font-black mb-6">Perfís de Auditoria</h2>
+                        <h2 className="text-3xl md:text-5xl font-black mb-6">Perfis de Auditoria</h2>
                         <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed">
                             Diferentes perspectivas que se unem para um único propósito: a evolução contínua da sua organização.
                         </p>

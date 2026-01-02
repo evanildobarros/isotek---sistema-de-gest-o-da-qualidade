@@ -1376,6 +1376,107 @@ export const SuperAdminPage: React.FC = () => {
                 </div>
             )}
 
+            {/* Modal: Designar Auditor */}
+            {isAssignModalOpen && selectedAuditor && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-amber-50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-amber-900 flex items-center gap-2">
+                                <Link2 className="w-5 h-5 text-amber-600" />
+                                Designar Auditor
+                            </h2>
+                            <button onClick={() => setIsAssignModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 mb-2">
+                                <p className="text-sm font-bold text-amber-900">{selectedAuditor.full_name}</p>
+                                <p className="text-xs text-amber-600">{selectedAuditor.email}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Selecionar Empresa</label>
+                                <div className="relative">
+                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                    <select
+                                        value={assignForm.companyId}
+                                        onChange={e => setAssignForm({ ...assignForm, companyId: e.target.value })}
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none appearance-none"
+                                    >
+                                        <option value="">Selecione uma empresa...</option>
+                                        {companies
+                                            .filter(c => c.status === 'active')
+                                            .map(company => (
+                                                <option key={company.id} value={company.id}>
+                                                    {company.name}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Início</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                        <input
+                                            type="date"
+                                            value={assignForm.startDate}
+                                            onChange={e => setAssignForm({ ...assignForm, startDate: e.target.value })}
+                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Previsão Fim</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                        <input
+                                            type="date"
+                                            value={assignForm.endDate}
+                                            onChange={e => setAssignForm({ ...assignForm, endDate: e.target.value })}
+                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Observações (Opcional)</label>
+                                <textarea
+                                    value={assignForm.notes}
+                                    onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                                    rows={3}
+                                    placeholder="Instruções para o auditor..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsAssignModalOpen(false)}
+                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleAssignAuditor}
+                                disabled={savingAssign || !assignForm.companyId || !assignForm.startDate}
+                                className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingAssign ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                                {savingAssign ? 'Designando...' : 'Confirmar Designação'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal: Configuração de Comissão */}
             {isCommissionModalOpen && selectedAuditor && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1435,23 +1536,23 @@ export const SuperAdminPage: React.FC = () => {
                             </div>
                         </div>
 
-                    <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
-                        <button
-                            onClick={() => setIsCommissionModalOpen(false)}
-                            className="px-4 py-2 text-gray-600 hover:text-gray-900 font-bold text-sm"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleUpdateCommission}
-                            disabled={savingCommission}
-                            className="px-6 py-2 bg-[#025159] text-white rounded-xl font-bold text-sm hover:bg-[#013d42] disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all"
-                        >
-                            {savingCommission ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
-                        </button>
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+                            <button
+                                onClick={() => setIsCommissionModalOpen(false)}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-900 font-bold text-sm"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleUpdateCommission}
+                                disabled={savingCommission}
+                                className="px-6 py-2 bg-[#025159] text-white rounded-xl font-bold text-sm hover:bg-[#013d42] disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all"
+                            >
+                                {savingCommission ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
 
             {/* Modal: Configurações Globais de Taxas */}

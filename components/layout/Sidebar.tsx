@@ -29,7 +29,8 @@ import {
   ArrowLeft,
   Wallet,
   ChevronsUpDown,
-  ChevronsDownUp
+  ChevronsDownUp,
+  X
 } from 'lucide-react';
 import { IsoSection, NavigationItem } from '../../types';
 import { usePlanLimits } from '../../hooks/usePlanLimits';
@@ -642,85 +643,87 @@ export const SidebarComponent: React.FC<SidebarProps> = ({ isOpen = true, onClos
 
   return (
     <>
-      {/* Mobile Trigger */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md md:hidden"
-      >
-        <LayoutDashboard className="w-6 h-6 text-[#025159]" />
-      </button>
-
       {/* Backdrop */}
-      {isMobileOpen && (
+      {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
       <aside className={`
         fixed top-0 left-0 z-40 h-screen w-72 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out flex flex-col
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
 
         {/* Header */}
-        <div className="p-6 border-b border-gray-100">
-          {isAuditorUser ? (
-            <div className="w-full space-y-3">
-              {isAuditorMode ? (
-                <CompanySwitcher fullWidth variant="sidebar" />
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#BF7B54] rounded-lg">
-                    <UserCog className="w-8 h-8 text-white" />
+        <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex-1">
+            {isAuditorUser ? (
+              <div className="w-full space-y-3">
+                {isAuditorMode ? (
+                  <CompanySwitcher fullWidth variant="sidebar" />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#BF7B54] rounded-lg">
+                      <UserCog className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-lg font-bold text-gray-900 truncate">
+                        Painel do Auditor
+                      </h1>
+                      <p className="text-xs text-[#BF7B54] truncate">
+                        Gestão de Auditorias
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h1 className="text-lg font-bold text-gray-900 truncate">
-                      Painel do Auditor
-                    </h1>
-                    <p className="text-xs text-[#BF7B54] truncate">
-                      Gestão de Auditorias
-                    </p>
-                  </div>
-                </div>
-              )}
-              {isAuditorMode && (
-                <button
-                  onClick={() => {
-                    exitAuditorMode();
-                    navigate('/app/auditor-portal');
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors font-medium"
-                >
-                  <ArrowLeft size={16} />
-                  Voltar aos Meus Projetos
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              {company?.logo_url ? (
-                <img
-                  src={company.logo_url}
-                  alt={company.name}
-                  className="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1"
-                />
-              ) : (
-                <div className="p-2 bg-[#025159] rounded-lg">
-                  <Building2 className="w-8 h-8 text-white" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">
-                  {company?.name || 'Isotek'}
-                </h1>
-                <p className="text-xs text-[#025159] truncate">
-                  {company?.slogan || 'Gestão da Qualidade'}
-                </p>
+                )}
+                {isAuditorMode && (
+                  <button
+                    onClick={() => {
+                      exitAuditorMode();
+                      navigate('/app/auditor-portal');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors font-medium border border-amber-100 mt-2"
+                  >
+                    <ArrowLeft size={16} />
+                    Voltar aos Meus Projetos
+                  </button>
+                )}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex items-center gap-3">
+                {company?.logo_url ? (
+                  <img
+                    src={company.logo_url}
+                    alt={company.name}
+                    className="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1"
+                  />
+                ) : (
+                  <div className="p-2 bg-[#025159] rounded-lg">
+                    <Building2 className="w-8 h-8 text-white" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg font-bold text-gray-900 truncate">
+                    {company?.name || 'Isotek'}
+                  </h1>
+                  <p className="text-xs text-[#025159] truncate">
+                    {company?.slogan || 'Gestão da Qualidade'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Close button for mobile */}
+          <button
+            onClick={onClose}
+            className="md:hidden p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation */}

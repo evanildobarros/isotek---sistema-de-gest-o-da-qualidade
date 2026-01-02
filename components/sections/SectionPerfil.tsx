@@ -1,4 +1,4 @@
-import { Building2, Calendar, Camera, Loader2, Lock, Mail, Phone, Shield, Upload, User, X } from 'lucide-react';
+import { Building2, Calendar, Camera, Instagram, Linkedin, Loader2, Lock, Mail, Phone, Shield, Twitter, Upload, User, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,6 +12,9 @@ interface ProfileData {
     is_active: boolean;
     is_super_admin?: boolean;
     created_at: string;
+    twitter_url?: string | null;
+    linkedin_url?: string | null;
+    instagram_url?: string | null;
     preferences?: {
         email_notifications: boolean;
         two_factor_enabled: boolean;
@@ -33,6 +36,9 @@ export const SectionPerfil: React.FC = () => {
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [department, setDepartment] = useState('');
+    const [twitterUrl, setTwitterUrl] = useState('');
+    const [linkedinUrl, setLinkedinUrl] = useState('');
+    const [instagramUrl, setInstagramUrl] = useState('');
 
     // Password states
     const [currentPassword, setCurrentPassword] = useState('');
@@ -63,7 +69,7 @@ export const SectionPerfil: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, department, role, is_active, is_super_admin, created_at, preferences')
+                .select('*')
                 .eq('id', user.id)
                 .single();
 
@@ -76,6 +82,9 @@ export const SectionPerfil: React.FC = () => {
                 setProfileData(data as ProfileData);
                 setFullName(data.full_name || '');
                 setDepartment(data.department || '');
+                setTwitterUrl(data.twitter_url || '');
+                setLinkedinUrl(data.linkedin_url || '');
+                setInstagramUrl(data.instagram_url || '');
 
                 if (data.preferences) {
                     setPreferences(data.preferences);
@@ -240,7 +249,10 @@ export const SectionPerfil: React.FC = () => {
                 .from('profiles')
                 .update({
                     full_name: fullName,
-                    department: department
+                    department: department,
+                    twitter_url: twitterUrl,
+                    linkedin_url: linkedinUrl,
+                    instagram_url: instagramUrl
                 })
                 .eq('id', user.id);
 
@@ -249,7 +261,7 @@ export const SectionPerfil: React.FC = () => {
             // Refresh profile data
             const { data } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, department, role, is_active, is_super_admin, created_at, preferences')
+                .select('*')
                 .eq('id', user.id)
                 .single();
 
@@ -440,18 +452,6 @@ export const SectionPerfil: React.FC = () => {
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Calendar className="text-teal-600" size={20} />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Data de Cadastro</p>
-                            <p className="font-semibold text-gray-900">
-                                {profileData?.created_at ? formatDate(profileData.created_at) : '-'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
                             <Shield className="text-red-600" size={20} />
                         </div>
@@ -460,6 +460,36 @@ export const SectionPerfil: React.FC = () => {
                             <p className="font-semibold text-gray-900">
                                 {isSuperAdmin ? 'Super Admin' : formatRole(profileData?.role || null)}
                             </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Twitter className="text-sky-600" size={20} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500">Twitter (X)</p>
+                            <p className="font-semibold text-gray-900 truncate max-w-[200px]">{profileData?.twitter_url || '-'}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Linkedin className="text-blue-600" size={20} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500">LinkedIn</p>
+                            <p className="font-semibold text-gray-900 truncate max-w-[200px]">{profileData?.linkedin_url || '-'}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Instagram className="text-pink-600" size={20} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500">Instagram</p>
+                            <p className="font-semibold text-gray-900 truncate max-w-[200px]">{profileData?.instagram_url || '-'}</p>
                         </div>
                     </div>
                 </div>
@@ -594,6 +624,54 @@ export const SectionPerfil: React.FC = () => {
                                     onChange={(e) => setDepartment(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 pt-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Twitter (Link)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Twitter size={18} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={twitterUrl}
+                                            onChange={(e) => setTwitterUrl(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                            placeholder="https://twitter.com/..."
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn (Link)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Linkedin size={18} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={linkedinUrl}
+                                            onChange={(e) => setLinkedinUrl(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                            placeholder="https://linkedin.com/in/..."
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Instagram (Link)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Instagram size={18} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={instagramUrl}
+                                            onChange={(e) => setInstagramUrl(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                            placeholder="https://instagram.com/..."
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

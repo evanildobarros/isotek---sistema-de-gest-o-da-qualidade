@@ -72,22 +72,26 @@ export const DashboardLayout: React.FC = () => {
             <div className="flex-1 flex flex-col lg:pl-72">
                 {/* Barra de Modo Auditoria */}
                 {isAuditorMode && targetCompany && (
-                    <div className="fixed top-0 right-0 left-0 lg:left-72 h-10 md:h-12 bg-amber-400 text-amber-900 px-4 flex items-center justify-between z-50 shadow-sm transition-all duration-200">
-                        <div className="flex items-center gap-3">
-                            <Eye size={18} className="animate-pulse" />
-                            <span className="font-semibold text-sm">
-                                MODO AUDITORIA
-                            </span>
-                            <span className="text-amber-800 text-sm">
-                                — Visualizando ambiente de: <strong>{targetCompany.name}</strong>
-                            </span>
+                    <div className="fixed top-0 right-0 left-0 lg:left-72 h-12 bg-amber-400 text-amber-900 px-3 md:px-4 flex items-center justify-between z-50 shadow-sm transition-all duration-200">
+                        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                            <Eye size={18} className="animate-pulse flex-shrink-0" />
+                            <div className="flex items-center gap-1 md:gap-2 whitespace-nowrap overflow-hidden">
+                                <span className="font-bold text-[10px] md:text-sm uppercase tracking-wider bg-amber-500/20 px-1.5 py-0.5 rounded md:bg-transparent md:p-0">
+                                    <span className="hidden xs:inline">MODO </span>AUDITORIA
+                                </span>
+                                <span className="text-amber-800 text-xs md:text-sm truncate">
+                                    <span className="hidden sm:inline">— Visualizando ambiente de: </span>
+                                    <span className="sm:hidden font-medium">|</span>
+                                    <strong className="ml-1">{targetCompany.name}</strong>
+                                </span>
+                            </div>
                         </div>
                         <button
                             onClick={handleExitAuditorMode}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 px-2 py-1.5 md:px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs md:text-sm font-bold rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ml-2"
                         >
-                            <ArrowLeft size={14} />
-                            Sair do Modo
+                            <ArrowLeft size={14} className="md:w-4 md:h-4" />
+                            <span className="hidden xs:inline">Sair<span className="hidden md:inline"> do Modo</span></span>
                         </button>
                     </div>
                 )}
@@ -97,7 +101,7 @@ export const DashboardLayout: React.FC = () => {
                     onMenuClick={() => setIsMobileMenuOpen(true)}
                 />
 
-                <main className={`flex-1 overflow-y-auto p-4 md:p-8 ${isAuditorMode ? 'mt-[6.5rem] md:mt-28' : 'mt-16'} scroll-smooth`}>
+                <main className={`flex-1 overflow-y-auto p-4 md:p-8 ${isAuditorMode ? 'mt-28' : 'mt-16'} scroll-smooth`}>
                     <div className="max-w-7xl mx-auto">
                         <Outlet />
                     </div>

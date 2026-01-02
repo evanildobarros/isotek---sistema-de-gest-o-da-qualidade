@@ -9,6 +9,7 @@ import { useAuthContext } from './AuthContext';
 interface TargetCompany {
     id: string;
     name: string;
+    logo_url?: string | null;
 }
 
 interface DatabaseAssignment {
@@ -73,7 +74,7 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
                 .from('audit_assignments')
                 .select(`
                     id, auditor_id, company_id, start_date, end_date, status, notes, created_by, created_at, updated_at, progress,
-                    company:company_info(id, name)
+                    company:company_info(id, name, logo_url)
                 `)
                 .eq('auditor_id', user.id)
                 .in('status', ['agendada', 'em_andamento'])
@@ -86,19 +87,20 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
                 return;
             }
 
-            const mappedAssignments: AuditAssignment[] = (data as unknown as DatabaseAssignment[] || []).map((item) => ({
+            const mappedAssignments: AuditAssignment[] = (data as any[] || []).map((item) => ({
                 id: item.id,
                 auditor_id: item.auditor_id,
                 company_id: item.company_id,
                 start_date: item.start_date,
                 end_date: item.end_date,
                 status: item.status,
-                progress: (item as any).progress,
+                progress: item.progress,
                 notes: item.notes || undefined,
                 created_by: item.created_by || undefined,
                 created_at: item.created_at,
                 updated_at: item.updated_at,
-                company_name: item.company?.name || 'Empresa'
+                company_name: item.company?.name || 'Empresa',
+                company_logo: item.company?.logo_url
             }));
 
             setAuditorAssignments(mappedAssignments);
@@ -123,6 +125,8 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
                 const companyData = JSON.parse(savedCompany);
                 setViewingAsCompanyId(companyData.id);
                 setViewingAsCompanyName(companyData.name);
+                // Also restore logo if possible
+                setViewingAsCompanyLogo(companyData.logo_url || null);
             } catch (e) {
                 console.error('[AuditorContext] Erro ao restaurar empresa:', e);
                 localStorage.removeItem('isotek_target_company');
@@ -141,12 +145,15 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
         setCurrentContext(context);
     }, [location.pathname, isAuditorMode]);
 
-    const setViewingAsCompany = useCallback((companyId: string | null, companyName?: string | null) => {
+    const [viewingAsCompanyLogo, setViewingAsCompanyLogo] = useState<string | null>(null);
+
+    const setViewingAsCompany = useCallback((companyId: string | null, companyName?: string | null, companyLogo?: string | null) => {
         setViewingAsCompanyId(companyId);
         setViewingAsCompanyName(companyName || null);
+        setViewingAsCompanyLogo(companyLogo || null);
 
         if (companyId) {
-            localStorage.setItem('isotek_target_company', JSON.stringify({ id: companyId, name: companyName }));
+            localStorage.setItem('isotek_target_company', JSON.stringify({ id: companyId, name: companyName, logo_url: companyLogo }));
             localStorage.setItem('isotek_auditor_mode', 'true');
         } else {
             localStorage.removeItem('isotek_target_company');
@@ -155,7 +162,7 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, []);
 
     const enterAuditorMode = (company: TargetCompany) => {
-        setViewingAsCompany(company.id, company.name);
+        setViewingAsCompany(company.id, company.name, company.logo_url);
         toast.success(`Modo auditor ativado: Visualizando ${company.name}`);
     };
 
@@ -165,8 +172,12 @@ export const AuditorProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
 
     const targetCompany = useMemo(() =>
-        viewingAsCompanyId ? { id: viewingAsCompanyId, name: viewingAsCompanyName || 'Empresa' } : null
-        , [viewingAsCompanyId, viewingAsCompanyName]);
+        viewingAsCompanyId ? {
+            id: viewingAsCompanyId,
+            name: viewingAsCompanyName || 'Empresa',
+            logo_url: viewingAsCompanyLogo
+        } : null
+        , [viewingAsCompanyId, viewingAsCompanyName, viewingAsCompanyLogo]);
 
     const activeAssignment = useMemo(() => {
         if (!viewingAsCompanyId || auditorAssignments.length === 0) return null;
