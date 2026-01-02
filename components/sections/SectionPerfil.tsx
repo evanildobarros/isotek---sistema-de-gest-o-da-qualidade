@@ -184,8 +184,11 @@ export const SectionPerfil: React.FC = () => {
                 throw new Error('Failed to get public URL');
             }
 
+            console.log('📷 Avatar URL gerada:', data.publicUrl);
+            console.log('📷 Atualizando perfil do usuário:', user.id);
+
             // 3. Update avatar_url in database using auth.uid()
-            const { error: updateError } = await supabase
+            const { data: updatedProfile, error: updateError } = await supabase
                 .from('profiles')
                 .update({ avatar_url: data.publicUrl })
                 .eq('id', user.id)
@@ -193,9 +196,11 @@ export const SectionPerfil: React.FC = () => {
                 .single();
 
             if (updateError) {
-                console.error('Update error:', updateError);
+                console.error('❌ Erro ao atualizar perfil:', updateError);
                 throw updateError;
             }
+
+            console.log('✅ Perfil atualizado com sucesso:', updatedProfile);
 
             // 4. Update local state
             setProfileData(prev => prev ? { ...prev, avatar_url: data.publicUrl } : null);

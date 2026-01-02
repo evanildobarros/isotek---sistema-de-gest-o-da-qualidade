@@ -32,17 +32,68 @@ export const AuditorsPublicPage: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isServicesOpen, setIsServicesOpen] = useState(false);
     const [featuredAvatar, setFeaturedAvatar] = useState<string | null>(null);
+    const [realAuditorData, setRealAuditorData] = useState<any>(null);
 
     useEffect(() => {
         const fetchFeaturedProfile = async () => {
+            let dbProfile = null;
+
+            // 1. Prioridade Absoluta: Usuário Logado
             if (user) {
-                const { data } = await supabase
+                const { data: userProfile } = await supabase
                     .from('profiles')
-                    .select('avatar_url')
+                    .select('*')
                     .eq('id', user.id)
-                    .single();
-                if (data?.avatar_url) {
-                    setFeaturedAvatar(data.avatar_url);
+                    .maybeSingle();
+
+                // Se for o Evans (ou auditor), usa este perfil
+                if (userProfile && (
+                    userProfile.full_name?.toLowerCase().includes('evans') ||
+                    userProfile.full_name?.toLowerCase().includes('evanildo') ||
+                    userProfile.role === 'auditor'
+                )) {
+                    console.log('🔍 Usando perfil do usuário logado:', userProfile.full_name);
+                    dbProfile = userProfile;
+                }
+            }
+
+            // 2. Se não achou via login, busca pública
+            if (!dbProfile) {
+                // Busca exata por nome
+                const { data: exactProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('full_name', 'Evans Barros')
+                    .limit(1)
+                    .maybeSingle();
+
+                if (exactProfile) {
+                    dbProfile = exactProfile;
+                } else {
+                    // Fallback busca ampla
+                    const { data: fallback } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .or('full_name.ilike.%Evans%,role.eq.auditor')
+                        .order('created_at', { ascending: true })
+                        .limit(1)
+                        .maybeSingle();
+                    dbProfile = fallback;
+                }
+            }
+
+            if (dbProfile) {
+                console.log('🔍 Perfil encontrado:', dbProfile.full_name, 'Avatar:', dbProfile.avatar_url);
+                setRealAuditorData(dbProfile);
+                if (dbProfile.avatar_url) {
+                    setFeaturedAvatar(dbProfile.avatar_url);
+                } else {
+                    // Tentar pegar do localStorage como fallback
+                    const localAvatar = localStorage.getItem('isotek_avatar');
+                    if (localAvatar) {
+                        console.log('📷 Usando avatar do localStorage:', localAvatar);
+                        setFeaturedAvatar(localAvatar);
+                    }
                 }
             }
         };
@@ -217,30 +268,29 @@ export const AuditorsPublicPage: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                                 {[
                                     {
-                                        id: 'isotekapp-auditor',
-                                        name: "Evanildo Barros",
-                                        role: "Auditor",
-                                        bio: "Especialista em processos de auditoria digital e gestão da qualidade, focado em automação e excelência técnica.",
-                                        image: logo,
-                                        twitter: "https://twitter.com/auditorisotek",
-                                        linkedin: "",
-                                        instagram: "https://instagram.com/auditor_isotek"
+                                        id: realAuditorData?.id || 'isotekapp-auditor',
+                                        name: realAuditorData?.full_name || "Evans Barros",
+                                        role: realAuditorData?.role === 'auditor' ? 'Auditor' :
+                                            realAuditorData?.role === 'admin' ? 'Administrador' :
+                                                realAuditorData?.role === 'gestor' ? 'Gestor' :
+                                                    realAuditorData?.role === 'Auditor' ? 'Auditor' :
+                                                        (realAuditorData?.role || "Auditor"),
+                                        bio: realAuditorData?.bio || "Especialista em processos de gestão da qualidade e auditoria digital, focado em excelência técnica e automação.",
+                                        image: featuredAvatar || realAuditorData?.avatar_url || logo,
+                                        twitter: realAuditorData?.twitter_url || "",
+                                        linkedin: realAuditorData?.linkedin_url || "",
+                                        instagram: realAuditorData?.instagram_url || ""
                                     }
                                 ].map((auditor, idx) => (
                                     <div key={idx} className="flex flex-col md:flex-row gap-8 items-start group">
                                         <div className="w-full md:w-48 flex-shrink-0">
                                             <div className="relative overflow-hidden rounded-3xl shadow-sm aspect-square bg-gray-50 flex items-center justify-center border border-gray-100">
-                                                {featuredAvatar ? (
-                                                    <img
-                                                        src={featuredAvatar}
-                                                        alt={auditor.name}
-                                                        className="w-full h-full object-contain p-4 transform transition-transform duration-500 group-hover:scale-110"
-                                                    />
-                                                ) : auditor.image && auditor.id !== 'isotekapp-auditor' ? (
+                                                {auditor.image ? (
                                                     <img
                                                         src={auditor.image}
                                                         alt={auditor.name}
-                                                        className="max-w-full max-h-full p-6 object-contain transform transition-transform duration-500 group-hover:scale-110"
+                                                        className={`w-full h-full transform transition-transform duration-500 group-hover:scale-110 ${auditor.image.includes('isotek-logo') ? 'object-contain p-4' : 'object-cover'
+                                                            }`}
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full bg-gradient-to-br from-[#0AADBF] to-[#2D3773] flex items-center justify-center text-white text-5xl font-bold">

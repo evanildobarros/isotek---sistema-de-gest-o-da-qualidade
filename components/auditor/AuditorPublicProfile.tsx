@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Badge, UserBadge, GamificationLevel } from '../../types';
+import { useAuthContext } from '../../contexts/AuthContext';
+
+import logo from '../../assets/isotek-logo.png';
 
 // Mapeamento de ícones por slug
 const badgeIcons: Record<string, React.ElementType> = {
@@ -123,12 +126,12 @@ const ProfileCard: React.FC<{
                 )}
                 <div className="flex items-center gap-3">
                     {/* Avatar */}
-                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center border-3 border-white/50">
+                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center border-3 border-white/50 overflow-hidden">
                         {profile.avatar_url ? (
                             <img
                                 src={profile.avatar_url}
                                 alt="Avatar"
-                                className="w-full h-full rounded-full object-cover"
+                                className={`w-full h-full rounded-full ${profile.avatar_url === logo ? 'object-contain p-2' : 'object-cover'}`}
                             />
                         ) : (
                             <span className="text-xl font-bold">
@@ -267,6 +270,7 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
     const [profile, setProfile] = useState<AuditorProfile | null>(null);
     const [badges, setBadges] = useState<UserBadge[]>([]);
     const [loading, setLoading] = useState(false);
+    const { user } = useAuthContext();
 
     const fetchAuditorData = async () => {
         // Check for undefined, null, empty, or literal "undefined" string
@@ -275,20 +279,100 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
         try {
             setLoading(true);
 
-            // Mock data for Isotekapp Auditor
+            // Tentar buscar perfil real se for o ID mock
             if (auditorId === 'isotekapp-auditor') {
+                // 1. Se o usuário estiver logado, tentamos usar o perfil dele primeiro
+                if (user?.id) {
+                    const { data: loggedProfile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .maybeSingle();
+
+                    if (loggedProfile && (loggedProfile.full_name?.toLowerCase().includes('evanildo') || loggedProfile.full_name?.toLowerCase().includes('evans') || loggedProfile.role === 'admin' || loggedProfile.role === 'auditor')) {
+                        // Buscar total de auditorias (concluídas + em andamento + agendadas)
+                        const { count: totalAudits } = await supabase
+                            .from('audit_assignments')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('auditor_id', loggedProfile.id);
+
+                        const profileWithAudits: AuditorProfile = {
+                            ...loggedProfile,
+                            audits_completed: totalAudits || 0,
+                            avatar_url: loggedProfile.avatar_url || logo
+                        };
+
+                        setProfile(profileWithAudits);
+                        const { data: badgesData } = await supabase
+                            .from('user_badges')
+                            .select('*, badge:badges(*)')
+                            .eq('user_id', loggedProfile.id);
+                        setBadges(badgesData || []);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // 2. Fallback: procurar por nome no banco (para visitantes)
+                // Tentativa 1: Busca exata
+                let { data: realProfile, error: realError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('full_name', 'Evans Barros')
+                    .limit(1)
+                    .maybeSingle();
+
+                // Tentativa 2: Busca ampla se não encontrou exata
+                if (!realProfile) {
+                    const { data: fallback, error: fallbackError } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .or('full_name.ilike.%Evans%,role.eq.auditor')
+                        .order('created_at', { ascending: true })
+                        .limit(1)
+                        .maybeSingle();
+                    realProfile = fallback;
+                    // Se fallbackError existir, ele substitui realError. Se não, realError fica como o da primeira tentativa (que deve ser null se não achou nada, exceto se for erro de conexão)
+                    // Mas maybeSingle retorna null, não erro, se não achar. Então realError só existe se for erro de rede/sql.
+                    if (fallbackError) realError = fallbackError;
+                }
+
+                if (realProfile && !realError) {
+                    // Buscar total de auditorias (concluídas + em andamento + agendadas)
+                    const { count: totalAudits } = await supabase
+                        .from('audit_assignments')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('auditor_id', realProfile.id);
+
+                    const profileWithAudits: AuditorProfile = {
+                        ...realProfile,
+                        audits_completed: totalAudits || 0,
+                        avatar_url: realProfile.avatar_url || logo
+                    };
+
+                    setProfile(profileWithAudits);
+                    const { data: badgesData } = await supabase
+                        .from('user_badges')
+                        .select('*, badge:badges(*)')
+                        .eq('user_id', realProfile.id);
+                    setBadges(badgesData || []);
+                    setLoading(false);
+                    return;
+                }
+
+                // 3. Fallback final: dados fictícios (demo) sincronizados
                 const mockProfile: AuditorProfile = {
                     id: 'isotekapp-auditor',
-                    full_name: 'Evanildo Barros',
-                    avatar_url: null, // O componente mostrará as iniciais
-                    gamification_xp: 2500,
-                    gamification_level: 'diamond',
+                    full_name: 'Evans Barros',
+                    avatar_url: logo,
+                    gamification_xp: 100,
+                    gamification_level: 'bronze',
                     reputation_score: 5.0,
-                    audits_completed: 48,
-                    created_at: new Date().toISOString(),
-                    twitter_url: 'https://twitter.com/auditorisotek',
+                    audits_completed: 0,
+                    created_at: '2024-01-01T00:00:00Z',
+                    twitter_url: '',
                     linkedin_url: '',
-                    instagram_url: 'https://instagram.com/auditor_isotek'
+                    instagram_url: ''
                 };
                 setProfile(mockProfile);
                 setBadges([]);

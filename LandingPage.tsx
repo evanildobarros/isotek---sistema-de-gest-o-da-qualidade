@@ -123,7 +123,7 @@ export const LandingPage: React.FC = () => {
                                                 Método
                                             </button>
                                             <button
-                                                onClick={() => { scrollToSection('auditores'); setIsServicesOpen(false); }}
+                                                onClick={() => { navigate('/foco-auditores'); setIsServicesOpen(false); }}
                                                 className="w-full text-left px-5 py-3 text-sm font-bold text-[#2D3773] hover:bg-[#E0F7F9]/40 hover:text-[#0AADBF] transition-all"
                                             >
                                                 Auditores
@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
                             <div className="space-y-1">
                                 <div className="px-4 py-2 text-xs font-black text-gray-400 uppercase tracking-widest">Serviços</div>
                                 <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Método</button>
-                                <button onClick={() => scrollToSection('auditores')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Página dos Auditores</button>
+                                <button onClick={() => navigate('/foco-auditores')} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Página dos Auditores</button>
                             </div>
 
                             <button onClick={() => scrollToSection('contato')} className="block w-full text-left px-4 py-3 text-lg font-bold text-[#2D3773] hover:bg-[#E0F7F9]/40 rounded-xl transition-all">Contato</button>
@@ -500,7 +500,7 @@ export const LandingPage: React.FC = () => {
                             <button onClick={() => scrollToSection('contato')} className="text-left text-sm font-bold hover:text-[#E8FAF5] transition-colors flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-[#0AADBF] rounded-full"></span> Contato
                             </button>
-                            <button onClick={() => scrollToSection('auditores')} className="text-left text-sm font-bold text-[#4AD9D9] hover:text-white transition-colors flex items-center gap-2">
+                            <button onClick={() => navigate('/foco-auditores')} className="text-left text-sm font-bold text-[#4AD9D9] hover:text-white transition-colors flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-[#4AD9D9] rounded-full"></span> Para Auditores
                             </button>
                         </nav>
