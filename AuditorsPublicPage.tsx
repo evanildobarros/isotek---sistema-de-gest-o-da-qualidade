@@ -59,26 +59,29 @@ export const AuditorsPublicPage: React.FC = () => {
 
             // 2. Se não achou via login, busca pública
             if (!dbProfile) {
-                // Busca exata por nome
-                const { data: exactProfile } = await supabase
+                // Busca exata por nome (Priorizando perfil com avatar)
+                const { data: exactCandidates, error: exactError } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('full_name', 'Evans Barros')
-                    .limit(1)
-                    .maybeSingle();
+                    .order('created_at', { ascending: false }) // Recentes primeiro
+                    .limit(5);
+
+                const exactProfile = exactCandidates?.find(p => p.avatar_url) || exactCandidates?.[0];
 
                 if (exactProfile) {
                     dbProfile = exactProfile;
                 } else {
                     // Fallback busca ampla
-                    const { data: fallback } = await supabase
+                    const { data: fallbackCandidates } = await supabase
                         .from('profiles')
                         .select('*')
                         .or('full_name.ilike.%Evans%,role.eq.auditor')
-                        .order('created_at', { ascending: true })
-                        .limit(1)
-                        .maybeSingle();
-                    dbProfile = fallback;
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    const fallbackProfile = fallbackCandidates?.find(p => p.avatar_url) || fallbackCandidates?.[0];
+                    dbProfile = fallbackProfile;
                 }
             }
 

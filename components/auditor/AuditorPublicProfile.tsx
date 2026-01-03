@@ -290,11 +290,12 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
                         .maybeSingle();
 
                     if (loggedProfile && (loggedProfile.full_name?.toLowerCase().includes('evanildo') || loggedProfile.full_name?.toLowerCase().includes('evans') || loggedProfile.role === 'admin' || loggedProfile.role === 'auditor')) {
-                        // Buscar total de auditorias (concluídas + em andamento + agendadas)
-                        const { count: totalAudits } = await supabase
-                            .from('audit_assignments')
-                            .select('*', { count: 'exact', head: true })
-                            .eq('auditor_id', loggedProfile.id);
+                        // Buscar total de auditorias via RPC seguro
+                        const { data: statsData, error: statsError } = await supabase
+                            .rpc('get_public_auditor_stats', { p_auditor_id: loggedProfile.id });
+
+                        console.log('🔍 RPC Result (logged user):', { statsData, statsError, profileId: loggedProfile.id });
+                        const totalAudits = statsData?.total_audits || 0;
 
                         const profileWithAudits: AuditorProfile = {
                             ...loggedProfile,
@@ -314,35 +315,39 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
                 }
 
                 // 2. Fallback: procurar por nome no banco (para visitantes)
-                // Tentativa 1: Busca exata
-                let { data: realProfile, error: realError } = await supabase
+                // Tentativa 1: Busca exata (Priorizando perfil com avatar)
+                const { data: exactCandidates, error: exactError } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('full_name', 'Evans Barros')
-                    .limit(1)
-                    .maybeSingle();
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                // Filtrar candidato com avatar ou pegar o mais recente
+                let realProfile = exactCandidates?.find(p => p.avatar_url) || exactCandidates?.[0];
+                let realError = exactError;
 
                 // Tentativa 2: Busca ampla se não encontrou exata
                 if (!realProfile) {
-                    const { data: fallback, error: fallbackError } = await supabase
+                    const { data: fallbackCandidates, error: fallbackError } = await supabase
                         .from('profiles')
                         .select('*')
                         .or('full_name.ilike.%Evans%,role.eq.auditor')
-                        .order('created_at', { ascending: true })
-                        .limit(1)
-                        .maybeSingle();
-                    realProfile = fallback;
-                    // Se fallbackError existir, ele substitui realError. Se não, realError fica como o da primeira tentativa (que deve ser null se não achou nada, exceto se for erro de conexão)
-                    // Mas maybeSingle retorna null, não erro, se não achar. Então realError só existe se for erro de rede/sql.
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    realProfile = fallbackCandidates?.find(p => p.avatar_url) || fallbackCandidates?.[0];
+                    // Se fallbackError existir e for relevante, consideramos. 
                     if (fallbackError) realError = fallbackError;
                 }
 
                 if (realProfile && !realError) {
                     // Buscar total de auditorias (concluídas + em andamento + agendadas)
-                    const { count: totalAudits } = await supabase
-                        .from('audit_assignments')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('auditor_id', realProfile.id);
+                    // Buscar total de auditorias via RPC seguro (bypassing RLS)
+                    const { data: statsData } = await supabase
+                        .rpc('get_public_auditor_stats', { p_auditor_id: realProfile.id });
+
+                    const totalAudits = statsData?.total_audits || 0;
 
                     const profileWithAudits: AuditorProfile = {
                         ...realProfile,
@@ -392,7 +397,18 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
                 return;
             }
 
-            setProfile(profileData as AuditorProfile);
+            // Buscar total de auditorias via RPC seguro
+            const { data: statsData } = await supabase
+                .rpc('get_public_auditor_stats', { p_auditor_id: auditorId });
+
+            const totalAudits = statsData?.total_audits || 0;
+
+            const profileWithAudits: AuditorProfile = {
+                ...profileData,
+                audits_completed: totalAudits
+            };
+
+            setProfile(profileWithAudits);
 
             // Buscar badges
             const { data: badgesData, error: badgesError } = await supabase
