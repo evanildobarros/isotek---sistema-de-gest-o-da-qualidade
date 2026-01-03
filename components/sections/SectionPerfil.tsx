@@ -15,6 +15,7 @@ interface ProfileData {
     twitter_url?: string | null;
     linkedin_url?: string | null;
     instagram_url?: string | null;
+    bio?: string | null;
     preferences?: {
         email_notifications: boolean;
         two_factor_enabled: boolean;
@@ -36,6 +37,7 @@ export const SectionPerfil: React.FC = () => {
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [department, setDepartment] = useState('');
+    const [bio, setBio] = useState('');
     const [twitterUrl, setTwitterUrl] = useState('');
     const [linkedinUrl, setLinkedinUrl] = useState('');
     const [instagramUrl, setInstagramUrl] = useState('');
@@ -82,6 +84,7 @@ export const SectionPerfil: React.FC = () => {
                 setProfileData(data as ProfileData);
                 setFullName(data.full_name || '');
                 setDepartment(data.department || '');
+                setBio(data.bio || '');
                 setTwitterUrl(data.twitter_url || '');
                 setLinkedinUrl(data.linkedin_url || '');
                 setInstagramUrl(data.instagram_url || '');
@@ -255,6 +258,7 @@ export const SectionPerfil: React.FC = () => {
                 .update({
                     full_name: fullName,
                     department: department,
+                    bio: bio,
                     twitter_url: twitterUrl,
                     linkedin_url: linkedinUrl,
                     instagram_url: instagramUrl
@@ -497,6 +501,16 @@ export const SectionPerfil: React.FC = () => {
                             <p className="font-semibold text-gray-900 truncate max-w-[200px]">{profileData?.instagram_url || '-'}</p>
                         </div>
                     </div>
+
+                    <div className="flex items-start gap-3 md:col-span-2">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <User className="text-indigo-600" size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm text-gray-500">Bio (Resumo Profissional)</p>
+                            <p className="font-semibold text-gray-900 leading-relaxed max-w-2xl">{profileData?.bio || '-'}</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Actions */}
@@ -577,7 +591,7 @@ export const SectionPerfil: React.FC = () => {
             {/* Edit Profile Modal */}
             {isEditModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all h-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-bold text-gray-900">Editar Perfil</h3>
                             <button
@@ -677,6 +691,17 @@ export const SectionPerfil: React.FC = () => {
                                         />
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Bio (Resumo)</label>
+                                <textarea
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-isotek-500 focus:border-transparent"
+                                    rows={3}
+                                    placeholder="Escreva um breve resumo sobre você..."
+                                />
                             </div>
                         </div>
 

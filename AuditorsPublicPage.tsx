@@ -285,49 +285,47 @@ export const AuditorsPublicPage: React.FC = () => {
                                         instagram: realAuditorData?.instagram_url || ""
                                     }
                                 ].map((auditor, idx) => (
-                                    <div key={idx} className="flex flex-col md:flex-row gap-8 items-start group">
-                                        <div className="w-full md:w-48 flex-shrink-0">
-                                            <div className="relative overflow-hidden rounded-3xl shadow-sm aspect-square bg-gray-50 flex items-center justify-center border border-gray-100">
-                                                {auditor.image ? (
-                                                    <img
-                                                        src={auditor.image}
-                                                        alt={auditor.name}
-                                                        className={`w-full h-full transform transition-transform duration-500 group-hover:scale-110 ${auditor.image.includes('isotek-logo') ? 'object-contain p-4' : 'object-cover'
-                                                            }`}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-[#0AADBF] to-[#2D3773] flex items-center justify-center text-white text-5xl font-bold">
-                                                        {auditor.name.charAt(0)}
-                                                    </div>
-                                                )}
-                                            </div>
+                                    <div key={idx} className="flex flex-col gap-6 group">
+                                        <div className="w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-sm bg-gray-50 border border-gray-100 relative">
+                                            {auditor.image ? (
+                                                <img
+                                                    src={auditor.image}
+                                                    alt={auditor.name}
+                                                    className={`w-full h-full transform transition-transform duration-700 group-hover:scale-105 ${auditor.image.includes('isotek-logo') ? 'object-contain p-8' : 'object-cover'
+                                                        }`}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-[#0AADBF] to-[#2D3773] flex items-center justify-center text-white text-6xl font-bold">
+                                                    {auditor.name.charAt(0)}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="mb-1">
+                                        <div className="flex-1 w-full">
+                                            <div className="mb-2">
                                                 <AuditorPublicProfile
                                                     auditorId={auditor.id}
                                                     auditorName={auditor.name}
-                                                    className="text-2xl font-bold text-[#2D3773]"
+                                                    className="text-2xl font-bold text-gray-900 hover:text-[#0AADBF] transition-colors"
                                                 />
                                             </div>
-                                            <p className="text-gray-500 font-medium text-base mb-4">{auditor.role}</p>
-                                            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                                            <p className="text-gray-500 font-medium text-lg mb-6">{auditor.role}</p>
+                                            <p className="text-gray-600 text-base leading-relaxed mb-8 text-justify">
                                                 {auditor.bio}
                                             </p>
-                                            <div className="flex gap-4 text-gray-300 group-hover:text-gray-400 transition-colors">
+                                            <div className="flex gap-5 text-gray-400">
                                                 {auditor.twitter && (
                                                     <a href={auditor.twitter} target="_blank" rel="noopener noreferrer">
-                                                        <Twitter size={18} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
+                                                        <Twitter size={20} className="cursor-pointer hover:text-black transition-colors" />
                                                     </a>
                                                 )}
                                                 {auditor.linkedin && (
                                                     <a href={auditor.linkedin} target="_blank" rel="noopener noreferrer">
-                                                        <Linkedin size={18} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
+                                                        <Linkedin size={20} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
                                                     </a>
                                                 )}
                                                 {auditor.instagram && (
                                                     <a href={auditor.instagram} target="_blank" rel="noopener noreferrer">
-                                                        <Instagram size={18} className="cursor-pointer hover:text-[#0AADBF] transition-colors" />
+                                                        <Instagram size={20} className="cursor-pointer hover:text-pink-600 transition-colors" />
                                                     </a>
                                                 )}
                                             </div>

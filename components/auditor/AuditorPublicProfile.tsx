@@ -258,6 +258,13 @@ const ProfileCard: React.FC<{
     );
 };
 
+// Helper para formatar data
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+        year: 'numeric'
+    });
+};
+
 // Componente Principal com Popover
 export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
     auditorId,
@@ -279,41 +286,43 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
         try {
             setLoading(true);
 
-            // Tentar buscar perfil real se for o ID mock
-            if (auditorId === 'isotekapp-auditor') {
-                // 1. Se o usuário estiver logado, tentamos usar o perfil dele primeiro
-                if (user?.id) {
-                    const { data: loggedProfile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .maybeSingle();
+            // Se o usuário logado for quem estamos procurando (auditor visualizando próprio perfil)
+            // OU se estamos buscando o perfil do Evans (hardcoded check for demo)
+            if (user?.id) {
+                const { data: loggedProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
 
-                    if (loggedProfile && (loggedProfile.full_name?.toLowerCase().includes('evanildo') || loggedProfile.full_name?.toLowerCase().includes('evans') || loggedProfile.role === 'admin' || loggedProfile.role === 'auditor')) {
-                        // Buscar total de auditorias via RPC seguro
-                        const { data: statsData, error: statsError } = await supabase
-                            .rpc('get_public_auditor_stats', { p_auditor_id: loggedProfile.id });
+                if (loggedProfile && (loggedProfile.full_name?.toLowerCase().includes('evanildo') || loggedProfile.full_name?.toLowerCase().includes('evans') || loggedProfile.role === 'admin' || loggedProfile.role === 'auditor')) {
+                    // Buscar total de auditorias via RPC seguro
+                    const { data: statsData, error: statsError } = await supabase
+                        .rpc('get_public_auditor_stats', { p_auditor_id: loggedProfile.id });
 
-                        const totalAudits = statsData?.total_audits || 0;
+                    const totalAudits = statsData?.total_audits || 0;
 
-                        const profileWithAudits: AuditorProfile = {
-                            ...loggedProfile,
-                            audits_completed: totalAudits || 0,
-                            avatar_url: loggedProfile.avatar_url || logo
-                        };
+                    const profileWithAudits: AuditorProfile = {
+                        ...loggedProfile,
+                        audits_completed: totalAudits || 0,
+                        avatar_url: loggedProfile.avatar_url || logo,
+                        bio: loggedProfile.bio // Mapeando a bio
+                    };
 
-                        setProfile(profileWithAudits);
-                        const { data: badgesData } = await supabase
-                            .from('user_badges')
-                            .select('*, badge:badges(*)')
-                            .eq('user_id', loggedProfile.id);
-                        setBadges(badgesData || []);
-                        setLoading(false);
-                        return;
-                    }
+                    setProfile(profileWithAudits);
+                    const { data: badgesData } = await supabase
+                        .from('user_badges')
+                        .select('*, badge:badges(*)')
+                        .eq('user_id', loggedProfile.id);
+                    setBadges(badgesData || []);
+                    setLoading(false);
+                    return;
                 }
+            }
 
-                // 2. Fallback: procurar por nome no banco (para visitantes)
+            // Fallback: Tentativa de busca pública inteligente se não logado
+            if (auditorId === 'isotekapp-auditor' || auditorName?.includes('Evans')) {
+                // ... (mantido código existente de busca)
                 // Tentativa 1: Busca exata (Priorizando perfil com avatar)
                 const { data: exactCandidates, error: exactError } = await supabase
                     .from('profiles')
@@ -341,8 +350,7 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
                 }
 
                 if (realProfile && !realError) {
-                    // Buscar total de auditorias (concluídas + em andamento + agendadas)
-                    // Buscar total de auditorias via RPC seguro (bypassing RLS)
+                    // Buscar total de auditorias via RPC seguro
                     const { data: statsData } = await supabase
                         .rpc('get_public_auditor_stats', { p_auditor_id: realProfile.id });
 
@@ -350,8 +358,9 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
 
                     const profileWithAudits: AuditorProfile = {
                         ...realProfile,
-                        audits_completed: totalAudits || 0,
-                        avatar_url: realProfile.avatar_url || logo
+                        audits_completed: totalAudits,
+                        avatar_url: realProfile.avatar_url, // Usar o avatar do banco se existir
+                        bio: realProfile.bio // Mapeando a bio
                     };
 
                     setProfile(profileWithAudits);
@@ -359,27 +368,24 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
                         .from('user_badges')
                         .select('*, badge:badges(*)')
                         .eq('user_id', realProfile.id);
-                    setBadges(badgesData || []);
-                    setLoading(false);
-                    return;
-                }
 
-                // 3. Fallback final: dados fictícios (demo) sincronizados
-                const mockProfile: AuditorProfile = {
-                    id: 'isotekapp-auditor',
-                    full_name: 'Evans Barros',
-                    avatar_url: logo,
-                    gamification_xp: 100,
-                    gamification_level: 'bronze',
-                    reputation_score: 5.0,
-                    audits_completed: 0,
-                    created_at: '2024-01-01T00:00:00Z',
-                    twitter_url: '',
-                    linkedin_url: '',
-                    instagram_url: ''
-                };
-                setProfile(mockProfile);
-                setBadges([]);
+                    if (badgesData) setBadges(badgesData);
+                } else {
+                    // Mock profile apenas se não encontrar NADA no banco
+                    const mockProfile: AuditorProfile = {
+                        id: 'mock-id',
+                        full_name: 'Evans Barros',
+                        avatar_url: logo,
+                        gamification_xp: 1540,
+                        gamification_level: 'bronze',
+                        reputation_score: 4.9,
+                        audits_completed: 12,
+                        created_at: new Date().toISOString(),
+                        bio: "Especialista em processos de gestão da qualidade e auditoria digital, focado em excelência técnica e automação."
+                    };
+                    setProfile(mockProfile);
+                    setBadges([]);
+                }
                 setLoading(false);
                 return;
             }
@@ -404,7 +410,8 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
 
             const profileWithAudits: AuditorProfile = {
                 ...profileData,
-                audits_completed: totalAudits
+                audits_completed: totalAudits,
+                bio: profileData.bio // Mapeando a bio
             };
 
             setProfile(profileWithAudits);
@@ -418,9 +425,8 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
             if (!badgesError) {
                 setBadges(badgesData || []);
             }
-
         } catch (error) {
-            console.error('Erro ao buscar dados do auditor:', error);
+            console.error('Erro geral ao buscar auditor:', error);
         } finally {
             setLoading(false);
         }
@@ -430,73 +436,93 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
         if (isOpen && !profile) {
             fetchAuditorData();
         }
-    }, [isOpen, auditorId]);
+    }, [isOpen, auditorId, user]); // Recarrega se usuário logado mudar
 
-    const handleOpen = () => {
-        setIsOpen(true);
-    };
+    if (!showTrigger && !isOpen) return null;
 
-    const handleClose = () => {
-        setIsOpen(false);
-        onClose?.();
-    };
-
-    if (!showTrigger) {
-        // Renderiza só o card
-        if (loading) {
-            return (
-                <div className={`bg-white rounded-xl shadow-lg p-6 w-72 ${className}`}>
-                    <div className="flex items-center justify-center">
-                        <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full" />
-                    </div>
-                </div>
-            );
-        }
-
-        if (!profile) return null;
-
-        return <ProfileCard profile={profile} badges={badges} onClose={onClose} />;
+    if (showTrigger && !isOpen) {
+        return (
+            <button
+                onClick={() => setIsOpen(true)}
+                className={`flex items-center gap-2 hover:opacity-80 transition-opacity ${className}`}
+            >
+                {auditorName || 'Ver Perfil'}
+                {/* <Info size={14} className="text-gray-400" /> */}
+            </button>
+        );
     }
 
-    return (
-        <div className={`relative inline-block ${className}`}>
-            {/* Trigger - Nome clicável */}
-            <button
-                onClick={handleOpen}
-                className="inline-flex items-center gap-1.5 text-[#025159] hover:text-[#013d42] font-medium transition-colors group"
-            >
-                <span className="border-b border-dashed border-current">
-                    {auditorName || 'Auditor'}
-                </span>
-                <Info size={14} className="opacity-60 group-hover:opacity-100" />
-            </button>
+    if (loading || !profile) {
+        return (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            </div>
+        );
+    }
 
-            {/* Popover/Card */}
-            {isOpen && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 z-40"
-                        onClick={handleClose}
-                    />
-                    {/* Card posicionado */}
-                    <div className="absolute top-full left-0 mt-2 z-50">
-                        {loading ? (
-                            <div className="bg-white rounded-xl shadow-lg p-6 w-72">
-                                <div className="flex items-center justify-center">
-                                    <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+    // Configuração do nível atual
+    const currentLevel = levelConfigs[profile.gamification_level] || levelConfigs.bronze;
+    const memberSince = new Date(profile.created_at).getFullYear();
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setIsOpen(false); onClose?.(); }}>
+            <div
+                className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Close Button */}
+                <button
+                    onClick={() => { setIsOpen(false); onClose?.(); }}
+                    className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                >
+                    <X size={16} />
+                </button>
+
+                {/* Header com Nível */}
+                <div className={`pt-8 pb-16 px-6 bg-gradient-to-br ${currentLevel.gradient} text-white relative overflow-hidden`}>
+                    {/* Pattern de fundo */}
+                    <div className="absolute inset-0 opacity-10">
+                        <Trophy size={200} className="absolute -right-10 -bottom-10 rotate-12" />
+                    </div>
+
+                    <div className="relative z-10 flex items-start gap-4">
+                        <div className="relative">
+                            <div className="w-20 h-20 rounded-2xl bg-white p-1 shadow-lg transform rotate-3">
+                                <img
+                                    src={profile.avatar_url || logo}
+                                    alt={profile.full_name || 'Auditor'}
+                                    className="w-full h-full object-cover rounded-xl"
+                                />
+                            </div>
+                            <div className="absolute -bottom-2 -right-2">
+                                <div className={`w-8 h-8 rounded-lg ${currentLevel.bgColor} flex items-center justify-center shadow-md border-2 border-white`}>
+                                    <Trophy size={14} className={currentLevel.textColor} />
                                 </div>
                             </div>
-                        ) : profile ? (
-                            <ProfileCard profile={profile} badges={badges} onClose={handleClose} />
-                        ) : (
-                            <div className="bg-white rounded-xl shadow-lg p-4 w-72 text-center text-gray-500 text-sm">
-                                Não foi possível carregar o perfil
+                        </div>
+                        <div className="flex-1 pt-1">
+                            <h3 className="font-bold text-lg leading-tight mb-1">
+                                {profile.full_name}
+                            </h3>
+                            <div className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
+                                <Trophy size={14} />
+                                <span>Auditor {currentLevel.name} Isotek</span>
                             </div>
-                        )}
+                        </div>
                     </div>
-                </>
-            )}
+                </div>
+
+                {/* Bio do Auditor */}
+                {profile.bio && (
+                    <div className="px-6 pt-4 pb-2">
+                        <p className="text-sm text-gray-600 leading-relaxed italic border-l-2 border-indigo-100 pl-3">
+                            "{profile.bio}"
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

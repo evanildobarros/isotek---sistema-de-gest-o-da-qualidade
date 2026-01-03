@@ -130,6 +130,7 @@ export interface Profile {
   audits_completed?: number;
   commission_tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
   custom_commission_rate?: number;
+  bio?: string;
 }
 
 // ===========================================
