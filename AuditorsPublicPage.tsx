@@ -52,7 +52,7 @@ export const AuditorsPublicPage: React.FC = () => {
                     userProfile.full_name?.toLowerCase().includes('evanildo') ||
                     userProfile.role === 'auditor'
                 )) {
-                    console.log('🔍 Usando perfil do usuário logado:', userProfile.full_name);
+
                     dbProfile = userProfile;
                 }
             }
@@ -86,7 +86,7 @@ export const AuditorsPublicPage: React.FC = () => {
             }
 
             if (dbProfile) {
-                console.log('🔍 Perfil encontrado:', dbProfile.full_name, 'Avatar:', dbProfile.avatar_url);
+
                 setRealAuditorData(dbProfile);
                 if (dbProfile.avatar_url) {
                     setFeaturedAvatar(dbProfile.avatar_url);
@@ -94,7 +94,7 @@ export const AuditorsPublicPage: React.FC = () => {
                     // Tentar pegar do localStorage como fallback
                     const localAvatar = localStorage.getItem('isotek_avatar');
                     if (localAvatar) {
-                        console.log('📷 Usando avatar do localStorage:', localAvatar);
+
                         setFeaturedAvatar(localAvatar);
                     }
                 }

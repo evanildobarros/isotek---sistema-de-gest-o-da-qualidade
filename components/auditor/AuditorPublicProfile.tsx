@@ -294,7 +294,6 @@ export const AuditorPublicProfile: React.FC<AuditorPublicProfileProps> = ({
                         const { data: statsData, error: statsError } = await supabase
                             .rpc('get_public_auditor_stats', { p_auditor_id: loggedProfile.id });
 
-                        console.log('🔍 RPC Result (logged user):', { statsData, statsError, profileId: loggedProfile.id });
                         const totalAudits = statsData?.total_audits || 0;
 
                         const profileWithAudits: AuditorProfile = {
