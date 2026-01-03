@@ -35,6 +35,10 @@ export const AuditorsPublicPage: React.FC = () => {
     const [realAuditorData, setRealAuditorData] = useState<any>(null);
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    useEffect(() => {
         const fetchFeaturedProfile = async () => {
             let dbProfile = null;
 
@@ -205,7 +209,7 @@ export const AuditorsPublicPage: React.FC = () => {
                             <div className="space-y-1">
                                 <div className="px-4 py-2 text-xs font-black text-gray-400 uppercase tracking-widest">Serviços</div>
                                 <button onClick={() => { navigate('/'); setTimeout(() => document.getElementById('funcionalidades')?.scrollIntoView({ behavior: 'smooth' }), 100); }} className="block w-full text-left px-8 py-2 text-base font-bold text-[#2D3773] hover:text-[#0AADBF] transition-all">Método</button>
-                                <button onClick={() => { setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="block w-full text-left px-8 py-2 text-base font-bold text-[#0AADBF] transition-all">Página dos Auditores</button>
+                                <button onClick={() => { setIsMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="block w-full text-left px-8 py-2 text-base font-bold text-[#0AADBF] transition-all">Auditores</button>
                             </div>
 
                             <div className="pt-4 px-2">
@@ -254,7 +258,7 @@ export const AuditorsPublicPage: React.FC = () => {
             {/* SEÇÃO NOSSO TIME - CONFORME MODELO DA IMAGEM */}
             <section className="py-24 bg-white border-y border-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col lg:flex-row gap-16">
+                    <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
                         {/* Lado Esquerdo: Texto de Introdução */}
                         <div className="lg:w-1/3">
                             <h2 className="text-4xl font-extrabold text-[#2D3773] mb-6">Nosso Time</h2>
@@ -286,12 +290,12 @@ export const AuditorsPublicPage: React.FC = () => {
                                     }
                                 ].map((auditor, idx) => (
                                     <div key={idx} className="flex flex-col gap-6 group">
-                                        <div className="w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-sm bg-gray-50 border border-gray-100 relative">
+                                        <div className="w-full aspect-[16/9] md:aspect-[4/3] rounded-[2rem] overflow-hidden shadow-sm bg-gray-50 border border-gray-100 relative">
                                             {auditor.image ? (
                                                 <img
                                                     src={auditor.image}
                                                     alt={auditor.name}
-                                                    className={`w-full h-full transform transition-transform duration-700 group-hover:scale-105 ${auditor.image.includes('isotek-logo') ? 'object-contain p-8' : 'object-cover'
+                                                    className={`w-full h-full transform transition-transform duration-700 group-hover:scale-105 ${auditor.image.includes('isotek-logo') ? 'object-contain p-6 md:p-8' : 'object-cover'
                                                         }`}
                                                 />
                                             ) : (
