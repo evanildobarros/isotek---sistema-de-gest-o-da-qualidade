@@ -4,7 +4,7 @@ export const PLANS = {
     start: {
         id: 'price_start_brl',
         label: 'Start',
-        price: 297,
+        price: 99, // Valor base (Sincronizado dinamicamente via Banco de Dados)
         period: 'mês',
         description: 'Para pequenas empresas (Dono + Analista)',
         features: [
@@ -25,7 +25,7 @@ export const PLANS = {
     pro: {
         id: 'price_pro_brl',
         label: 'Pro',
-        price: 697,
+        price: 299, // Valor base (Sincronizado dinamicamente via Banco de Dados)
         period: 'mês',
         isPopular: true,
         description: 'Gestão completa com IA ilimitada',
@@ -48,7 +48,7 @@ export const PLANS = {
     enterprise: {
         id: 'price_ent_brl',
         label: 'Enterprise',
-        price: 1497,
+        price: 999, // Valor base (Sincronizado dinamicamente via Banco de Dados)
         period: 'mês',
         description: 'Para grandes operações com múltiplas unidades.',
         features: [
@@ -77,14 +77,14 @@ export const FINANCIAL_FEES = {
 
 // Níveis e Comissões
 export const AUDITOR_RATES = {
-    bronze: { label: 'Bronze', rate: 0.70 },
+    bronze: { label: 'Bronze', rate: 0.65 },
     silver: { label: 'Prata', rate: 0.75 },
     gold: { label: 'Ouro', rate: 0.80 },
     platinum: { label: 'Platina', rate: 0.85 },
     diamond: { label: 'Diamante', rate: 0.90 }
 };
 
-export const AUDIT_BASE_PRICE = 1200; // Preço base diária sugerida
+export const AUDIT_BASE_PRICE = 1200; // Preço base padrão (Sincronizado dinamicamente via Banco de Dados)
 
 // ============================================================================
 // ISO 9001:2015 - Matriz de Riscos e Oportunidades

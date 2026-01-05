@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Shield, Users, DollarSign, Activity, Plus, Search,
     MoreVertical, Lock, Unlock, ExternalLink, Building2, Mail, Key, AlertCircle,
-    ClipboardCheck, UserPlus, Link2, Calendar, X, Loader2, Settings, Globe, Save
+    ClipboardCheck, UserPlus, Link2, Calendar, X, Loader2, Settings, Globe, Save, LayoutGrid
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
@@ -74,7 +74,14 @@ export const SuperAdminPage: React.FC = () => {
 
     // Global Settings
     const [isGlobalSettingsModalOpen, setIsGlobalSettingsModalOpen] = useState(false);
+    const [isPlanSettingsModalOpen, setIsPlanSettingsModalOpen] = useState(false);
     const [globalRates, setGlobalRates] = useState<Record<string, number>>({});
+    const [globalBasePrice, setGlobalBasePrice] = useState<number>(AUDIT_BASE_PRICE);
+    const [globalPlanPrices, setGlobalPlanPrices] = useState<Record<string, number>>({
+        start: 297,
+        pro: 697,
+        enterprise: 1497
+    });
     const [savingGlobalSettings, setSavingGlobalSettings] = useState(false);
     const [loadingGlobalSettings, setLoadingGlobalSettings] = useState(false);
 
@@ -208,11 +215,14 @@ export const SuperAdminPage: React.FC = () => {
                 const completedAudits = completedCount.get(p.id) || 0;
                 const activeAudits = assignmentCount.get(p.id) || 0;
 
-                // Calcular ganhos de auditorias CONCLUÍDAS
+                // Calcular ganhos de auditorias CONCLUÍDAS usando taxas globais e PREÇO BASE dinâmico
+                const effectiveRate = customRate || (globalRates[tier] !== undefined ? globalRates[tier] * 100 : undefined);
+                const basePrice = globalBasePrice || AUDIT_BASE_PRICE;
+
                 const earnings = calculateAuditEarnings(
-                    completedAudits * AUDIT_BASE_PRICE,
+                    completedAudits * basePrice,
                     tier,
-                    customRate
+                    effectiveRate
                 );
 
                 return {
@@ -312,57 +322,104 @@ export const SuperAdminPage: React.FC = () => {
     // Global Settings Functions
     const fetchGlobalSettings = async () => {
         setLoadingGlobalSettings(true);
-        const { data, error } = await supabase
+
+        // 1. Buscar Taxas
+        const { data: ratesData } = await supabase
             .from('global_settings')
             .select('value')
             .eq('key', 'auditor_rates')
             .single();
 
-        if (error) {
-            console.error('Error fetching global settings:', error);
-            // Fallback para constantes se falhar
-            setGlobalRates({
-                bronze: 0.70,
-                silver: 0.75,
-                gold: 0.80,
-                platinum: 0.85,
-                diamond: 0.90
-            });
-        } else if (data) {
-            // Se as chaves platinum/diamond estiverem faltando no dado legado, garante que existam
+        // 2. Buscar Preço Base
+        const { data: priceData } = await supabase
+            .from('global_settings')
+            .select('value')
+            .eq('key', 'audit_base_price')
+            .single();
+
+        // 3. Buscar Preços dos Planos
+        const { data: plansData } = await supabase
+            .from('global_settings')
+            .select('value')
+            .eq('key', 'company_plans')
+            .single();
+
+        if (ratesData) {
             const rates = {
-                bronze: 0.70,
-                silver: 0.75,
-                gold: 0.80,
-                platinum: 0.85,
-                diamond: 0.90,
-                ...data.value
+                bronze: AUDITOR_RATES.bronze.rate,
+                silver: AUDITOR_RATES.silver.rate,
+                gold: AUDITOR_RATES.gold.rate,
+                platinum: AUDITOR_RATES.platinum.rate,
+                diamond: AUDITOR_RATES.diamond.rate,
+                ...ratesData.value
             };
             setGlobalRates(rates);
+        } else {
+            setGlobalRates({
+                bronze: AUDITOR_RATES.bronze.rate,
+                silver: AUDITOR_RATES.silver.rate,
+                gold: AUDITOR_RATES.gold.rate,
+                platinum: AUDITOR_RATES.platinum.rate,
+                diamond: AUDITOR_RATES.diamond.rate
+            });
         }
+
+        if (priceData) {
+            setGlobalBasePrice(Number(priceData.value));
+        }
+
+        if (plansData) {
+            setGlobalPlanPrices(plansData.value);
+        }
+
         setLoadingGlobalSettings(false);
     };
 
     const handleUpdateGlobalSettings = async () => {
         setSavingGlobalSettings(true);
-        const { error } = await supabase
-            .from('global_settings')
-            .upsert({
-                key: 'auditor_rates',
-                value: globalRates,
-                updated_at: new Date().toISOString(),
-                updated_by: user?.id
-            });
 
-        if (error) {
-            toast.error('Erro ao salvar configurações globais');
-            console.error('Error updating global settings:', error);
-        } else {
+        try {
+            // Salvar Taxas, Preço Base e Preços dos Planos
+            const results = await Promise.all([
+                supabase
+                    .from('global_settings')
+                    .upsert({
+                        key: 'auditor_rates',
+                        value: globalRates,
+                        updated_at: new Date().toISOString(),
+                        updated_by: user?.id
+                    }),
+                supabase
+                    .from('global_settings')
+                    .upsert({
+                        key: 'audit_base_price',
+                        value: globalBasePrice,
+                        updated_at: new Date().toISOString(),
+                        updated_by: user?.id
+                    }),
+                supabase
+                    .from('global_settings')
+                    .upsert({
+                        key: 'company_plans',
+                        value: globalPlanPrices,
+                        updated_at: new Date().toISOString(),
+                        updated_by: user?.id
+                    })
+            ]);
+
+            const hasError = results.some(r => r.error);
+            if (hasError) throw new Error('Erro ao salvar algumas configurações');
+
             toast.success('Configurações globais atualizadas com sucesso!');
             setIsGlobalSettingsModalOpen(false);
-            fetchAuditors(); // Recarregar para atualizar os cálculos
+            fetchAuditors();
+            fetchCompanies(); // Recarregar para atualizar os valores de receita exibidos
+        } catch (error: any) {
+            toast.error('Erro ao salvar configurações globais');
+            console.error('Error updating global settings:', error);
+        } finally {
+            setSavingGlobalSettings(false);
         }
-        setSavingGlobalSettings(false);
     };
 
     // Open assign modal
@@ -469,7 +526,11 @@ export const SuperAdminPage: React.FC = () => {
 
     const updateStats = (data: Company[]) => {
         const total = data.length;
-        const revenue = data.reduce((acc: number, curr: Company) => acc + (Number(curr.monthly_revenue) || 0), 0);
+        const revenue = data.reduce((acc: number, curr: Company) => {
+            const planKey = curr.plan?.toLowerCase() || 'start';
+            const planRevenue = globalPlanPrices[planKey] || Number(curr.monthly_revenue) || 0;
+            return acc + planRevenue;
+        }, 0);
         const active = data.filter((c: Company) => c.status === 'active').length;
         setStats({ total, revenue, active });
     };
@@ -555,7 +616,7 @@ export const SuperAdminPage: React.FC = () => {
                     email: editForm.email,
                     plan: editForm.plan,
                     status: editForm.status,
-                    monthly_revenue: editForm.plan === 'enterprise' ? 999 : (editForm.plan === 'pro' ? 299 : 99)
+                    monthly_revenue: globalPlanPrices[editForm.plan.toLowerCase()] || 0
                 })
                 .eq('id', editingCompany.id);
 
@@ -665,7 +726,7 @@ export const SuperAdminPage: React.FC = () => {
                 p_cnpj: companyForm.cnpj.replace(/\D/g, ''), // Remove formatação antes de salvar
                 p_plan: companyForm.plan,
                 p_owner_id: userId,
-                p_monthly_revenue: companyForm.plan === 'enterprise' ? 999 : (companyForm.plan === 'pro' ? 299 : 99)
+                p_monthly_revenue: globalPlanPrices[companyForm.plan.toLowerCase()] || 0
             });
 
             if (rpcError) throw rpcError;
@@ -816,15 +877,23 @@ export const SuperAdminPage: React.FC = () => {
                                     className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none"
                                 />
                             </div>
-                            <button
-                                onClick={handleOpenWizard}
-                                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
-                            >
-                                <Plus className="w-5 h-5" />
-                                Cadastrar Novo Cliente
-                            </button>
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <button
+                                    onClick={handleOpenWizard}
+                                    className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    Cadastrar Novo Cliente
+                                </button>
+                                <button
+                                    onClick={() => setIsPlanSettingsModalOpen(true)}
+                                    className="flex-1 sm:flex-none border border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <LayoutGrid className="w-5 h-5" />
+                                    Planos
+                                </button>
+                            </div>
                         </div>
-
                         {/* Clients Table */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px]">
                             <table className="w-full text-left border-collapse">
@@ -884,8 +953,8 @@ export const SuperAdminPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 {getSubscriptionBadge(company.subscription_status)}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">
-                                                {(Number(company.monthly_revenue) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                                                {(globalPlanPrices[company.plan?.toLowerCase() || 'start'] || company.monthly_revenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">
                                                 {company.created_at ? new Date(company.created_at).toLocaleDateString('pt-BR') : '-'}
@@ -1122,9 +1191,9 @@ export const SuperAdminPage: React.FC = () => {
                                             onChange={e => setCompanyForm({ ...companyForm, plan: e.target.value })}
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none"
                                         >
-                                            <option value="start">Start (R$ 99/mês)</option>
-                                            <option value="pro">Pro (R$ 299/mês)</option>
-                                            <option value="enterprise">Enterprise (R$ 999/mês)</option>
+                                            <option value="start">Start (R$ {globalPlanPrices.start}/mês)</option>
+                                            <option value="pro">Pro (R$ {globalPlanPrices.pro}/mês)</option>
+                                            <option value="enterprise">Enterprise (R$ {globalPlanPrices.enterprise}/mês)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1263,9 +1332,9 @@ export const SuperAdminPage: React.FC = () => {
                                     onChange={e => setEditForm({ ...editForm, plan: e.target.value })}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none"
                                 >
-                                    <option value="start">Start (R$ 99/mês)</option>
-                                    <option value="pro">Pro (R$ 299/mês)</option>
-                                    <option value="enterprise">Enterprise (R$ 999/mês)</option>
+                                    <option value="start">Start (R$ {globalPlanPrices.start}/mês)</option>
+                                    <option value="pro">Pro (R$ {globalPlanPrices.pro}/mês)</option>
+                                    <option value="enterprise">Enterprise (R$ {globalPlanPrices.enterprise}/mês)</option>
                                 </select>
                             </div>
                             <div>
@@ -1571,10 +1640,28 @@ export const SuperAdminPage: React.FC = () => {
 
                         <div className="p-6 space-y-6">
                             <p className="text-sm text-gray-600">
-                                Estas são as taxas padrão para cada nível de auditor. Alterações aqui afetarão todos os auditores que não possuem uma taxa personalizada definida.
+                                Estas são as configurações padrão para auditorias e níveis. Alterações aqui afetarão todos os cálculos que não possuem valores personalizados.
                             </p>
 
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 space-y-3">
+                                <label className="block text-sm font-bold text-amber-900">Preço Base por Auditoria (Diária)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">R$</span>
+                                    <input
+                                        type="number"
+                                        value={globalBasePrice}
+                                        onChange={(e) => setGlobalBasePrice(Number(e.target.value))}
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-amber-200 focus:ring-2 focus:ring-amber-500 outline-none font-bold text-amber-900"
+                                        placeholder="Ex: 1200"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-amber-700 italic">
+                                    Este valor será usado como padrão quando a auditoria não tiver um valor negociado específico.
+                                </p>
+                            </div>
+
                             <div className="space-y-4">
+                                <label className="block text-sm font-bold text-gray-700 px-1">Comissões por Nível (%)</label>
                                 {Object.keys(globalRates).map((tier) => (
                                     <div key={tier} className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-100 bg-gray-50/50">
                                         <div className="flex flex-col">
@@ -1615,6 +1702,67 @@ export const SuperAdminPage: React.FC = () => {
                             >
                                 {savingGlobalSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 {savingGlobalSettings ? 'Salvando...' : 'Salvar Taxas Globais'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal: Configurações de Planos */}
+            {isPlanSettingsModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-emerald-50 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                                <LayoutGrid className="w-5 h-5 text-emerald-600" />
+                                Configuração de Planos
+                            </h2>
+                            <button onClick={() => setIsPlanSettingsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <p className="text-sm text-gray-600">
+                                Ajuste os valores mensais de cada plano. Alterações aqui afetarão o faturamento exibido para todas as empresas vinculadas a estes planos.
+                            </p>
+
+                            <div className="space-y-4">
+                                {['start', 'pro', 'enterprise'].map((plan) => (
+                                    <div key={plan} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-emerald-200 transition-all group">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-gray-900 uppercase tracking-wider group-hover:text-emerald-700 transition-colors">{plan}</span>
+                                            <span className="text-xs text-gray-500">Mensalidade padrão</span>
+                                        </div>
+                                        <div className="relative w-36">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold group-hover:text-emerald-600">R$</span>
+                                            <input
+                                                type="number"
+                                                value={globalPlanPrices[plan] || 0}
+                                                onChange={(e) => {
+                                                    setGlobalPlanPrices({ ...globalPlanPrices, [plan]: Number(e.target.value) });
+                                                }}
+                                                className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-right text-emerald-900"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+                            <button
+                                onClick={() => setIsPlanSettingsModalOpen(false)}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleUpdateGlobalSettings}
+                                disabled={savingGlobalSettings}
+                                className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all"
+                            >
+                                {savingGlobalSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                {savingGlobalSettings ? 'Salvando...' : 'Salvar Alterações'}
                             </button>
                         </div>
                     </div>

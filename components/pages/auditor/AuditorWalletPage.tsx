@@ -47,19 +47,41 @@ export const AuditorWalletPage: React.FC = () => {
         try {
             setLoading(true);
 
-            // 1. Buscar Perfil para saber o Nível e Comissões
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('gamification_level, commission_tier, custom_commission_rate')
-                .eq('id', user?.id)
-                .single();
+            // 1. Buscar Perfil e Configurações Globais
+            const [profileRes, settingsRes, settingsRes2] = await Promise.all([
+                supabase
+                    .from('profiles')
+                    .select('gamification_level, commission_tier, custom_commission_rate')
+                    .eq('id', user?.id)
+                    .single(),
+                supabase
+                    .from('global_settings')
+                    .select('value')
+                    .eq('key', 'auditor_rates')
+                    .single(),
+                supabase
+                    .from('global_settings')
+                    .select('value')
+                    .eq('key', 'audit_base_price')
+                    .single()
+            ]);
+
+            const profile = profileRes.data;
+            const globalRates = settingsRes.data?.value || {};
+            const globalBasePrice = settingsRes2.data?.value ? Number(settingsRes2.data.value) : AUDIT_BASE_PRICE;
 
             const currentLevel = profile?.gamification_level || 'bronze';
             const tier = profile?.commission_tier || currentLevel;
             const customRate = profile?.custom_commission_rate || null;
 
+            // Se for usar a taxa do nível e ela existir no banco, passamos como customRate para o cálculo
+            const effectiveRate = customRate || (globalRates[tier] ? globalRates[tier] * 100 : null);
+
             setAuditorLevel(currentLevel);
-            setCommissionSettings({ tier, customRate });
+            setCommissionSettings({
+                tier,
+                customRate: effectiveRate
+            });
 
             // 2. Buscar Auditorias (Assignments)
             // Assumimos que auditorias concluídas geraram receita
@@ -77,14 +99,14 @@ export const AuditorWalletPage: React.FC = () => {
             let totalPending = 0;
 
             const processedTransactions = (assignments || []).map((audit: any) => {
-                // Se tivessse valor customizado no banco, usaria aqui. Por enquanto: CONSTANTE
-                const auditValue = AUDIT_BASE_PRICE;
+                // Se tiver valor customizado no banco (agreed_amount), usa ele. Caso contrário, usa o preço base dinâmico.
+                const auditValue = audit.agreed_amount || globalBasePrice;
 
                 // Calcular breakdown para ESTA transação
                 const financials = calculateAuditEarnings(
                     auditValue,
                     tier,
-                    customRate || undefined
+                    effectiveRate || undefined
                 );
 
                 // Computar Totais

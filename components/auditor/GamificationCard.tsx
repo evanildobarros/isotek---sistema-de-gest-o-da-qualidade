@@ -114,6 +114,8 @@ interface AuditorProfile {
     gamification_level: GamificationLevel;
     reputation_score: number;
     audits_completed: number;
+    commission_tier?: string;
+    custom_commission_rate?: number;
 }
 
 export const GamificationCard: React.FC<GamificationCardProps> = ({ className = '' }) => {
@@ -122,6 +124,8 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
     const [allBadges, setAllBadges] = useState<Badge[]>([]);
     const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
     const [totalEarnings, setTotalEarnings] = useState(0);
+    const [globalRates, setGlobalRates] = useState<Record<string, number>>({});
+    const [globalBasePrice, setGlobalBasePrice] = useState<number>(AUDIT_BASE_PRICE);
     const [loading, setLoading] = useState(true);
 
     // Dados do perfil do auditor
@@ -152,7 +156,7 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
             // Buscar perfil do auditor com dados de gamificação
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, gamification_xp, gamification_level, reputation_score, audits_completed')
+                .select('id, full_name, avatar_url, gamification_xp, gamification_level, reputation_score, audits_completed, commission_tier, custom_commission_rate')
                 .eq('id', user?.id)
                 .single();
 
@@ -160,6 +164,20 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
                 console.error('Erro ao carregar perfil:', profileError);
             } else {
                 setProfile(profileData as AuditorProfile);
+            }
+
+            // Buscar Configurações Globais (Taxas)
+            const { data: settingsData } = await supabase
+                .from('global_settings')
+                .select('key, value')
+                .in('key', ['auditor_rates', 'audit_base_price']);
+
+            if (settingsData) {
+                const rates = settingsData.find(s => s.key === 'auditor_rates')?.value;
+                const price = settingsData.find(s => s.key === 'audit_base_price')?.value;
+
+                if (rates) setGlobalRates(rates);
+                if (price) setGlobalBasePrice(Number(price));
             }
 
             // Buscar todas as badges
@@ -218,8 +236,12 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
 
                     const total = assignments.reduce((acc, curr) => {
                         // Se tiver payout no banco usa ele, senão calcula com base no nível atual
+                        const tier = profileData?.commission_tier || level;
+                        const customRate = profileData?.custom_commission_rate;
+                        const effectiveRate = customRate || (settingsData?.value?.[tier] ? settingsData.value[tier] * 100 : null);
+
                         const payout = curr.auditor_payout ||
-                            calculateAuditEarnings(AUDIT_BASE_PRICE, level).auditorShare;
+                            calculateAuditEarnings(globalBasePrice, tier, effectiveRate || undefined).auditorShare;
                         return acc + payout;
                     }, 0);
                     setTotalEarnings(total);
@@ -332,7 +354,7 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({ className = 
                                 </div>
                                 <div>
                                     <p className="text-base font-bold text-gray-900 leading-tight">
-                                        {(AUDITOR_RATES[level as keyof typeof AUDITOR_RATES]?.rate * 100 || 70)}%
+                                        {Math.round((globalRates[level] || AUDITOR_RATES[level as keyof typeof AUDITOR_RATES]?.rate || 0.65) * 100)}%
                                     </p>
                                     <p className="text-[10px] text-gray-500">Taxa de Repasse</p>
                                 </div>
